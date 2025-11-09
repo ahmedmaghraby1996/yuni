@@ -1,0 +1,74 @@
+[
+  {
+    "name_en": "Electronics",
+    "name_ar": "إلكترونيات",
+    "subcategories": [
+      {
+        "name_en": "Mobile Phones",
+        "name_ar": "هواتف محمولة"
+      },
+      {
+        "name_en": "Laptops",
+        "name_ar": "أجهزة كمبيوتر محمولة"
+      },
+      {
+        "name_en": "Cameras",
+        "name_ar": "كاميرات"
+      }
+    ]
+  },
+  {
+    "name_en": "Fashion",
+    "name_ar": "أزياء",
+    "subcategories": [
+      {
+        "name_en": "Men's Clothing",
+        "name_ar": "ملابس رجالية"
+      },
+      {
+        "name_en": "Women's Clothing",
+        "name_ar": "ملابس نسائية"
+      },
+      {
+        "name_en": "Watches",
+        "name_ar": "ساعات"
+      }
+    ]
+  },
+  {
+    "name_en": "Home & Kitchen",
+    "name_ar": "المنزل والمطبخ",
+    "subcategories": [
+      {
+        "name_en": "Furniture",
+        "name_ar": "أثاث"
+      },
+      {
+        "name_en": "Kitchen Appliances",
+        "name_ar": "أجهزة المطبخ"
+      },
+      {
+        "name_en": "Decor",
+        "name_ar": "ديكور"
+      }
+    ]
+  },
+  {
+    "name_en": "Books",
+    "name_ar": "كتب",
+    "subcategories": [
+      {
+        "name_en": "Children's Books",
+        "name_ar": "كتب الأطفال"
+      },
+      {
+        "name_en": "Novels",
+        "name_ar": "روايات"
+      },
+      {
+        "name_en": "Educational",
+        "name_ar": "تعليمي"
+      }
+    ]
+  }
+]

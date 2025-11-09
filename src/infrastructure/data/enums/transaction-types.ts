@@ -1,0 +1,6 @@
+export enum TransactionTypes {
+    STORE_PAYMENT = 'STORE_PAYMENT',
+    AGENT_PAYMENT = 'AGENT_PAYMENT',
+    COMMISSION = 'COMMISSION',
+    OTHER = 'OTHER',
+}

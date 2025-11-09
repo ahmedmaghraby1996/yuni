@@ -1,0 +1,182 @@
+{
+    "specializations": [
+      {
+        "name_ar": "طب الأطفال",
+        "name_en": "Pediatrics"
+      },
+      {
+        "name_ar": "طب النساء والتوليد",
+        "name_en": "Obstetrics and Gynecology"
+      },
+      {
+        "name_ar": "جراحة عامة",
+        "name_en": "General Surgery"
+      },
+      {
+        "name_ar": "طب الأسنان",
+        "name_en": "Dentistry"
+      },
+      {
+        "name_ar": "طب العيون",
+        "name_en": "Ophthalmology"
+      },
+      {
+        "name_ar": "طب الأذن والأنف والحنجرة",
+        "name_en": "Otolaryngology"
+      },
+      {
+        "name_ar": "أمراض القلب والأوعية الدموية",
+        "name_en": "Cardiology"
+      },
+      {
+        "name_ar": "أمراض الجهاز الهضمي",
+        "name_en": "Gastroenterology"
+      },
+      {
+        "name_ar": "أمراض الجهاز التنفسي",
+        "name_en": "Pulmonology"
+      },
+      {
+        "name_ar": "طب الطوارئ",
+        "name_en": "Emergency Medicine"
+      },
+      {
+        "name_ar": "طب الأمراض الجلدية",
+        "name_en": "Dermatology"
+      },
+      {
+        "name_ar": "الطب النفسي",
+        "name_en": "Psychiatry"
+      },
+      {
+        "name_ar": "أمراض الكلى",
+        "name_en": "Nephrology"
+      },
+      {
+        "name_ar": "أمراض الغدة الدرقية",
+        "name_en": "Endocrinology"
+      },
+      {
+        "name_ar": "جراحة العظام",
+        "name_en": "Orthopedic Surgery"
+      },
+      {
+        "name_ar": "طب الأورام",
+        "name_en": "Oncology"
+      },
+      {
+        "name_ar": "طب الأمراض المعدية",
+        "name_en": "Infectious Diseases"
+      },
+      {
+        "name_ar": "طب الأعصاب",
+        "name_en": "Neurology"
+      },
+      {
+        "name_ar": "جراحة القلب والصدر",
+        "name_en": "Cardiothoracic Surgery"
+      },
+      {
+        "name_ar": "طب الأسنان التجميلي",
+        "name_en": "Cosmetic Dentistry"
+      },
+      {
+        "name_ar": "جراحة التجميل",
+        "name_en": "Plastic Surgery"
+      },
+      {
+        "name_ar": "التغذية وعلم الأغذية",
+        "name_en": "Nutrition and Dietetics"
+      },
+      {
+        "name_ar": "طب الأمومة والجنين",
+        "name_en": "Maternal-Fetal Medicine"
+      },
+      {
+        "name_ar": "أمراض الدم",
+        "name_en": "Hematology"
+      },
+      {
+        "name_ar": "طب الطلائع",
+        "name_en": "Pediatric Hematology-Oncology"
+      },
+      {
+        "name_ar": "جراحة الأوعية الدموية",
+        "name_en": "Vascular Surgery"
+      },
+      {
+        "name_ar": "علم الوراثة الطبية",
+        "name_en": "Medical Genetics"
+      },
+      {
+        "name_ar": "أمراض الجهاز اللمفاوي",
+        "name_en": "Lymphology"
+      },
+      {
+        "name_ar": "أمراض الجهاز العصبي المحيطي",
+        "name_en": "Peripheral Nerve Disorders"
+      },
+      {
+        "name_ar": "علم الأشعة التشخيصي",
+        "name_en": "Diagnostic Radiology"
+      },
+      {
+        "name_ar": "أمراض الجهاز البولي",
+        "name_en": "Urology"
+      },
+      {
+        "name_ar": "جراحة السمنة والبدانة",
+        "name_en": "Bariatric Surgery"
+      },
+      {
+        "name_ar": "أمراض الغدة الكظرية",
+        "name_en": "Adrenal Gland Disorders"
+      },
+      {
+        "name_ar": "علم الأورام الإشعاعي",
+        "name_en": "Radiation Oncology"
+      },
+      {
+        "name_ar": "علم الأمراض الطارئة",
+        "name_en": "Emergency Medicine"
+      },
+      {
+        "name_ar": "أمراض العضلات والألياف العصبية",
+        "name_en": "Neuromuscular Diseases"
+      },
+      {
+        "name_ar": "أمراض العظام والمفاصل",
+        "name_en": "Rheumatology"
+      },
+      {
+        "name_ar": "طب الأعصاب السريري",
+        "name_en": "Clinical Neurophysiology"
+      },
+      {
+        "name_ar": "علم الأشعة العلاجية",
+        "name_en": "Therapeutic Radiology"
+      },
+      {
+        "name_ar": "جراحة الرأس والرقبة",
+        "name_en": "Head and Neck Surgery"
+      },
+      {
+        "name_ar": "أمراض الأوعية الدموية الليمفاوية",
+        "name_en": "Lymphovascular Diseases"
+      },
+      {
+        "name_ar": "جراحة العيون",
+        "name_en": "Ocular Surgery"
+      },
+      {
+        "name_ar": "جراحة الفم والفكين",
+        "name_en": "Oral and Maxillofacial Surgery"
+      },
+      {
+        "name_ar": "علم الأمراض الباطنية",
+        "name_en": "Internal Medicine"
+      },
+      {
+        "name_ar": "علم الوراثة الطبية",
+        "name_en": "Medical Genetics"}]}
+  

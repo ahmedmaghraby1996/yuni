@@ -1,0 +1,28 @@
+[
+    {
+        "static_page_type": "ABOUT_US",
+        "content_ar": "المحتوى العربي لصفحة من نحن",
+        "content_en": "English content for About Us page"
+    },
+    {
+        "static_page_type": "TERMS_AND_CONDITIONS",
+        "content_ar": "المحتوى العربي لصفحة الشروط والأحكام",
+        "content_en": "English content for Terms and Conditions page"
+    },
+    {
+        "static_page_type": "PRIVACY_POLICY",
+        "content_ar": "المحتوى العربي لصفحة سياسة الخصوصية",
+        "content_en": "English content for PRIVACY_POLICY page"
+    },
+    {
+        "static_page_type": "RETURN_POLICY",
+        "content_ar": "المحتوى العربي لصفحة سياسة الإرجاع",
+        "content_en": "English content for RETURN_POLICY page"
+    },
+ {
+  "static_page_type": "AGENT_POLICY",
+  "content_ar": "مرحبًا بك في تطبيق محطات العروض. يوضح هذا المستند سياسة المندوبين لدينا. يحصل المندوب على نسبة 10٪ من قيمة اشتراكات التاجر التي يقوم بجلبها بنجاح من خلال التطبيق، وتُصرف العمولة بعد تأكيد عملية الاشتراك من قبل التاجر.",
+  "content_en": "Welcome to Mahatat Al-Orod app. This document outlines our agent policy. The agent receives a 10% commission from the total value of the merchant's subscriptions that they successfully bring through the app, and the commission is paid after the merchant's subscription is confirmed."
+}
+
+]

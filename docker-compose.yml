@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  offers-station-api:
+    build: .
+    image: offers-station-api:latest
+    container_name: offers-station-api
+    hostname: offers-station-api
+    depends_on:
+      mysql-server-offers-station:
+        condition: service_healthy
+    networks:
+      - offers-station-network
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./storage:/usr/src/app/storage
+    environment:
+      - DATABASE_HOST= mysql-server-offers-station
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=offers_station
+      - DATABASE_USER=root_user
+      - DATABASE_PASSWORD=Yf7@qP9!xLm2wM3z    
+
+  mysql-server-offers-station:
+    image: mysql:8.0
+    container_name: mysql-server-offers-station
+    hostname: mysql-server-offers-station
+    environment:
+      MYSQL_ROOT_PASSWORD: Yf7@qP9!xLm2wM3z
+      MYSQL_DATABASE: offers_station
+      MYSQL_USER: root_user
+      MYSQL_PASSWORD: Yf7@qP9!xLm2wM3z
+    networks:
+      - offers-station-network
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_server_offers_station_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  offers-station-network:
+    driver: bridge
+
+volumes:
+  mysql_server_offers_station_data:

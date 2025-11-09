@@ -1,0 +1,88 @@
+
+    [
+        {
+          "name_en": "Kindergarten 1",
+          "name_ar": "روضة أولى",
+          "order_by": 1,
+          "academic_stage": "Kindergarten"
+        },
+        {
+          "name_en": "Kindergarten 2",
+          "name_ar": "روضة ثانية",
+          "order_by": 2,
+          "academic_stage": "Kindergarten"
+        },
+        {
+          "name_en": "Grade 1",
+          "name_ar": "الصف الأول الابتدائي",
+          "order_by": 3,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 2",
+          "name_ar": "الصف الثاني الابتدائي",
+          "order_by": 4,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 3",
+          "name_ar": "الصف الثالث الابتدائي",
+          "order_by": 5,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 4",
+          "name_ar": "الصف الرابع الابتدائي",
+          "order_by": 6,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 5",
+          "name_ar": "الصف الخامس الابتدائي",
+          "order_by": 7,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 6",
+          "name_ar": "الصف السادس الابتدائي",
+          "order_by": 8,
+          "academic_stage": "Primary"
+        },
+        {
+          "name_en": "Grade 7",
+          "name_ar": "الصف الأول المتوسط",
+          "order_by": 9,
+          "academic_stage": "Intermediate"
+        },
+        {
+          "name_en": "Grade 8",
+          "name_ar": "الصف الثاني المتوسط",
+          "order_by": 10,
+          "academic_stage": "Intermediate"
+        },
+        {
+          "name_en": "Grade 9",
+          "name_ar": "الصف الثالث المتوسط",
+          "order_by": 11,
+          "academic_stage": "Intermediate"
+        },
+        {
+          "name_en": "Grade 10",
+          "name_ar": "الصف الأول الثانوي",
+          "order_by": 12,
+          "academic_stage": "Secondary"
+        },
+        {
+          "name_en": "Grade 11",
+          "name_ar": "الصف الثاني الثانوي",
+          "order_by": 13,
+          "academic_stage": "Secondary"
+        },
+        {
+          "name_en": "Grade 12",
+          "name_ar": "الصف الثالث الثانوي",
+          "order_by": 14,
+          "academic_stage": "Secondary"
+        }
+      ]
+      

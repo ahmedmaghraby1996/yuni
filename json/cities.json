@@ -1,0 +1,43 @@
+{
+    "country":{
+        "name_ar":"السعوية",
+        "name_en":"Saudi Arabia",
+        "cities":[ 
+{ "code": "AHB", "name_ar": "أبها", "name_en": "Abha" }, 
+{ "code": "ABQ", "name_ar": "بقيق", "name_en": "Abqaiq" },
+ { "code": "DMM", "name_ar": "الدمام", "name_en": "Ad Dammam" }, 
+{ "code": "DAW", "name_ar": "الدوادمي", "name_en": "Ad Dawadami" }, 
+{ "code": "BAH", "name_ar": "الباحة", "name_en": "Al Bahah" },
+{ "code": "ALH", "name_ar": "الأحساء", "name_en": "Al Hasa" }, 
+{ "code": "JBI", "name_ar": "الجبيل الصناعية", "name_en": "Al Jubayl Industrial City" }, 
+{ "code": "AKH", "name_ar": "الخرج", "name_en": "Al Kharj" }, 
+{ "code": "ALK", "name_ar": "الخبر", "name_en": "Al Khobar" }, 
+{ "code": "BUR", "name_ar": "بريدة", "name_en": "Buraydah" }, 
+{ "code": "DHA", "name_ar": "الظهران", "name_en": "Dhahran" },
+{ "code": "ELQ", "name_ar": "القصيم", "name_en": "Gassim" }, 
+{ "code": "HBT", "name_ar": "حفر الباطن", "name_en": "Hafar al Batin" }, 
+{ "code": "HAS", "name_ar": "حايل", "name_en": "Hail" }, 
+{ "code": "HOF", "name_ar": "الهفوف", "name_en": "Hofuf" }, 
+{ "code": "JED", "name_ar": "جدة", "name_en": "Jeddah" }, 
+{ "code": "GIZ", "name_ar": "جيزان", "name_en": "Jizan" }, 
+{ "code": "AJF", "name_ar": "الجوف", "name_en": "Jouf" }, 
+{ "code": "JUB", "name_ar": "الجبيل", "name_en": "Jubail" }, 
+{ "code": "KMX", "name_ar": "خميس مشيط", "name_en": "Khamis Mushayt" }, 
+{ "code": "MED", "name_ar": "المدينة", "name_en": "Madinah" }, 
+{ "code": "MJH", "name_ar": "المجمعة", "name_en": "Majma" }, 
+{ "code": "MAK", "name_ar": "مكة", "name_en": "Makkah" }, 
+{ "code": "NJN", "name_ar": "نجران", "name_en": "Najran" }, 
+{ "code": "QTF", "name_ar": "القطيف", "name_en": "Qatif" }, 
+{ "code": "RAB", "name_ar": "رابغ", "name_en": "Rabigh" }, 
+{ "code": "RTA", "name_ar": "رأس تنورة", "name_en": "Ras Tanura" }, 
+{ "code": "RUH", "name_ar": "الرياض", "name_en": "Riyadh" }, 
+{ "code": "Y", "name_ar": "سيهات", "name_en": "Sayhat" }, 
+{ "code": "TUU", "name_ar": "تبوك", "name_en": "Tabuk" }, 
+{ "code": "TIF", "name_ar": "الطائف", "name_en": "Taif" },  
+{ "code": "UZH", "name_ar": "عنيزة", "name_en": "Unayzah" },  
+{ "code": "WAE", "name_ar": "وادي الدواسر", "name_en": "Wadi ad Dawasir" },  
+{ "code": "YNB", "name_ar": "ينبع", "name_en": "Yanbu commercial city " },  
+{ "code": "ZUL", "name_ar": "الزلفي", "name_en": "Zilfi" }  
+]
+    }
+}
