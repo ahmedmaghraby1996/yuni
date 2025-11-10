@@ -91,7 +91,7 @@ export class RegisterUserTransaction extends BaseTransaction<
         });
         store.user_id = savedUser.id;
         store.is_main_branch = true;
-        savedUser.agent_id = req.agent_id;
+     
         await context.save(store);
       }
 
