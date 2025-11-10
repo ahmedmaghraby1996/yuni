@@ -29,6 +29,11 @@ export class RegisterRequest {
   @Unique('User')
   phone: string;
 
+  @ApiProperty()
+  @IsEmail()
+  @Unique('User')
+  email: string;
+
   @ApiProperty({ type: 'file', required: false })
   @IsOptional()
   avatarFile: Express.Multer.File;
