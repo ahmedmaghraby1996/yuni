@@ -125,21 +125,6 @@ export class AuthenticationController {
       statusCode: HttpStatus.CREATED,
     });
   }
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.CLIENT)
-  @Post('agent-register')
-  async Agentregister(
-    @Body() req: AgentRegisterRequest,
-  ): Promise<ActionResponse<RegisterResponse>> {
-    const user = await this.authService.registerAgent(req);
-    const result = plainToInstance(RegisterResponse, user, {
-      excludeExtraneousValues: true,
-    });
-    return new ActionResponse<RegisterResponse>(result, {
-      statusCode: HttpStatus.CREATED,
-    });
-  }
 
   
 

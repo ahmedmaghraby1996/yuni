@@ -60,6 +60,9 @@ export class Offer extends AuditableEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   offer_price: number;
 
+  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+offer_percentage: number; // Example: 0.15 = 15%
+
   @Column({ nullable: true })
   code: string;
 
