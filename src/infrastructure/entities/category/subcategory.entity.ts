@@ -37,6 +37,8 @@ export class SubCategory extends AuditableEntity {
  @OneToMany(() => Offer, (offer) => offer.subcategory)
  offers: Offer[]
 
+ 
+
  constructor(partial: Partial<SubCategory>) {
   super();
   Object.assign(this, partial);

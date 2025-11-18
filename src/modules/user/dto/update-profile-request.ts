@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { string } from 'joi';
 import { Unique } from 'src/core/validators/unique-constraints.validator';
 import { Gender } from 'src/infrastructure/data/enums/gender.enum';
 import { Language } from 'src/infrastructure/data/enums/language.enum';
@@ -78,6 +79,22 @@ export class UpdateProfileRequest {
   @IsBoolean()
   is_active?: boolean;
 
+
+   @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    school_name: string;
+  
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    major: Role;
+  
+    //list of ids
+    @ApiProperty({ required: false, type: [string] })
+    @IsOptional()
+    @IsNotEmpty({ each: true })
+    favorite_sections: string[];
 
   // @ApiProperty({required:false})
   // @Transform(({ value }) => value.split(','))

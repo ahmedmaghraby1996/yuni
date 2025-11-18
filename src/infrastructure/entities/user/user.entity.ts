@@ -27,6 +27,7 @@ import { City } from '../city/city.entity';
 import { Chat } from '../chat/chat.entity';
 import { Store } from '../store/store.entity';
 import { Subscription } from '../subscription/subscription.entity';
+import { SubCategory } from '../category/subcategory.entity';
 
 @Entity()
 export class User extends AuditableEntity {
@@ -144,8 +145,6 @@ export class User extends AuditableEntity {
   @Expose()
   addresses: Promise<Address[]>;
 
-
-
   @Column({ nullable: true })
   id_number: string;
 
@@ -163,7 +162,7 @@ export class User extends AuditableEntity {
   @Column({ nullable: true })
   resume: string;
 
-  @Column({ nullable: true ,unique: true})
+  @Column({ nullable: true, unique: true })
   code: string;
 
   @OneToMany(() => User, (user) => user.agent)
@@ -176,7 +175,15 @@ export class User extends AuditableEntity {
   @Column({ nullable: true })
   agent_id: string;
 
+  @Column({ nullable: true })
+  school_name: string;
 
+  @Column({ nullable: true })
+  major: string;
+
+  @ManyToMany(() => SubCategory)
+  @JoinTable()
+  favorite_sections: SubCategory[];
 
   constructor(partial: Partial<User>) {
     super();

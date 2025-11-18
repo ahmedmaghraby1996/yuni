@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/infrastructure/entities/user/user.entity';
-import { DataSource, MoreThan, Repository } from 'typeorm';
+import { DataSource, In, MoreThan, Repository } from 'typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { randNum } from 'src/core/helpers/cast.helper';
 import { plainToInstance } from 'class-transformer';
@@ -39,6 +39,7 @@ import { SystemVariableEnum } from 'src/infrastructure/data/enums/sysytem-variab
 import { TransactionService } from '../transaction/transaction.service';
 import { agent } from 'supertest';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
+import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseService<User> {
@@ -66,6 +67,8 @@ export class UserService extends BaseService<User> {
     @InjectRepository(SystemVariable)
     private readonly systemVariableRepo: Repository<SystemVariable>,
     private readonly transactionService: TransactionService,
+    @InjectRepository(SubCategory)
+    private readonly subCategoryRepo: Repository<SubCategory>,
   ) {
     super(userRepo);
   }
@@ -101,6 +104,19 @@ export class UserService extends BaseService<User> {
         { path: 'avatars' },
       );
       user.avatar = path;
+    }
+
+    if (req.favorite_sections) {
+      //from string to array
+      const parsed_data = JSON.parse(
+        req.favorite_sections as unknown as string,
+      );
+
+      const favorite_sections = await this.subCategoryRepo.find({
+        where: { id: In(parsed_data) },
+      });
+
+      user.favorite_sections = favorite_sections;
     }
     await this.userRepo.save(user);
 
@@ -276,7 +292,7 @@ export class UserService extends BaseService<User> {
     });
   }
 
-    async rejectAgent(id: string) {
+  async rejectAgent(id: string) {
     const user = await this._repo.findOne({ where: { id: id } });
     if (!user) throw new NotFoundException('agent not found');
     user.roles = [Role.CLIENT];
