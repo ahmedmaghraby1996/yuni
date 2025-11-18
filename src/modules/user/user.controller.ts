@@ -242,7 +242,7 @@ export class UserController {
   @ApiBearerAuth()
   @Put('update-profile')
   async updateProfile(
-    @Query() query: GetUserRequest,
+    // @Query() query: GetUserRequest,
     @Body() request: UpdateProfileRequest,
     @UploadedFile(new UploadValidator().build())
     avatarFile: Express.Multer.File,
@@ -253,7 +253,7 @@ export class UserController {
     return new ActionResponse(
       plainToInstance(
         RegisterResponse,
-        await this.userService.updateProfile(query.id, request),
+        await this.userService.updateProfile(this.request.user.id, request),
         {
           excludeExtraneousValues: true,
         },
