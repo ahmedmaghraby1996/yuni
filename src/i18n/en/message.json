@@ -13,5 +13,6 @@
     "user_has_no_vehicle": "User has no vehicle",
     "image_not_found": "Image not found",
     "user_inactive": "This account is inactive",
-    "not_within_working_hours": "Not within working hours"
+    "not_within_working_hours": "Not within working hours",
+    "email_not_verified": "Email is not verified. Please verify your email before signing in"
 }

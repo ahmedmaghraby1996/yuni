@@ -75,6 +75,10 @@ export class AuthenticationService {
       );
     }
     if (user && isMatch) {
+      // Check if email is verified
+      if (user.email && !user.email_verified_at) {
+        throw new BadRequestException('message.email_not_verified');
+      }
       return user;
     }
     return null;
@@ -200,6 +204,15 @@ export class AuthenticationService {
 
   async register(req: any) {
     const user = await this.registerUserTransaction.run(req);
+
+    // Send OTP with type email after registration
+    if (user.email) {
+      await this.sendOtp({
+        type: 'email',
+        username: user.email,
+        role: req.role || user.roles[0],
+      });
+    }
 
     return user;
   }

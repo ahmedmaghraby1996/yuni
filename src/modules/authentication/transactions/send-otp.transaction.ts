@@ -8,6 +8,7 @@ import { User } from 'src/infrastructure/entities/user/user.entity';
 import { DataSource, EntityManager, In } from 'typeorm';
 import { SendOtpRequest } from '../dto/requests/send-otp.dto';
 import { SmsService } from 'src/modules/send-email/sms-service';
+import { SendEmailService } from 'src/modules/send-email/send-email.service';
 
 @Injectable()
 export class SendOtpTransaction extends BaseTransaction<
@@ -18,6 +19,7 @@ export class SendOtpTransaction extends BaseTransaction<
     dataSource: DataSource,
     @Inject(ConfigService) private readonly _config: ConfigService,
     @Inject(SmsService) private readonly smsService: SmsService,
+    @Inject(SendEmailService) private readonly sendEmailService: SendEmailService,
   ) {
     super(dataSource);
   }
@@ -50,10 +52,26 @@ export class SendOtpTransaction extends BaseTransaction<
       await context.save(Otp, otp);
 
       try {
-        // await this.smsService.sendSms(
-        //    req.username,
-        //    `Your verification code is ${code}`,
-        // );
+        if (req.type === 'email') {
+          await this.sendEmailService.sendCustomMessage({
+            send_to: req.username,
+            message_header: 'Nadnee - Verification Code',
+            message_body: `
+              <h2>Verification Code</h2>
+              <p>Dear User,</p>
+              <p>Your verification code is: <strong style="font-size: 24px; color: #007bff;">${code}</strong></p>
+              <p>Please use this code to verify your account. This code will expire in 5 minutes.</p>
+              <p>If you did not request this code, please ignore this email.</p>
+              <p>Best Regards,<br>Nadnee.</p>
+            `,
+            type: ['email'],
+          });
+        } else {
+          // await this.smsService.sendSms(
+          //    req.username,
+          //    `Your verification code is ${code}`,
+          // );
+        }
       } catch (error) {
         console.log(error);
       }
