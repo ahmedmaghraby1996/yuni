@@ -19,8 +19,9 @@ export class RegisterRequest {
   @IsString()
   name: string;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({ required: true })
+  @IsNotEmpty()
+  @IsString()
   // @IsStrongPassword()
   password: string;
 

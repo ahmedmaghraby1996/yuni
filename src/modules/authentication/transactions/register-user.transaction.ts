@@ -7,7 +7,6 @@ import {
   RegisterRequest,
 } from '../dto/requests/register.dto';
 import { User } from 'src/infrastructure/entities/user/user.entity';
-import { randStr } from 'src/core/helpers/cast.helper';
 import { BaseTransaction } from 'src/core/base/database/base.transaction';
 import { ImageManager } from 'src/integration/sharp/image.manager';
 import * as sharp from 'sharp';
@@ -71,9 +70,8 @@ export class RegisterUserTransaction extends BaseTransaction<
         user.avatar = path;
       }
       // encrypt password
-      const randomPassword = req.password || randStr(8);
       user.password = await bcrypt.hash(
-        randomPassword + this._config.get('app.key'),
+        req.password + this._config.get('app.key'),
         10,
       );
 
