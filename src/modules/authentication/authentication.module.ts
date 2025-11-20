@@ -20,7 +20,7 @@ import { SendEmailModule } from '../send-email/send-email.module';
 import { SendEmailService } from '../send-email/send-email.service';
 import { SmsService } from '../send-email/sms-service';
 import { HttpModule } from '@nestjs/axios';
-
+// 
 @Global()
 @Module({
   imports: [JWTSetup(),HttpModule],
