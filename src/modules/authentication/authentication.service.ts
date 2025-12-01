@@ -61,6 +61,21 @@ export class AuthenticationService {
     @Inject(ConfigService) private readonly _config: ConfigService,
   ) {}
 
+  private generateTokens(user: User) {
+    const payload = { username: user.username ?? user.email, sub: user.id };
+    const access_token = this.jwtService.sign(
+      payload,
+      jwtSignOptions(this._config),
+    );
+    const refresh_token = this.jwtService.sign(payload, {
+      secret: this._config.get<string>('app.key'),
+      expiresIn:
+        this._config.get<string>('JWT_REFRESH_EXPIRATION') ?? '30d',
+    });
+
+    return { access_token, refresh_token };
+  }
+
   async validateUser(req: LoginRequest): Promise<any> {
     const user = await this.userService.findOne([
       { email: req.username },
@@ -86,10 +101,10 @@ export class AuthenticationService {
 
   async login(user: any) {
     if (!user) throw new BadRequestException('message.invalid_credentials');
-    const payload = { username: user.username, sub: user.id };
+    const tokens = this.generateTokens(user);
     return {
       ...user,
-      access_token: this.jwtService.sign(payload, jwtSignOptions(this._config)),
+      ...tokens,
     };
   }
   async googleSignin(req: GoogleSigninRequest) {
@@ -115,19 +130,13 @@ export class AuthenticationService {
           return {
             ...(await this.userService._repo.save(newUser)),
             role: Role.CLIENT,
-            access_token: this.jwtService.sign(
-              { username: user.email, sub: user.id },
-              jwtSignOptions(this._config),
-            ),
+            ...this.generateTokens(newUser),
           };
         } else
           return {
             ...user,
             role: Role.CLIENT,
-            access_token: this.jwtService.sign(
-              { username: user.email, sub: user.id },
-              jwtSignOptions(this._config),
-            ),
+            ...this.generateTokens(user),
           };
       })
 
@@ -196,7 +205,8 @@ export class AuthenticationService {
         user = await this.userService._repo.save(user);
       }
 
-      return { ...user, access_token, role: Role.CLIENT };
+      const tokens = this.generateTokens(user);
+      return { ...user, ...tokens, role: Role.CLIENT };
     } catch (error) {
       throw new UnauthorizedException(error.message);
     }
@@ -244,14 +254,34 @@ export class AuthenticationService {
     );
     await user.save();
 
-    const newPayload = { username: user.username, sub: user.id };
+    const tokens = this.generateTokens(user);
     return {
       ...user,
-      access_token: this.jwtService.sign(
-        newPayload,
-        jwtSignOptions(this._config),
-      ),
+      ...tokens,
     };
+  }
+
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: this._config.get<string>('app.key'),
+      }) as { sub: string; username: string };
+
+      const user = await this.userService._repo.findOneBy({ id: payload.sub });
+
+      if (!user) {
+        throw new NotFoundException('message.invalid_credentials');
+      }
+
+      const tokens = this.generateTokens(user);
+
+      return {
+        ...user,
+        ...tokens,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('message.invalid_credentials');
+    }
   }
 
   async requestResetPassword(req: RequestResetPassword) {

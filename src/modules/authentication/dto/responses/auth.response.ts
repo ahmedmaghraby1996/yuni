@@ -7,6 +7,9 @@ export class AuthResponse extends PartialType(RegisterResponse) {
     @Expose() access_token: string;
 
     @ApiProperty()
+    @Expose() refresh_token: string;
+
+    @ApiProperty()
     @Expose() is_store_completed?: boolean;
 
 

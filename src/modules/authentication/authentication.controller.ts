@@ -57,6 +57,7 @@ import {
 } from './dto/requests/create-city.request';
 import { AddSecurityGradeRequest } from './dto/requests/add-security-garde.request';
 import { City } from 'src/infrastructure/entities/city/city.entity';
+import { RefreshTokenRequest } from './dto/requests/refresh-token.request';
 
 @ApiTags(Router.Auth.ApiTag)
 @Controller(Router.Auth.Base)
@@ -77,6 +78,21 @@ export class AuthenticationController {
     const authData = await this.authService.login(
       await this.authService.validateUser(req),
     );
+    const result = plainToInstance(
+      AuthResponse,
+      { ...authData, role: authData.roles[0] },
+      {
+        excludeExtraneousValues: true,
+      },
+    );
+    return new ActionResponse<AuthResponse>(result);
+  }
+
+  @Post('refresh-token')
+  async refreshToken(
+    @Body() req: RefreshTokenRequest,
+  ): Promise<ActionResponse<AuthResponse>> {
+    const authData = await this.authService.refreshToken(req.refresh_token);
     const result = plainToInstance(
       AuthResponse,
       { ...authData, role: authData.roles[0] },

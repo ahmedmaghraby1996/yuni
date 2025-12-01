@@ -19,7 +19,7 @@ export class Otp extends BaseEntity {
     @CreateDateColumn()
     created_at: Date;
 
-    // expire after 5 minutes
+    // expire after 1 minutes
     public isExpired(): boolean {
         return new Date().getTime() - this.created_at.getTime() > 1 * 60 * 1000;
     }

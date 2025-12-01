@@ -57,9 +57,15 @@ export class VerifyOtpTransaction extends BaseTransaction<
       }
 
       if (!user) throw new BadRequestException('message.invalid_credentials');
-    if(user.is_active==false) throw new BadRequestException('message.user_inactive');
+      if (user.is_active == false)
+        throw new BadRequestException('message.user_inactive');
       const payload = { username: user.username, sub: user.id };
-  if (user.roles.includes(Role.STORE)) {
+      const refresh_token = this.jwtService.sign(payload, {
+        secret: this._config.get<string>('app.key'),
+        expiresIn:
+          this._config.get<string>('JWT_REFRESH_EXPIRATION') ?? '30d',
+      });
+      if (user.roles.includes(Role.STORE)) {
         // check for store
         const store = await context.findOne(Store, {
           where: { user_id: user.id },
@@ -79,7 +85,8 @@ export class VerifyOtpTransaction extends BaseTransaction<
         access_token: this.jwtService.sign(
           payload,
           jwtSignOptions(this._config),
-        )
+        ),
+        refresh_token,
        }   
        else return {
         ...user,
@@ -88,7 +95,8 @@ export class VerifyOtpTransaction extends BaseTransaction<
         access_token: this.jwtService.sign(
           payload,
           jwtSignOptions(this._config),
-        )
+        ),
+        refresh_token,
        }
       }
       return {
@@ -99,6 +107,7 @@ export class VerifyOtpTransaction extends BaseTransaction<
           payload,
           jwtSignOptions(this._config),
         ),
+        refresh_token,
       };
     } catch (error) {
       throw new BadRequestException(
