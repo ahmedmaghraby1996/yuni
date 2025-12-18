@@ -64,12 +64,23 @@ export class UsersSeeder implements Seeder {
       gender: Gender.MALE,
     });
 
-    // create driver reciever
-
+    // create store user
+    const storeUser = new User({
+      id: 'store_user',
+      name: 'Store Owner',
+      account: '00000003',
+      username: '+966555552222',
+      phone: '+966555552222',
+      phone_verified_at: new Date(),
+      avatar: 'https://i.pravatar.cc/150?img=3',
+      roles: [Role.STORE],
+      gender: Gender.MALE,
+    });
 
     users[0] = superAdmin as any;
     users[1] = client as any;
     users[2] = client_ as any;
+    users[3] = storeUser as any;
 
 
     // Insert into the database with relations.

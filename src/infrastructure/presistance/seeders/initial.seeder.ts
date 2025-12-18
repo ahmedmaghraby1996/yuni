@@ -7,7 +7,7 @@ import { StoreSeeder } from "./store.seeder";
 import { OfferSeeder } from "./offer.seeder";
 
 export const DB_SEEDERS = [
-  // UsersSeeder,
+  UsersSeeder,
   // AddressSeeder,
   // CitySeeder,
   StaticPageSeeder,

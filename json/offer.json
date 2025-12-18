@@ -12,7 +12,8 @@
     "is_active": true,
     "is_special": true,
     "views": 150,
-    "store_index": 0
+    "store_index": 0,
+    "subcategory_index": 0
   },
   {
     "title_ar": "بيتزا كومبو",
@@ -27,7 +28,8 @@
     "is_active": true,
     "is_special": true,
     "views": 280,
-    "store_index": 1
+    "store_index": 1,
+    "subcategory_index": 1
   },
   {
     "title_ar": "مطعم تمارا",
@@ -42,7 +44,8 @@
     "is_active": true,
     "is_special": false,
     "views": 95,
-    "store_index": 2
+    "store_index": 2,
+    "subcategory_index": 2
   }
 ]
 
