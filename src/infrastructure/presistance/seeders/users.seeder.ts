@@ -16,8 +16,6 @@ export class UsersSeeder implements Seeder {
   ) { }
 
   async seed(): Promise<any> {
-    // Generate 10 users.
-    const users = DataFactory.createForClass(User).generate(10);
     const password = await bcrypt.hash(
       'secret' + this.configService.get('app.key'),
       bcrypt.genSaltSync(10),
@@ -77,11 +75,7 @@ export class UsersSeeder implements Seeder {
       gender: Gender.MALE,
     });
 
-    users[0] = superAdmin as any;
-    users[1] = client as any;
-    users[2] = client_ as any;
-    users[3] = storeUser as any;
-
+    const users = [superAdmin, client, client_, storeUser];
 
     // Insert into the database with relations.
     return this.user.save(users);
