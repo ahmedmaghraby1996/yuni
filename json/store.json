@@ -1,0 +1,59 @@
+[
+  {
+    "name": "Neon Burger",
+    "logo": "storage/stores/neon-burger-logo.jpg",
+    "cover_image": "storage/stores/neon-burger-cover.jpg",
+    "first_phone": "+966501234567",
+    "address": "King Fahd Road, Riyadh",
+    "latitude": 24.7136,
+    "longitude": 46.6753,
+    "is_active": true,
+    "is_online": false,
+    "store_type": "in_store",
+    "is_main_branch": true,
+    "status": "approved"
+  },
+  {
+    "name": "Pizza Inn",
+    "logo": "storage/stores/pizza-inn-logo.jpg",
+    "cover_image": "storage/stores/pizza-inn-cover.jpg",
+    "first_phone": "+966502345678",
+    "address": "Olaya Street, Riyadh",
+    "latitude": 24.6877,
+    "longitude": 46.7219,
+    "is_active": true,
+    "is_online": true,
+    "store_type": "both",
+    "is_main_branch": true,
+    "status": "approved"
+  },
+  {
+    "name": "Tamara Restaurant",
+    "logo": "storage/stores/tamara-logo.jpg",
+    "cover_image": "storage/stores/tamara-cover.jpg",
+    "first_phone": "+966503456789",
+    "address": "Tahlia Street, Riyadh",
+    "latitude": 24.6908,
+    "longitude": 46.6850,
+    "is_active": true,
+    "is_online": false,
+    "store_type": "in_store",
+    "is_main_branch": true,
+    "status": "approved"
+  },
+  {
+    "name": "Pizza Store",
+    "logo": "storage/stores/pizza-store-logo.jpg",
+    "cover_image": "storage/stores/pizza-store-cover.jpg",
+    "first_phone": "+966504567890",
+    "address": "Al Malaz, Riyadh",
+    "latitude": 24.6600,
+    "longitude": 46.7100,
+    "is_active": true,
+    "is_online": false,
+    "store_type": "in_store",
+    "is_main_branch": true,
+    "status": "approved"
+  }
+]
+

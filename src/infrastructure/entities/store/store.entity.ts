@@ -65,6 +65,12 @@ export class Store extends OwnedEntity {
   @Column({ default: 0 })
   is_active: boolean;
 
+  @Column({ default: false })
+  is_online: boolean;
+
+  @Column({ type: 'enum', enum: ['in_store', 'online', 'both'], default: 'in_store' })
+  store_type: 'in_store' | 'online' | 'both';
+
   @Column({ nullable: true })
   address: string;
 

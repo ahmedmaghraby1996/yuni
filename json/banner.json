@@ -1,0 +1,30 @@
+[
+  {
+    "banar": "storage/banners/cinnabon-banner.jpg",
+    "started_at": "2025-01-01",
+    "ended_at": "2025-12-31",
+    "order_by": 1,
+    "is_active": true,
+    "is_popup": false,
+    "is_general": true
+  },
+  {
+    "banar": "storage/banners/pizza-promo.jpg",
+    "started_at": "2025-01-01",
+    "ended_at": "2025-12-31",
+    "order_by": 2,
+    "is_active": true,
+    "is_popup": false,
+    "is_general": true
+  },
+  {
+    "banar": "storage/banners/fitness-offer.jpg",
+    "started_at": "2025-01-01",
+    "ended_at": "2025-12-31",
+    "order_by": 3,
+    "is_active": true,
+    "is_popup": false,
+    "is_general": false
+  }
+]
+

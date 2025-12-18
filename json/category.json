@@ -1,73 +1,100 @@
 [
   {
-    "name_en": "Electronics",
-    "name_ar": "إلكترونيات",
+    "name_ar": "مطاعم",
+    "name_en": "Restaurant",
+    "logo": "storage/categories/restaurant.png",
+    "order_by": 1,
+    "is_active": true,
     "subcategories": [
       {
-        "name_en": "Mobile Phones",
-        "name_ar": "هواتف محمولة"
+        "name_ar": "برجر",
+        "name_en": "Burger",
+        "logo": "storage/subcategories/burger.png",
+        "order_by": 1,
+        "is_active": true
       },
       {
-        "name_en": "Laptops",
-        "name_ar": "أجهزة كمبيوتر محمولة"
+        "name_ar": "بيتزا",
+        "name_en": "Pizza",
+        "logo": "storage/subcategories/pizza.png",
+        "order_by": 2,
+        "is_active": true
       },
       {
-        "name_en": "Cameras",
-        "name_ar": "كاميرات"
+        "name_ar": "مشويات",
+        "name_en": "Grills",
+        "logo": "storage/subcategories/grills.png",
+        "order_by": 3,
+        "is_active": true
       }
     ]
   },
   {
-    "name_en": "Fashion",
-    "name_ar": "أزياء",
+    "name_ar": "كافيه",
+    "name_en": "Cafe",
+    "logo": "storage/categories/cafe.png",
+    "order_by": 2,
+    "is_active": true,
     "subcategories": [
       {
-        "name_en": "Men's Clothing",
-        "name_ar": "ملابس رجالية"
+        "name_ar": "قهوة",
+        "name_en": "Coffee",
+        "logo": "storage/subcategories/coffee.png",
+        "order_by": 1,
+        "is_active": true
       },
       {
-        "name_en": "Women's Clothing",
-        "name_ar": "ملابس نسائية"
-      },
-      {
-        "name_en": "Watches",
-        "name_ar": "ساعات"
+        "name_ar": "حلويات",
+        "name_en": "Desserts",
+        "logo": "storage/subcategories/desserts.png",
+        "order_by": 2,
+        "is_active": true
       }
     ]
   },
   {
-    "name_en": "Home & Kitchen",
-    "name_ar": "المنزل والمطبخ",
+    "name_ar": "لياقة",
+    "name_en": "Fitness",
+    "logo": "storage/categories/fitness.png",
+    "order_by": 3,
+    "is_active": true,
     "subcategories": [
       {
-        "name_en": "Furniture",
-        "name_ar": "أثاث"
+        "name_ar": "صالات رياضية",
+        "name_en": "Gyms",
+        "logo": "storage/subcategories/gym.png",
+        "order_by": 1,
+        "is_active": true
       },
       {
-        "name_en": "Kitchen Appliances",
-        "name_ar": "أجهزة المطبخ"
-      },
-      {
-        "name_en": "Decor",
-        "name_ar": "ديكور"
+        "name_ar": "يوغا",
+        "name_en": "Yoga",
+        "logo": "storage/subcategories/yoga.png",
+        "order_by": 2,
+        "is_active": true
       }
     ]
   },
   {
-    "name_en": "Books",
-    "name_ar": "كتب",
+    "name_ar": "عناية شخصية",
+    "name_en": "Self care",
+    "logo": "storage/categories/selfcare.png",
+    "order_by": 4,
+    "is_active": true,
     "subcategories": [
       {
-        "name_en": "Children's Books",
-        "name_ar": "كتب الأطفال"
+        "name_ar": "سبا",
+        "name_en": "Spa",
+        "logo": "storage/subcategories/spa.png",
+        "order_by": 1,
+        "is_active": true
       },
       {
-        "name_en": "Novels",
-        "name_ar": "روايات"
-      },
-      {
-        "name_en": "Educational",
-        "name_ar": "تعليمي"
+        "name_ar": "صالون",
+        "name_en": "Salon",
+        "logo": "storage/subcategories/salon.png",
+        "order_by": 2,
+        "is_active": true
       }
     ]
   }

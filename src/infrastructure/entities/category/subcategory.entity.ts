@@ -13,10 +13,8 @@ export class SubCategory extends AuditableEntity {
   @Expose()
   name_en: string;
   @Column({ nullable: true })
-   @Transform(({ value }) => {
-    toUrl(value);
-  })
-    @Expose()
+  @Transform(({ value }) => toUrl(value))
+  @Expose()
   logo: string;
 
  @ManyToOne(() => Category, (category) => category.subcategories)

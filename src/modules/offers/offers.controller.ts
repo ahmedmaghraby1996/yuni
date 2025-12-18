@@ -289,6 +289,42 @@ export class OffersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.CLIENT)
+  @Get('best-offers')
+  async getBestOffers(@Query() query: PaginatedRequest) {
+    applyQueryIncludes(query, 'stores');
+    applyQueryIncludes(query, 'subcategory');
+    applyQueryIncludes(query, 'subcategory.category');
+    applyQueryIncludes(query, 'images');
+    applyQueryFilters(
+      query,
+      `stores.status=${StoreStatus.APPROVED},stores.is_active=1`,
+    );
+    applyQuerySort(query, 'views=DESC');
+    applyQueryIncludes(query, 'favorites');
+
+    const total = await this.offersService.count(query);
+    const offers = await this.offersService.findAll(query);
+    offers.map((offer) => {
+      offer.is_favorite =
+        offer.favorites?.some(
+          (favorite) =>
+            String(favorite.user_id) === String(this.request.user.id),
+        ) ?? false;
+      return offer;
+    });
+    const result = plainToInstance(OfferResponse, offers, {
+      excludeExtraneousValues: true,
+    });
+
+    const response = this._i18nResponse.entity(result);
+    return new PaginatedResponse(response, {
+      meta: { total, ...query },
+    });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
   @Get('nearby-offers')
   async getNearbyOffers(
     @Query('lat') lat: string,
