@@ -16,6 +16,7 @@ export class SubCategory extends AuditableEntity {
    @Transform(({ value }) => {
     toUrl(value);
   })
+    @Expose()
   logo: string;
 
  @ManyToOne(() => Category, (category) => category.subcategories)
