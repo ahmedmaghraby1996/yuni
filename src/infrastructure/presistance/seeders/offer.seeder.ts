@@ -27,7 +27,7 @@ export class OfferSeeder implements Seeder {
 
     for (const offerData of jsonData) {
       const { store_index, subcategory_index, ...data } = offerData;
-      const offer = this.offerRepository.create(data);
+      const offer = this.offerRepository.create(data as Partial<Offer>);
       
       if (stores[store_index]) {
         offer.stores = [stores[store_index]];
