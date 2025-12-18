@@ -8,7 +8,6 @@ import { BaseTransaction } from 'src/core/base/database/base.transaction';
 import { DataSource, EntityManager, In } from 'typeorm';
 import { UpdateOfferRequest } from '../dto/requests/update-offer.request';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
-import { plainToInstance } from 'class-transformer';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import * as fs from 'fs';
@@ -64,7 +63,6 @@ export class UpdateOfferTransaction extends BaseTransaction<
         subcategory_id: req.subcategory_id,
         end_date: req.end_date,
         code: req.code,
-        
       });
       Object.assign(existingOffer, updatedData);
 
@@ -82,22 +80,19 @@ export class UpdateOfferTransaction extends BaseTransaction<
         });
       });
 
-      // Remove old images (optional)
-   
-if(req?.stores?.length > 0) {
-      // Update associated stores
-      const stores = await context.find(Store, {
-        where: {
-          id: In(req.stores),
-        },
-      });
-
-      existingOffer.stores = stores;
-    }
+      if(req?.stores?.length > 0) {
+        const stores = await context.find(Store, {
+          where: {
+            id: In(req.stores),
+          },
+        });
+        existingOffer.stores = stores;
+      }
       await context.save(existingOffer);
       if (newImages?.length > 0) {
-         await context.remove(existingOffer.images);
-      await context.save(newImages);}
+        await context.remove(existingOffer.images);
+        await context.save(newImages);
+      }
 
       return existingOffer;
     } catch (error) {

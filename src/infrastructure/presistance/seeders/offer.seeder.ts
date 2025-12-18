@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
+import { OfferImages } from 'src/infrastructure/entities/offer/offer-images.entity';
 
 @Injectable()
 export class OfferSeeder implements Seeder {
@@ -16,6 +17,8 @@ export class OfferSeeder implements Seeder {
     private readonly storeRepository: Repository<Store>,
     @InjectRepository(SubCategory)
     private readonly subCategoryRepository: Repository<SubCategory>,
+    @InjectRepository(OfferImages)
+    private readonly offerImagesRepository: Repository<OfferImages>,
   ) {}
 
   async seed(): Promise<void> {
@@ -26,7 +29,7 @@ export class OfferSeeder implements Seeder {
     const subcategories = await this.subCategoryRepository.find();
 
     for (const offerData of jsonData) {
-      const { store_index, subcategory_index, ...data } = offerData;
+      const { store_index, subcategory_index, images, ...data } = offerData;
       const offer = this.offerRepository.create(data as Partial<Offer>);
       
       if (stores[store_index]) {
@@ -37,13 +40,25 @@ export class OfferSeeder implements Seeder {
         offer.subcategory = subcategories[subcategory_index];
       }
       
-      await this.offerRepository.save(offer);
+      const savedOffer = await this.offerRepository.save(offer);
+
+      // Create offer images
+      if (images && images.length > 0) {
+        for (const imageData of images) {
+          const offerImage = this.offerImagesRepository.create({
+            ...imageData,
+            offer_id: savedOffer.id,
+          });
+          await this.offerImagesRepository.save(offerImage);
+        }
+      }
     }
 
     console.log('Offers seeded successfully.');
   }
 
   async drop(): Promise<void> {
+    await this.offerImagesRepository.clear();
     await this.offerRepository.clear();
     console.log('Offer table cleared.');
   }

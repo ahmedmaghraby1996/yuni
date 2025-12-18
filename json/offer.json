@@ -4,8 +4,6 @@
     "title_en": "Neon Burger",
     "description_ar": "خصم 15% على جميع البرجر",
     "description_en": "15% off on all burgers",
-    "original_price": 50,
-    "offer_price": 42.5,
     "offer_percentage": 15,
     "start_date": "2025-01-01",
     "end_date": "2025-12-31",
@@ -13,15 +11,17 @@
     "is_special": true,
     "views": 150,
     "store_index": 0,
-    "subcategory_index": 0
+    "subcategory_index": 0,
+    "images": [
+      { "image": "storage/offers/neon-burger-1.png", "order_by": 1 },
+      { "image": "storage/offers/neon-burger-2.png", "order_by": 2 }
+    ]
   },
   {
     "title_ar": "بيتزا كومبو",
     "title_en": "Pizza Combo",
     "description_ar": "وجبة بيتزا مع مشروب بخصم يصل الى 66%",
     "description_en": "Pizza combo meals with up to 66% off",
-    "original_price": 100,
-    "offer_price": 34,
     "offer_percentage": 66,
     "start_date": "2025-01-01",
     "end_date": "2025-12-31",
@@ -29,15 +29,17 @@
     "is_special": true,
     "views": 280,
     "store_index": 1,
-    "subcategory_index": 1
+    "subcategory_index": 1,
+    "images": [
+      { "image": "storage/offers/pizza-combo-1.png", "order_by": 1 },
+      { "image": "storage/offers/pizza-combo-2.png", "order_by": 2 }
+    ]
   },
   {
     "title_ar": "مطعم تمارا",
     "title_en": "Tamara Restaurant",
     "description_ar": "سحور مثالي لشخصين بخصم يصل الى 37%",
     "description_en": "Perfect sohour set for 2 with up to 37% off",
-    "original_price": 80,
-    "offer_price": 50.4,
     "offer_percentage": 37,
     "start_date": "2025-01-01",
     "end_date": "2025-12-31",
@@ -45,7 +47,10 @@
     "is_special": false,
     "views": 95,
     "store_index": 2,
-    "subcategory_index": 2
+    "subcategory_index": 2,
+    "images": [
+      { "image": "storage/offers/tamara-1.png", "order_by": 1 }
+    ]
   }
 ]
 

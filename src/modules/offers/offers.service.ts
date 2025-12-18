@@ -130,7 +130,7 @@ async findNearbyOffers(
   async findOne(id: string) {
     const offer = await this.repo.findOne({
       where: { id: id },
-      relations: { user: true, subcategory: { category: true }, images: true ,favorites: true, stores: true},
+      relations: { user: true, subcategory: { category: true }, images: true, favorites: true, stores: true },
     });
     if (!offer) {
       throw new NotFoundException('Offer not found');

@@ -21,3 +21,4 @@ export class OfferImages extends AuditableEntity{
     Object.assign(this, partial);
   }
 }
+

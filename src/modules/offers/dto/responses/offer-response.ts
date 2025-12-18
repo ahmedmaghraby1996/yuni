@@ -25,9 +25,7 @@ export class OfferResponse {
   @Expose()
   end_date: Date;
   @Expose()
-  original_price: number;
-  @Expose()
-  offer_price: number;
+  offer_percentage: number;
   @Expose()
   code: string;
 
