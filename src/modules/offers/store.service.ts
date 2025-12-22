@@ -99,4 +99,37 @@ export class StoreService extends BaseService<Store> {
 
     return { stores, total };
   }
+
+  async findAllStores(
+    storeType?: 'in_store' | 'online' | 'both',
+    page?: number,
+    limit?: number,
+  ) {
+    const queryBuilder = this.repo
+      .createQueryBuilder('store')
+      .leftJoinAndSelect('store.category', 'category')
+      .leftJoinAndSelect('store.city', 'city')
+      .leftJoinAndSelect('store.user', 'user')
+      .where('store.is_active = true AND store.status = :approvedStatus', {
+        approvedStatus: StoreStatus.APPROVED,
+      });
+
+    // Filter by store type
+    if (storeType) {
+      queryBuilder.andWhere('store.store_type = :storeType', { storeType });
+    }
+
+    // Get total count before pagination
+    const total = await queryBuilder.getCount();
+
+    // Apply pagination
+    if (page !== undefined && limit !== undefined) {
+      const skip = (page - 1) * limit;
+      queryBuilder.skip(skip).take(limit);
+    }
+
+    const stores = await queryBuilder.getMany();
+
+    return { stores, total };
+  }
 }

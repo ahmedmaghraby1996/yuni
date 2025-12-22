@@ -100,41 +100,44 @@ export class OffersController {
 
   @Get('store')
   async getStore(
-    @Query() query: PaginatedRequest,
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('store_type') storeType?: 'in_store' | 'online' | 'both',
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
+    const pageNum = page ? parseInt(page) : 1;
+    const limitNum = limit ? parseInt(limit) : 10;
+
     if (lat && lng) {
-      const page = query.page ? parseInt(query.page.toString()) : 1;
-      const limit = query.limit ? parseInt(query.limit.toString()) : 10;
       const { stores, total } = await this.storeService.findNearbyStores(
         lat,
         lng,
         10000,
         storeType,
-        page,
-        limit,
+        pageNum,
+        limitNum,
       );
       const result = plainToInstance(BranchResponse, stores, {
         excludeExtraneousValues: true,
       });
       const response = this._i18nResponse.entity(result);
       return new PaginatedResponse(response, {
-        meta: { total, page, limit },
+        meta: { total, page: pageNum, limit: limitNum },
       });
     } else {
-      applyQueryFilters(query, `is_active=1`);
-      if (storeType) {
-        applyQueryFilters(query, `store_type=${storeType}`);
-      }
-      const total = await this.storeService.count(query);
-      const stores = await this.storeService.findAll(query);
+      const { stores, total } = await this.storeService.findAllStores(
+        storeType,
+        pageNum,
+        limitNum,
+      );
       const result = plainToInstance(BranchResponse, stores, {
         excludeExtraneousValues: true,
       });
       const response = this._i18nResponse.entity(result);
-      return new PaginatedResponse(response, { meta: { total, ...query } });
+      return new PaginatedResponse(response, {
+        meta: { total, page: pageNum, limit: limitNum },
+      });
     }
   }
 
@@ -142,7 +145,6 @@ export class OffersController {
   @Get('admin/store')
   async getAllStore(@Query() query: PaginatedRequest) {
     applyQueryIncludes(query, 'user');
-    applyQueryIncludes(query, 'category');
     const total = await this.storeService.count(query);
     const stores = await this.storeService.findAll(query);
     const result = plainToInstance(BranchResponse, stores, {
@@ -231,7 +233,6 @@ export class OffersController {
 
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'subcategory.category');
     applyQueryIncludes(query, 'images');
     applyQuerySort(query, 'created_at=DESC');
     // applyQueryFilters(query, `stores.is_active=1`);
@@ -277,7 +278,6 @@ export class OffersController {
 
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'subcategory.category');
     applyQueryIncludes(query, 'images');
     applyQuerySort(query, 'created_at=DESC');
     // applyQueryFilters(query, `stores.is_active=1`);
@@ -394,7 +394,6 @@ export class OffersController {
   async getClientFavoriteOffers(@Query() query: PaginatedRequest) {
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'subcategory.category');
     applyQueryIncludes(query, 'images');
     // applyQueryFilters(query, `stores.is_active=1`);
 
