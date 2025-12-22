@@ -22,3 +22,4 @@ export class OfferImages extends AuditableEntity{
   }
 }
 
+

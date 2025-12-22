@@ -85,5 +85,8 @@ is_online: boolean;
 
 @Expose()
 store_type: 'in_store' | 'online' | 'both';
+
+@Expose()
+distance: number;
   
 }

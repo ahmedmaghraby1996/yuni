@@ -55,4 +55,7 @@ export class OfferResponse {
 
   @Expose()
   is_special: boolean;
+
+  @Expose()
+  distance: number;
 }

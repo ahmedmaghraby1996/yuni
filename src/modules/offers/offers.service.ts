@@ -109,6 +109,65 @@ async findNearbyOffers(
     .getMany();
 }
 
+async findBestOffers(
+  latitude: string,
+  longitude: string,
+  radiusMeters = 10000,
+) {
+  const rawResults = await this._repo
+    .createQueryBuilder('offer')
+    .leftJoinAndSelect('offer.stores', 'stores')
+    .leftJoinAndSelect('offer.images', 'images')
+    .leftJoinAndSelect('offer.user', 'user')
+    .leftJoinAndSelect('offer.subcategory', 'subcategory')
+    .leftJoinAndSelect('offer.subcategory.category', 'category')
+    .leftJoinAndSelect('offer.favorites', 'favorites')
+    .addSelect(
+      `
+      (6371000 * acos(
+        cos(radians(:lat)) *
+        cos(radians(stores.latitude)) *
+        cos(radians(stores.longitude) - radians(:lng)) +
+        sin(radians(:lat)) *
+        sin(radians(stores.latitude))
+      ))
+    `,
+      'distance',
+    )
+    .where(
+      `
+      offer.is_active = true AND
+      stores.is_active = true AND
+      stores.status = :approvedStatus AND
+      (6371000 * acos(
+        cos(radians(:lat)) *
+        cos(radians(stores.latitude)) *
+        cos(radians(stores.longitude) - radians(:lng)) +
+        sin(radians(:lat)) *
+        sin(radians(stores.latitude))
+      )) <= :radius
+    `,
+    )
+    .setParameters({
+      lat: latitude,
+      lng: longitude,
+      radius: radiusMeters,
+      approvedStatus: StoreStatus.APPROVED,
+    })
+    .orderBy('offer.views', 'DESC')
+    .addOrderBy('distance', 'ASC')
+    .getRawAndEntities();
+
+  // Map distance from raw results to entities
+  const offers = rawResults.entities.map((offer, index) => {
+    const rawResult = rawResults.raw[index];
+    (offer as any).distance = rawResult?.distance ? parseFloat(rawResult.distance) : null;
+    return offer;
+  });
+
+  return offers;
+}
+
   async addRemoveFavorite(offer_id: string) {
     const favorite = await this.favoriteOfferRepo.findOne({
       where: {
