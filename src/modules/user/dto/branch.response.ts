@@ -30,6 +30,9 @@ export class BranchResponse {
   @Transform((value) => toUrl(value.obj.catalogue))
   catalogue: string;
   @Expose()
+  @Transform((value) => toUrl(value.obj.cover_image))
+  cover_image: string;
+  @Expose()
   first_phone: string;
   @Expose()
   @Type(() => Category)
