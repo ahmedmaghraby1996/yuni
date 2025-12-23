@@ -52,15 +52,19 @@ async findNearbyStores(
   page?: number,
   limit?: number,
 ) {
+  // ✅ Fixed: Added COALESCE to handle identical coordinates (distance = 0)
   const distanceFormula = `
-    6371000 * acos(
-      LEAST(1, GREATEST(-1,
-        cos(radians(:lat)) *
-        cos(radians(store.latitude)) *
-        cos(radians(store.longitude) - radians(:lng)) +
-        sin(radians(:lat)) *
-        sin(radians(store.latitude))
-      ))
+    COALESCE(
+      6371000 * acos(
+        LEAST(1, GREATEST(-1,
+          cos(radians(:lat)) *
+          cos(radians(store.latitude)) *
+          cos(radians(store.longitude) - radians(:lng)) +
+          sin(radians(:lat)) *
+          sin(radians(store.latitude))
+        ))
+      ),
+      0
     )
   `;
 
@@ -69,7 +73,7 @@ async findNearbyStores(
     .leftJoinAndSelect('store.subcategory', 'subcategory')
     .leftJoinAndSelect('store.city', 'city')
     .leftJoinAndSelect('store.user', 'user')
-    .addSelect(distanceFormula, 'distance')
+    .addSelect(distanceFormula, 'distance') // ✅ Now returns 0 for identical coordinates
     .where('store.is_active = true')
     .andWhere('store.status = :approvedStatus', {
       approvedStatus: StoreStatus.APPROVED,
@@ -101,8 +105,10 @@ async findNearbyStores(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
+  // ✅ Fixed: Safely parse distance with fallback to 0
   const stores = rawResults.entities.map((store, index) => {
-    (store as any).distance = parseFloat(rawResults.raw[index].distance);
+    const rawDistance = rawResults.raw[index]?.distance;
+    (store as any).distance = rawDistance != null ? parseFloat(rawDistance) : 0;
     return store;
   });
 
