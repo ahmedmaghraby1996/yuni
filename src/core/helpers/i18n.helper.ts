@@ -27,49 +27,48 @@ export function convertToI18nObject(obj: any, lang: string): any {
   }
 }
 
-export function i18nEntity(obj: any, lang: string,roles?:string[]): any {
+export function i18nEntity(obj: any, lang: string, roles?: string[]): any {
 
-
-  if(roles?.includes(Role.ADMIN)){
+  if (roles?.includes(Role.ADMIN)) {
     return obj;
   }
-  if (obj) {
-    if (Array.isArray(obj)) {
-      return obj.map((item) => i18nEntity(item, lang));
-    }
 
-    if (
-      typeof obj === 'object' &&
-      obj.constructor.name !== 'Date' &&
-      obj !== null
-    ) {
-      const newObj = {};
-      Object.keys(obj).forEach((key) => {
-        // find key that ends with _${lang}, remove _${lang} and set value to key
-        if (obj[key] !== undefined) {
-          
-          if (key.endsWith(`_${lang}`)) {
-            const newKey = key.replace(`_${lang}`, '');
-            newObj[newKey] = obj[key];
-
-          
-            delete obj[`${newKey}_ar`];
-            delete obj[`${newKey}_en`];
-            delete newObj[`${newKey}_ar`];
-            delete newObj[`${newKey}_en`];
-          } else {
-            newObj[key] = i18nEntity(obj[key], lang);
-          }
-        } else {
-          newObj[key] = obj[key];
-        }
-      });
-      
-      return newObj;
-    } else {
-      return obj;
-    }
+  if (obj === null || obj === undefined) {
+    return obj;
   }
+
+  // primitives (0, false, string, number)
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+
+  // ✅ Handle Date correctly
+  if (obj instanceof Date) {
+    return obj; // أو return obj.toISOString() لو عايز string
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => i18nEntity(item, lang, roles));
+  }
+
+  const newObj: any = {};
+
+  Object.keys(obj).forEach((key) => {
+    const value = obj[key];
+
+    if (key.endsWith(`_${lang}`)) {
+      const newKey = key.replace(`_${lang}`, '');
+      newObj[newKey] = value;
+
+      // remove i18n siblings safely
+      delete newObj[`${newKey}_ar`];
+      delete newObj[`${newKey}_en`];
+    } else {
+      newObj[key] = i18nEntity(value, lang, roles);
+    }
+  });
+
+  return newObj;
 }
 
 // convert from { image: 'path/to/image.png', avatar: 'path/to/avatar.png' }

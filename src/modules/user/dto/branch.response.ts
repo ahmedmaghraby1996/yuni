@@ -94,6 +94,7 @@ is_online: boolean;
 store_type: 'in_store' | 'online' | 'both';
 
 @Expose()
+
 distance: number;
 
 @Expose()

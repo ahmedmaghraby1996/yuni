@@ -63,12 +63,18 @@ export class OffersService extends BaseService<Offer> {
     return true;
   }
 
+
+
+// ═══════════════════════════════════════════════════════════════
+// 🎯 Method 1: Find Nearby Offers
+// ═══════════════════════════════════════════════════════════════
+
 async findNearbyOffers(
   latitude: string,
   longitude: string,
   radiusMeters = 500,
 ) {
-  // ✅ Fixed: Added ROUND + COALESCE + LEAST/GREATEST
+  // حساب المسافة بدقة + حماية من NaN و NULL
   const distanceFormula = `
     ROUND(
       COALESCE(
@@ -89,9 +95,9 @@ async findNearbyOffers(
 
   const queryBuilder = this._repo
     .createQueryBuilder('offer')
-    .leftJoinAndSelect('offer.stores', 'stores')
+  
     .leftJoinAndSelect('offer.images', 'images')
-    .leftJoinAndSelect('offer.user', 'user')
+ 
     .leftJoinAndSelect('offer.subcategory', 'subcategory')
     .addSelect(distanceFormula, 'distance')
     .where('offer.is_active = true')
@@ -110,37 +116,38 @@ async findNearbyOffers(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
-  // Build a robust map from offer id -> nearest distance using raw rows
-  const offerDistanceMap = new Map<any, number>();
-  rawResults.raw.forEach(row => {
-    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
-    const rawDistance = row.distance ?? row.min_distance ?? row['distance'];
-    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
-    const distance = Number.isFinite(parsed) ? parsed : 0;
-    if (offerId != null) {
-      const prev = offerDistanceMap.get(offerId);
-      if (prev == null || distance < prev) {
-        offerDistanceMap.set(offerId, distance);
-      }
-    }
-  });
+  // توزيع المسافة على الـ offer وعلى كل store
+  const offers = rawResults.entities.map((offer, index) => {
+    const rawRow = rawResults.raw[index];
+    const distanceValue = rawRow?.distance ?? 0;
+    const distance = typeof distanceValue === 'number' 
+      ? distanceValue 
+      : parseFloat(distanceValue) || 0;
 
-  const offers = rawResults.entities.map((offer) => {
-    const distance = offerDistanceMap.get(offer.id) ?? 0;
     (offer as any).distance = distance;
+
+    if (offer.stores?.length) {
+      offer.stores = offer.stores.map(store => {
+        (store as any).distance = distance;
+        return store;
+      });
+    }
+
     return offer;
   });
 
   return offers;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🎯 Method 2: Find Best Offers (Trending / Popular)
+// ═══════════════════════════════════════════════════════════════
 
 async findBestOffers(
   latitude: string,
   longitude: string,
   radiusMeters = 10000,
 ) {
-  // ✅ Fixed: Added ROUND to force numeric output
   const distanceFormula = `
     ROUND(
       COALESCE(
@@ -159,166 +166,77 @@ async findBestOffers(
     )
   `;
 
-  const queryBuilder = this._repo
+  // Step 1: احصل على IDs مع أدنى مسافة لكل offer
+  const subQuery = this._repo
     .createQueryBuilder('offer')
-    .leftJoinAndSelect('offer.stores', 'stores')
-    .leftJoinAndSelect('offer.images', 'images')
-    .leftJoinAndSelect('offer.user', 'user')
-    .leftJoinAndSelect('offer.subcategory', 'subcategory')
-    .leftJoinAndSelect('offer.favorites', 'favorites')
-    // ✅ Select the MINIMUM distance among all stores for this offer
+    .select('offer.id', 'offer_id')
+    .addSelect('offer.views', 'offer_views')
     .addSelect(`MIN(${distanceFormula})`, 'min_distance')
+    .leftJoin('offer.stores', 'stores')
     .where('offer.is_active = true')
     .andWhere('stores.is_active = true')
     .andWhere('stores.status = :approvedStatus')
     .andWhere('stores.latitude IS NOT NULL')
     .andWhere('stores.longitude IS NOT NULL')
     .andWhere(`${distanceFormula} <= :radius`)
-    .setParameters({
-      lat: Number(latitude),
-      lng: Number(longitude),
-      radius: radiusMeters,
-      approvedStatus: StoreStatus.APPROVED,
-    })
-    // ✅ Group by offer to avoid duplicates
     .groupBy('offer.id')
-    .addGroupBy('images.id')
-    .addGroupBy('user.id')
-    .addGroupBy('subcategory.id')
-    .addGroupBy('favorites.id')
+    .addGroupBy('offer.views')
     .orderBy('offer.views', 'DESC')
     .addOrderBy('min_distance', 'ASC');
 
-  const rawResults = await queryBuilder.getRawAndEntities();
-    
-  // Build a robust map from offer id -> nearest distance using raw rows
-  const offerDistanceMap = new Map<any, number>();
-  rawResults.raw.forEach(row => {
-    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
-    const rawDistance = row.min_distance ?? row.distance ?? row['min_distance'];
-    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
-    const distance = Number.isFinite(parsed) ? parsed : 0;
-    if (offerId != null) {
-      const prev = offerDistanceMap.get(offerId);
-      if (prev == null || distance < prev) {
-        offerDistanceMap.set(offerId, distance);
-      }
-    }
-  });
-
-  const offers = rawResults.entities.map((offer) => {
-    const distance = offerDistanceMap.get(offer.id) ?? 0;
-    (offer as any).distance = distance;
-    return offer;
-  });
-
-  return offers;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// 🎯 Alternative Solution: If you need ALL stores with distances
-// ═══════════════════════════════════════════════════════════════
-
-async findBestOffersWithAllStores(
-  latitude: string,
-  longitude: string,
-  radiusMeters = 10000,
-) {
-  const distanceFormula = `
-    COALESCE(
-      6371000 * acos(
-        LEAST(1, GREATEST(-1,
-          cos(radians(:lat)) *
-          cos(radians(stores.latitude)) *
-          cos(radians(stores.longitude) - radians(:lng)) +
-          sin(radians(:lat)) *
-          sin(radians(stores.latitude))
-        ))
-      ),
-      0
-    )
-  `;
-
-  const rawResults = await this._repo
-    .createQueryBuilder('offer')
-    .leftJoinAndSelect('offer.stores', 'stores')
-    .leftJoinAndSelect('offer.images', 'images')
-    .leftJoinAndSelect('offer.user', 'user')
-    .leftJoinAndSelect('offer.subcategory', 'subcategory')
-    .leftJoinAndSelect('offer.favorites', 'favorites')
-    .addSelect(distanceFormula, 'distance')
-    .where('offer.is_active = true')
-    .andWhere('stores.is_active = true')
-    .andWhere('stores.status = :approvedStatus')
-    .andWhere('stores.latitude IS NOT NULL')
-    .andWhere('stores.longitude IS NOT NULL')
-    .andWhere(`${distanceFormula} <= :radius`)
+  const results = await subQuery
     .setParameters({
       lat: Number(latitude),
       lng: Number(longitude),
       radius: radiusMeters,
       approvedStatus: StoreStatus.APPROVED,
     })
-    .orderBy('offer.views', 'DESC')
-    .addOrderBy('distance', 'ASC')
-    .getRawAndEntities();
+    .getRawMany();
 
-  // ✅ Group offers manually and attach stores with distances
-  // Build a map: offerId -> (storeId -> distance)
-  const offerStoreDistanceMap = new Map<any, Map<any, number>>();
-  rawResults.raw.forEach(row => {
-    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
-    const storeId = row.stores_id ?? row.storesId ?? row['stores_id'] ?? row['storesId'];
-    const rawDistance = row.distance ?? row.min_distance ?? row['distance'];
-    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
-    const distance = Number.isFinite(parsed) ? parsed : 0;
-    if (offerId != null && storeId != null) {
-      let m = offerStoreDistanceMap.get(offerId);
-      if (!m) {
-        m = new Map();
-        offerStoreDistanceMap.set(offerId, m);
-      }
-      // Keep the smallest distance per store if multiple rows exist
-      const prev = m.get(storeId);
-      if (prev == null || distance < prev) {
-        m.set(storeId, distance);
-      }
-    }
-  });
+  if (results.length === 0) return [];
 
-  const offersMap = new Map<string | number, any>();
+  // Step 2: جلب التفاصيل الكاملة
+  const offerIds = results.map(r => r.offer_id);
 
-  rawResults.entities.forEach((offer) => {
-    const offerId = offer.id;
-    if (!offersMap.has(offerId)) {
-      const storeDistances = offerStoreDistanceMap.get(offerId) ?? new Map();
-      const stores = (offer.stores || []).map(store => ({
-        ...store,
-        distance: storeDistances.get(store.id) ?? 0,
-      }));
-      const nearest = stores.length
-        ? stores.reduce((min, s) => Math.min(min, s.distance ?? 0), Infinity)
-        : 0;
-      const nearestDistance = Number.isFinite(nearest) ? nearest : 0;
+  const offers = await this._repo
+    .createQueryBuilder('offer')
 
-      offersMap.set(offerId, {
-        ...offer,
-        stores,
-        nearestDistance,
-        distance: nearestDistance, // top-level distance alias
+    .leftJoinAndSelect('offer.images', 'images')
+   
+    .leftJoinAndSelect('offer.subcategory', 'subcategory')
+    .leftJoinAndSelect('offer.favorites', 'favorites')
+    .whereInIds(offerIds)
+    .getMany();
+
+  // Step 3: توزيع المسافة على offer و stores
+  const distanceMap = new Map(
+    results.map(r => [r.offer_id, parseFloat(r.min_distance) || 0])
+  );
+
+  const offersWithDistance = offers.map(offer => {
+    const dist = distanceMap.get(offer.id) || 0;
+    (offer as any).distance = dist;
+
+    if (offer.stores?.length) {
+      offer.stores = offer.stores.map(store => {
+        (store as any).distance = dist;
+        return store;
       });
     }
+
+    return offer;
   });
 
-  // Convert map to array and sort by views DESC, then nearest distance ASC
-  const offers = Array.from(offersMap.values()).sort((a, b) => {
-    if (b.views !== a.views) {
-      return b.views - a.views; // Sort by views DESC
-    }
-    return a.nearestDistance - b.nearestDistance; // Then by distance ASC
-  });
+  // Step 4: sort حسب views DESC + distance ASC
+  const orderMap = new Map(
+    results.map((r, i) => [r.offer_id, i])
+  );
 
-  return offers;
+  offersWithDistance.sort(
+    (a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!
+  );
+
+  return offersWithDistance;
 }
 
 
