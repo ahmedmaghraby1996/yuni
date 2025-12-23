@@ -139,7 +139,7 @@ export class UserService extends BaseService<User> {
     if (req.latitude) store.latitude = req.latitude;
     if (req.longitude) store.longitude = req.longitude;
     if (req.city_id) store.city_id = req.city_id;
-    if (req.category_id) store.category_id = req.category_id;
+    // if (req.category_id) store.category_id = req.category_id;
     if (req.x_link) store.x_link = req.x_link;
     if (req.whatsapp_link) store.whatsapp_link = req.whatsapp_link;
     if (req.snapchat_link) store.snapchat_link = req.snapchat_link;
@@ -208,7 +208,7 @@ export class UserService extends BaseService<User> {
       ...req,
       is_main_branch: false,
       user_id: main_branch.user_id,
-      category_id: main_branch.category_id,
+      subcategory_id: main_branch.subcategory_id,
       logo: main_branch.logo,
     });
 
@@ -224,7 +224,7 @@ export class UserService extends BaseService<User> {
               is_main_branch: true,
             }
           : { user_id: this.request.user.id },
-      relations: { category: true, offers: true, city: true },
+      relations: { subcategory: true, offers: true, city: true },
     });
     return branches;
   }

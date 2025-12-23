@@ -16,6 +16,7 @@ import { User } from '../user/user.entity';
 import { Offer } from '../offer/offer.entity';
 import { Category } from '../category/category.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
+import { SubCategory } from '../category/subcategory.entity';
 @Entity()
 export class Store extends OwnedEntity {
   @Column({ nullable: true })
@@ -35,6 +36,9 @@ export class Store extends OwnedEntity {
 
   @Column({ nullable: true })
   first_phone: string;
+
+  @Column({ nullable: true })
+  website_link: string;
 
   @Column({ nullable: true })
   second_phone: string;
@@ -108,11 +112,10 @@ export class Store extends OwnedEntity {
   @ManyToMany(() => Offer, (offer) => offer.stores)
   offers: Offer[];
 
-  @ManyToOne(() => Category)
-  @JoinColumn({ name: 'category_id' })
-  category: Category;
-  @Column({ nullable: true })
-  category_id: string;
+@ManyToOne(()=>SubCategory  )
+subcategory: SubCategory;
+@Column({nullable:true})
+subcategory_id:string;
 
   @BeforeInsert()
   saveLocation() {

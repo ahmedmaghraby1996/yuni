@@ -18,11 +18,29 @@ export class StoreService extends BaseService<Store> {
     super(repo);
   }
 
-  getDetails(id:string) {
+  getDetails(id: string) {
     return this.repo.findOne({
       where: { id: id },
-      relations: { user: true ,category: true,},
+      relations: { user: true, subcategory: true,  },
     });
+  }
+
+  //with active offers and images
+  getDetailsWithOffers(id: string) {
+    return this.repo
+      .createQueryBuilder('store')
+      .leftJoinAndSelect(
+        'store.offers',
+        'offer',
+        'offer.is_active = :isActive',
+        { isActive: true },
+      )
+      .leftJoinAndSelect('offer.images', 'images')
+      .leftJoinAndSelect('store.subcategory', 'subcategory')
+      .leftJoinAndSelect('store.city', 'city')
+      .leftJoinAndSelect('store.user', 'user')
+      .where('store.id = :id', { id })
+      .getOne();
   }
 
   async findNearbyStores(
@@ -30,6 +48,7 @@ export class StoreService extends BaseService<Store> {
     longitude: string,
     radiusMeters = 10000,
     storeType?: 'in_store' | 'online' | 'both',
+    name?: string,
     page?: number,
     limit?: number,
   ) {
@@ -76,6 +95,10 @@ export class StoreService extends BaseService<Store> {
     if (storeType) {
       queryBuilder.andWhere('store.store_type = :storeType', { storeType });
     }
+    // Filter by name
+    if (name) {
+      queryBuilder.andWhere('store.name LIKE :name', { name: `%${name}%` });
+    }
 
     // Get total count before pagination
     const total = await queryBuilder.getCount();
@@ -93,7 +116,9 @@ export class StoreService extends BaseService<Store> {
     // Map distance from raw results to entities
     const stores = rawResults.entities.map((store, index) => {
       const rawResult = rawResults.raw[index];
-      (store as any).distance = rawResult?.distance ? parseFloat(rawResult.distance) : null;
+      (store as any).distance = rawResult?.distance
+        ? parseFloat(rawResult.distance)
+        : null;
       return store;
     });
 

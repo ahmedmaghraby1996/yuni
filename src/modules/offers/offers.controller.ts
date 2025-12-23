@@ -103,6 +103,7 @@ export class OffersController {
     @Query('lat') lat?: string,
     @Query('lng') lng?: string,
     @Query('store_type') storeType?: 'in_store' | 'online' | 'both',
+    @Query('name') name?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -115,6 +116,7 @@ export class OffersController {
         lng,
         10000,
         storeType,
+        name,
         pageNum,
         limitNum,
       );
@@ -154,10 +156,10 @@ export class OffersController {
     return new PaginatedResponse(response, { meta: { total, ...query } });
   }
 
-  @Roles(Role.ADMIN)
-  @Get('admin/store/:id')
+  
+  @Get('store/:id')
   async geStoredetials(@Param('id') id: string) {
-    const stores = await this.storeService.getDetails(id);
+    const stores = await this.storeService.getDetailsWithOffers(id);
     const result = plainToInstance(BranchResponse, stores, {
       excludeExtraneousValues: true,
     });

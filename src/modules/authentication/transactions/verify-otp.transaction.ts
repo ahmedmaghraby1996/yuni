@@ -76,7 +76,7 @@ export class VerifyOtpTransaction extends BaseTransaction<
           store.city_id == null ||
           store.latitude == null ||
           store.longitude == null ||
-          store.category_id == null
+          store.subcategory_id == null
         )
        return {
         ...user,
