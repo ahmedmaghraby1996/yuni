@@ -52,19 +52,22 @@ async findNearbyStores(
   page?: number,
   limit?: number,
 ) {
-  // ✅ Fixed: Added COALESCE to handle identical coordinates (distance = 0)
+  // ✅ ROUND ensures we always get a numeric value (even 0)
   const distanceFormula = `
-    COALESCE(
-      6371000 * acos(
-        LEAST(1, GREATEST(-1,
-          cos(radians(:lat)) *
-          cos(radians(store.latitude)) *
-          cos(radians(store.longitude) - radians(:lng)) +
-          sin(radians(:lat)) *
-          sin(radians(store.latitude))
-        ))
+    ROUND(
+      COALESCE(
+        6371000 * acos(
+          LEAST(1, GREATEST(-1,
+            cos(radians(:lat)) *
+            cos(radians(store.latitude)) *
+            cos(radians(store.longitude) - radians(:lng)) +
+            sin(radians(:lat)) *
+            sin(radians(store.latitude))
+          ))
+        ),
+        0
       ),
-      0
+      2
     )
   `;
 
@@ -73,7 +76,7 @@ async findNearbyStores(
     .leftJoinAndSelect('store.subcategory', 'subcategory')
     .leftJoinAndSelect('store.city', 'city')
     .leftJoinAndSelect('store.user', 'user')
-    .addSelect(distanceFormula, 'distance') // ✅ Now returns 0 for identical coordinates
+    .addSelect(distanceFormula, 'distance') // ✅ Always returns a number
     .where('store.is_active = true')
     .andWhere('store.status = :approvedStatus', {
       approvedStatus: StoreStatus.APPROVED,
@@ -105,16 +108,20 @@ async findNearbyStores(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
-  // ✅ Fixed: Safely parse distance with fallback to 0
+  // ✅ Enhanced mapping with better error handling
   const stores = rawResults.entities.map((store, index) => {
-    const rawDistance = rawResults.raw[index]?.distance;
-    (store as any).distance = rawDistance != null ? parseFloat(rawDistance) : 0;
+    const rawRow = rawResults.raw[index];
+    const distanceValue = rawRow?.distance ?? rawRow?.store_distance ?? 0;
+    
+    (store as any).distance = typeof distanceValue === 'number' 
+      ? distanceValue 
+      : parseFloat(distanceValue) || 0;
+    
     return store;
   });
 
   return { stores, total };
 }
-
 
 
   async findAllStores(

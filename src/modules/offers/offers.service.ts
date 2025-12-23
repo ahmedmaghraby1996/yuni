@@ -68,65 +68,85 @@ async findNearbyOffers(
   longitude: string,
   radiusMeters = 500,
 ) {
-  return this._repo
+  // ✅ Fixed: Added ROUND + COALESCE + LEAST/GREATEST
+  const distanceFormula = `
+    ROUND(
+      COALESCE(
+        6371000 * acos(
+          LEAST(1, GREATEST(-1,
+            cos(radians(:lat)) *
+            cos(radians(stores.latitude)) *
+            cos(radians(stores.longitude) - radians(:lng)) +
+            sin(radians(:lat)) *
+            sin(radians(stores.latitude))
+          ))
+        ),
+        0
+      ),
+      2
+    )
+  `;
+
+  const queryBuilder = this._repo
     .createQueryBuilder('offer')
     .leftJoinAndSelect('offer.stores', 'stores')
     .leftJoinAndSelect('offer.images', 'images')
     .leftJoinAndSelect('offer.user', 'user')
     .leftJoinAndSelect('offer.subcategory', 'subcategory')
-    .addSelect(
-      `
-      (6371000 * acos(
-        cos(radians(:lat)) *
-        cos(radians(stores.latitude)) *
-        cos(radians(stores.longitude) - radians(:lng)) +
-        sin(radians(:lat)) *
-        sin(radians(stores.latitude))
-      ))
-    `,
-      'distance',
-    )
-    .where(
-      `
-      stores.is_active = true AND
-      stores.status = :approvedStatus AND
-      (6371000 * acos(
-        cos(radians(:lat)) *
-        cos(radians(stores.latitude)) *
-        cos(radians(stores.longitude) - radians(:lng)) +
-        sin(radians(:lat)) *
-        sin(radians(stores.latitude))
-      )) <= :radius
-    `,
-    )
+    .addSelect(distanceFormula, 'distance')
+    .where('offer.is_active = true')
+    .andWhere('stores.is_active = true')
+    .andWhere('stores.status = :approvedStatus')
+    .andWhere('stores.latitude IS NOT NULL')
+    .andWhere('stores.longitude IS NOT NULL')
+    .andWhere(`${distanceFormula} <= :radius`)
     .setParameters({
-      lat: latitude,
-      lng: longitude,
+      lat: Number(latitude),
+      lng: Number(longitude),
       radius: radiusMeters,
       approvedStatus: StoreStatus.APPROVED,
     })
-    .orderBy('distance', 'ASC')
-    .getMany();
+    .orderBy('distance', 'ASC');
+
+  const rawResults = await queryBuilder.getRawAndEntities();
+
+  // ✅ Enhanced mapping with proper error handling
+  const offers = rawResults.entities.map((offer, index) => {
+    const rawRow = rawResults.raw[index];
+    const distanceValue = rawRow?.distance ?? 0;
+    
+    (offer as any).distance = typeof distanceValue === 'number' 
+      ? distanceValue 
+      : parseFloat(distanceValue) || 0;
+    
+    return offer;
+  });
+
+  return offers;
 }
+
 
 async findBestOffers(
   latitude: string,
   longitude: string,
   radiusMeters = 10000,
 ) {
-  // ✅ Calculate distance to the NEAREST store for each offer
+  // ✅ Fixed: Added ROUND to force numeric output
   const distanceFormula = `
-    COALESCE(
-      6371000 * acos(
-        LEAST(1, GREATEST(-1,
-          cos(radians(:lat)) *
-          cos(radians(stores.latitude)) *
-          cos(radians(stores.longitude) - radians(:lng)) +
-          sin(radians(:lat)) *
-          sin(radians(stores.latitude))
-        ))
+    ROUND(
+      COALESCE(
+        6371000 * acos(
+          LEAST(1, GREATEST(-1,
+            cos(radians(:lat)) *
+            cos(radians(stores.latitude)) *
+            cos(radians(stores.longitude) - radians(:lng)) +
+            sin(radians(:lat)) *
+            sin(radians(stores.latitude))
+          ))
+        ),
+        0
       ),
-      0
+      2
     )
   `;
 
@@ -162,10 +182,15 @@ async findBestOffers(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
-  // ✅ Map the minimum distance to each offer
+  // ✅ Enhanced mapping with proper error handling
   const offers = rawResults.entities.map((offer, index) => {
-    const rawDistance = rawResults.raw[index]?.min_distance;
-    (offer as any).distance = rawDistance != null ? parseFloat(rawDistance) : 0;
+    const rawRow = rawResults.raw[index];
+    const distanceValue = rawRow?.min_distance ?? 0;
+    
+    (offer as any).distance = typeof distanceValue === 'number' 
+      ? distanceValue 
+      : parseFloat(distanceValue) || 0;
+    
     return offer;
   });
 
