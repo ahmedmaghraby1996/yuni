@@ -117,6 +117,9 @@ subcategory: SubCategory;
 @Column({nullable:true})
 subcategory_id:string;
 
+@Column({nullable:true})
+distance:number;
+
   @BeforeInsert()
   saveLocation() {
     if (this.latitude != null && this.longitude != null) {

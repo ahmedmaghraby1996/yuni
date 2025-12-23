@@ -66,6 +66,9 @@ offer_percentage: number; // Example: 0.15 = 15%
   @Column({ nullable: true })
   code: string;
 
+  @Column({nullable:true})
+distance:number;
+
   @ManyToMany(() => Store, (store) => store.offers)
   @JoinTable()
   stores: Store[];
