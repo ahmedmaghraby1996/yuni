@@ -163,8 +163,9 @@ export class OffersController {
     const result = plainToInstance(BranchResponse, stores, {
       excludeExtraneousValues: true,
     });
+    const response = this._i18nResponse.entity(result);
 
-    return new ActionResponse(result);
+    return new ActionResponse(response);
   }
 
   @ApiBearerAuth()

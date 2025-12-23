@@ -43,87 +43,72 @@ export class StoreService extends BaseService<Store> {
       .getOne();
   }
 
-  async findNearbyStores(
-    latitude: string,
-    longitude: string,
-    radiusMeters = 10000,
-    storeType?: 'in_store' | 'online' | 'both',
-    name?: string,
-    page?: number,
-    limit?: number,
-  ) {
-    const queryBuilder = this.repo
-      .createQueryBuilder('store')
-      .leftJoinAndSelect('store.category', 'category')
-      .leftJoinAndSelect('store.city', 'city')
-      .leftJoinAndSelect('store.user', 'user')
-      .addSelect(
-        `
-        (6371000 * acos(
-          cos(radians(:lat)) *
-          cos(radians(store.latitude)) *
-          cos(radians(store.longitude) - radians(:lng)) +
-          sin(radians(:lat)) *
-          sin(radians(store.latitude))
-        ))
-      `,
-        'distance',
-      )
-      .where(
-        `
-        store.is_active = true AND
-        store.status = :approvedStatus AND
-        store.latitude IS NOT NULL AND
-        store.longitude IS NOT NULL AND
-        (6371000 * acos(
-          cos(radians(:lat)) *
-          cos(radians(store.latitude)) *
-          cos(radians(store.longitude) - radians(:lng)) +
-          sin(radians(:lat)) *
-          sin(radians(store.latitude))
-        )) <= :radius
-      `,
-      )
-      .setParameters({
-        lat: latitude,
-        lng: longitude,
-        radius: radiusMeters,
-        approvedStatus: StoreStatus.APPROVED,
-      });
+ async findNearbyStores(
+  latitude: string,
+  longitude: string,
+  radiusMeters = 10000,
+  storeType?: 'in_store' | 'online' | 'both',
+  name?: string,
+  page?: number,
+  limit?: number,
+) {
+  const distanceFormula = `
+    6371000 * acos(
+      LEAST(1, GREATEST(-1,
+        cos(radians(:lat)) *
+        cos(radians(store.latitude)) *
+        cos(radians(store.longitude) - radians(:lng)) +
+        sin(radians(:lat)) *
+        sin(radians(store.latitude))
+      ))
+    )
+  `;
 
-    // Filter by store type
-    if (storeType) {
-      queryBuilder.andWhere('store.store_type = :storeType', { storeType });
-    }
-    // Filter by name
-    if (name) {
-      queryBuilder.andWhere('store.name LIKE :name', { name: `%${name}%` });
-    }
-
-    // Get total count before pagination
-    const total = await queryBuilder.getCount();
-
-    // Apply pagination
-    if (page !== undefined && limit !== undefined) {
-      const skip = (page - 1) * limit;
-      queryBuilder.skip(skip).take(limit);
-    }
-
-    queryBuilder.orderBy('distance', 'ASC');
-
-    const rawResults = await queryBuilder.getRawAndEntities();
-
-    // Map distance from raw results to entities
-    const stores = rawResults.entities.map((store, index) => {
-      const rawResult = rawResults.raw[index];
-      (store as any).distance = rawResult?.distance
-        ? parseFloat(rawResult.distance)
-        : null;
-      return store;
+  const queryBuilder = this.repo
+    .createQueryBuilder('store')
+    .leftJoinAndSelect('store.category', 'category')
+    .leftJoinAndSelect('store.city', 'city')
+    .leftJoinAndSelect('store.user', 'user')
+    .addSelect(distanceFormula, 'distance')
+    .where('store.is_active = true')
+    .andWhere('store.status = :approvedStatus', {
+      approvedStatus: StoreStatus.APPROVED,
+    })
+    .andWhere('store.latitude IS NOT NULL')
+    .andWhere('store.longitude IS NOT NULL')
+    .having(`${distanceFormula} <= :radius`)
+    .setParameters({
+      lat: Number(latitude),
+      lng: Number(longitude),
+      radius: radiusMeters,
     });
 
-    return { stores, total };
+  if (storeType) {
+    queryBuilder.andWhere('store.store_type = :storeType', { storeType });
   }
+
+  if (name) {
+    queryBuilder.andWhere('store.name LIKE :name', { name: `%${name}%` });
+  }
+
+  const total = await queryBuilder.getCount();
+
+  if (page && limit) {
+    queryBuilder.skip((page - 1) * limit).take(limit);
+  }
+
+  queryBuilder.orderBy('distance', 'ASC');
+
+  const rawResults = await queryBuilder.getRawAndEntities();
+
+  const stores = rawResults.entities.map((store, index) => {
+    (store as any).distance = parseFloat(rawResults.raw[index].distance);
+    return store;
+  });
+
+  return { stores, total };
+}
+
 
   async findAllStores(
     storeType?: 'in_store' | 'online' | 'both',
