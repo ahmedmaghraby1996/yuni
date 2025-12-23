@@ -110,15 +110,24 @@ async findNearbyOffers(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
-  // ✅ Enhanced mapping with proper error handling
-  const offers = rawResults.entities.map((offer, index) => {
-    const rawRow = rawResults.raw[index];
-    const distanceValue = rawRow?.distance ?? 0;
-    
-    (offer as any).distance = typeof distanceValue === 'number' 
-      ? distanceValue 
-      : parseFloat(distanceValue) || 0;
-    
+  // Build a robust map from offer id -> nearest distance using raw rows
+  const offerDistanceMap = new Map<any, number>();
+  rawResults.raw.forEach(row => {
+    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
+    const rawDistance = row.distance ?? row.min_distance ?? row['distance'];
+    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
+    const distance = Number.isFinite(parsed) ? parsed : 0;
+    if (offerId != null) {
+      const prev = offerDistanceMap.get(offerId);
+      if (prev == null || distance < prev) {
+        offerDistanceMap.set(offerId, distance);
+      }
+    }
+  });
+
+  const offers = rawResults.entities.map((offer) => {
+    const distance = offerDistanceMap.get(offer.id) ?? 0;
+    (offer as any).distance = distance;
     return offer;
   });
 
@@ -181,16 +190,25 @@ async findBestOffers(
     .addOrderBy('min_distance', 'ASC');
 
   const rawResults = await queryBuilder.getRawAndEntities();
+    
+  // Build a robust map from offer id -> nearest distance using raw rows
+  const offerDistanceMap = new Map<any, number>();
+  rawResults.raw.forEach(row => {
+    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
+    const rawDistance = row.min_distance ?? row.distance ?? row['min_distance'];
+    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
+    const distance = Number.isFinite(parsed) ? parsed : 0;
+    if (offerId != null) {
+      const prev = offerDistanceMap.get(offerId);
+      if (prev == null || distance < prev) {
+        offerDistanceMap.set(offerId, distance);
+      }
+    }
+  });
 
-  // ✅ Enhanced mapping with proper error handling
-  const offers = rawResults.entities.map((offer, index) => {
-    const rawRow = rawResults.raw[index];
-    const distanceValue = rawRow?.min_distance ?? 0;
-    
-    (offer as any).distance = typeof distanceValue === 'number' 
-      ? distanceValue 
-      : parseFloat(distanceValue) || 0;
-    
+  const offers = rawResults.entities.map((offer) => {
+    const distance = offerDistanceMap.get(offer.id) ?? 0;
+    (offer as any).distance = distance;
     return offer;
   });
 
@@ -246,29 +264,49 @@ async findBestOffersWithAllStores(
     .getRawAndEntities();
 
   // ✅ Group offers manually and attach stores with distances
+  // Build a map: offerId -> (storeId -> distance)
+  const offerStoreDistanceMap = new Map<any, Map<any, number>>();
+  rawResults.raw.forEach(row => {
+    const offerId = row.offer_id ?? row.offerId ?? row['offer_id'];
+    const storeId = row.stores_id ?? row.storesId ?? row['stores_id'] ?? row['storesId'];
+    const rawDistance = row.distance ?? row.min_distance ?? row['distance'];
+    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
+    const distance = Number.isFinite(parsed) ? parsed : 0;
+    if (offerId != null && storeId != null) {
+      let m = offerStoreDistanceMap.get(offerId);
+      if (!m) {
+        m = new Map();
+        offerStoreDistanceMap.set(offerId, m);
+      }
+      // Keep the smallest distance per store if multiple rows exist
+      const prev = m.get(storeId);
+      if (prev == null || distance < prev) {
+        m.set(storeId, distance);
+      }
+    }
+  });
+
   const offersMap = new Map<string | number, any>();
 
-  rawResults.entities.forEach((offer, index) => {
-    const rawDistance = rawResults.raw[index]?.distance;
-    const distance = rawDistance != null ? parseFloat(rawDistance) : 0;
-    const offerId = offer.id; // Can be string or number
-
+  rawResults.entities.forEach((offer) => {
+    const offerId = offer.id;
     if (!offersMap.has(offerId)) {
-      // First time seeing this offer
+      const storeDistances = offerStoreDistanceMap.get(offerId) ?? new Map();
+      const stores = (offer.stores || []).map(store => ({
+        ...store,
+        distance: storeDistances.get(store.id) ?? 0,
+      }));
+      const nearest = stores.length
+        ? stores.reduce((min, s) => Math.min(min, s.distance ?? 0), Infinity)
+        : 0;
+      const nearestDistance = Number.isFinite(nearest) ? nearest : 0;
+
       offersMap.set(offerId, {
         ...offer,
-        stores: offer.stores.map(store => ({
-          ...store,
-          distance: distance,
-        })),
-        nearestDistance: distance, // Track nearest store distance
+        stores,
+        nearestDistance,
+        distance: nearestDistance, // top-level distance alias
       });
-    } else {
-      // Offer already exists, just update nearest distance if closer
-      const existingOffer = offersMap.get(offerId);
-      if (distance < existingOffer.nearestDistance) {
-        existingOffer.nearestDistance = distance;
-      }
     }
   });
 

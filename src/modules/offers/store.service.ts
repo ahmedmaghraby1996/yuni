@@ -108,15 +108,34 @@ async findNearbyStores(
 
   const rawResults = await queryBuilder.getRawAndEntities();
 
-  // ✅ Enhanced mapping with better error handling
-  const stores = rawResults.entities.map((store, index) => {
-    const rawRow = rawResults.raw[index];
-    const distanceValue = rawRow?.distance ?? rawRow?.store_distance ?? 0;
-    
-    (store as any).distance = typeof distanceValue === 'number' 
-      ? distanceValue 
-      : parseFloat(distanceValue) || 0;
-    
+  // Build a robust map from store id -> distance using raw rows
+  const storeDistanceMap = new Map<any, number>();
+  rawResults.raw.forEach(row => {
+    // Try common key names for store id
+    const storeId = row.store_id ?? row.storeId ?? row['store_id'] ?? row['storeId'] ?? row.id ?? row['id'];
+
+    // Fallback: look for any key that ends with 'store_id' or contains 'stores_id'
+    let resolvedStoreId = storeId;
+    if (resolvedStoreId == null) {
+      const possibleIdKey = Object.keys(row).find(k => /stores?_id$|storeId$|store_id$|\bstore\b.*\bId\b/i.test(k));
+      if (possibleIdKey) resolvedStoreId = row[possibleIdKey];
+    }
+
+    const rawDistance = row.distance ?? row.store_distance ?? row['distance'] ?? row['store_distance'];
+    const parsed = rawDistance != null ? parseFloat(rawDistance) : NaN;
+    const distance = Number.isFinite(parsed) ? parsed : 0;
+
+    if (resolvedStoreId != null) {
+      const prev = storeDistanceMap.get(resolvedStoreId);
+      if (prev == null || distance < prev) {
+        storeDistanceMap.set(resolvedStoreId, distance);
+      }
+    }
+  });
+
+  const stores = rawResults.entities.map((store) => {
+    const distance = storeDistanceMap.get(store.id) ?? 0;
+    (store as any).distance = distance;
     return store;
   });
 
