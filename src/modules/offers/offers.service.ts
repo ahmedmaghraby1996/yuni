@@ -157,6 +157,7 @@ async findBestOffers(
 }
 
 
+
   async addRemoveFavorite(offer_id: string) {
     const favorite = await this.favoriteOfferRepo.findOne({
       where: {

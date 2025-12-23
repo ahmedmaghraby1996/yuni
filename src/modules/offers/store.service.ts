@@ -43,7 +43,7 @@ export class StoreService extends BaseService<Store> {
       .getOne();
   }
 
- async findNearbyStores(
+async findNearbyStores(
   latitude: string,
   longitude: string,
   radiusMeters = 10000,
@@ -76,7 +76,7 @@ export class StoreService extends BaseService<Store> {
     })
     .andWhere('store.latitude IS NOT NULL')
     .andWhere('store.longitude IS NOT NULL')
-    .having(`${distanceFormula} <= :radius`)
+    .andWhere(`${distanceFormula} <= :radius`)
     .setParameters({
       lat: Number(latitude),
       lng: Number(longitude),
@@ -110,6 +110,7 @@ export class StoreService extends BaseService<Store> {
 }
 
 
+
   async findAllStores(
     storeType?: 'in_store' | 'online' | 'both',
     page?: number,
@@ -127,6 +128,13 @@ export class StoreService extends BaseService<Store> {
     // Filter by store type
     if (storeType) {
       queryBuilder.andWhere('store.store_type = :storeType', { storeType });
+    }
+
+    // Filter by name
+    if (this._request.query.name) {
+      queryBuilder.andWhere('store.name LIKE :name', {
+        name: `%${this._request.query.name}%`,
+      });
     }
 
     // Get total count before pagination
