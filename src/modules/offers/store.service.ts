@@ -75,7 +75,6 @@ async findNearbyStores(
     .createQueryBuilder('store')
     .leftJoinAndSelect('store.subcategory', 'subcategory')
     .leftJoinAndSelect('store.city', 'city')
-    .leftJoinAndSelect('store.user', 'user')
     .addSelect(distanceFormula, 'distance') // ✅ Always returns a number
     .where('store.is_active = true')
     .andWhere('store.status = :approvedStatus', {
