@@ -28,6 +28,7 @@ import {
   UpdateAdminOfferRequest,
   UpdateOfferRequest,
 } from './dto/requests/update-offer.request';
+import { GetStoreRequest } from './dto/requests/get-store.request';
 import { query } from 'express';
 import {
   applyQueryFilters,
@@ -99,26 +100,21 @@ export class OffersController {
   }
 
   @Get('store')
-  async getStore(
-    @Query('lat') lat?: string,
-    @Query('lng') lng?: string,
-    @Query('store_type') storeType?: 'in_store' | 'online' | 'both',
-    @Query('name') name?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-  ) {
-    const pageNum = page ? parseInt(page) : 1;
-    const limitNum = limit ? parseInt(limit) : 10;
+  async getStore(@Query() query: GetStoreRequest) {
+    const { lat, lng, store_type, name, page, limit, sub_category_id } = query;
+    const pageNum = page || 1;
+    const limitNum = limit || 10;
 
     if (lat && lng) {
       const { stores, total } = await this.storeService.findNearbyStores(
         lat,
         lng,
         10000,
-        storeType,
+        store_type,
         name,
         pageNum,
         limitNum,
+        sub_category_id,
       );
       const result = plainToInstance(BranchResponse, stores, {
         excludeExtraneousValues: true,
@@ -129,9 +125,10 @@ export class OffersController {
       });
     } else {
       const { stores, total } = await this.storeService.findAllStores(
-        storeType,
+        store_type,
         pageNum,
         limitNum,
+        sub_category_id,
       );
       const result = plainToInstance(BranchResponse, stores, {
         excludeExtraneousValues: true,
@@ -156,7 +153,6 @@ export class OffersController {
     return new PaginatedResponse(response, { meta: { total, ...query } });
   }
 
-  
   @Get('store/:id')
   async geStoredetials(@Param('id') id: string) {
     const stores = await this.storeService.getDetailsWithOffers(id);
@@ -321,10 +317,7 @@ export class OffersController {
   @UseGuards(JwtAuthGuard)
   @Roles(Role.CLIENT)
   @Get('best-offers')
-  async getBestOffers(
-    @Query('lat') lat: string,
-    @Query('lng') lng: string,
-  ) {
+  async getBestOffers(@Query('lat') lat: string, @Query('lng') lng: string) {
     const offers = await this.offersService.findBestOffers(lat, lng);
     offers.map((offer) => {
       offer.is_favorite =
@@ -421,7 +414,7 @@ export class OffersController {
   }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE, Role.CLIENT,)
+  @Roles(Role.STORE, Role.CLIENT)
   @Get('details/:id')
   async getOfferById(@Param('id') id: string) {
     const offer = await this.offersService.findOne(id);
@@ -440,9 +433,9 @@ export class OffersController {
     return new ActionResponse(response);
   }
 
-    @ApiBearerAuth()
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Roles( Role.ADMIN)
+  @Roles(Role.ADMIN)
   @Get('admin/details/:id')
   async getAdminOfferById(@Param('id') id: string) {
     const offer = await this.offersService.findOne(id);
@@ -452,8 +445,6 @@ export class OffersController {
     const result = plainToInstance(OfferResponse, offer, {
       excludeExtraneousValues: true,
     });
-   
- 
 
     return new ActionResponse(result);
   }

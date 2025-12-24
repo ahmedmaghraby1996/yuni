@@ -21,7 +21,7 @@ export class StoreService extends BaseService<Store> {
   getDetails(id: string) {
     return this.repo.findOne({
       where: { id: id },
-      relations: { user: true, subcategory: true,  },
+      relations: { user: true, subcategory: true },
     });
   }
 
@@ -43,17 +43,18 @@ export class StoreService extends BaseService<Store> {
       .getOne();
   }
 
-async findNearbyStores(
-  latitude: string,
-  longitude: string,
-  radiusMeters = 10000,
-  storeType?: 'in_store' | 'online' | 'both',
-  name?: string,
-  page?: number,
-  limit?: number,
-) {
-  // ✅ ROUND ensures we always get a numeric value (even 0)
-  const distanceFormula = `
+  async findNearbyStores(
+    latitude: string,
+    longitude: string,
+    radiusMeters = 10000,
+    storeType?: 'in_store' | 'online' | 'both',
+    name?: string,
+    page?: number,
+    limit?: number,
+    sub_category_id?: string,
+  ) {
+    // ✅ ROUND ensures we always get a numeric value (even 0)
+    const distanceFormula = `
     ROUND(
       COALESCE(
         6371000 * acos(
@@ -71,60 +72,68 @@ async findNearbyStores(
     )
   `;
 
-  const queryBuilder = this.repo
-    .createQueryBuilder('store')
-    .leftJoinAndSelect('store.subcategory', 'subcategory')
-    .leftJoinAndSelect('store.city', 'city')
-    .addSelect(distanceFormula, 'distance') // ✅ Always returns a number
-    .where('store.is_active = true')
-    .andWhere('store.status = :approvedStatus', {
-      approvedStatus: StoreStatus.APPROVED,
-    })
-    .andWhere('store.latitude IS NOT NULL')
-    .andWhere('store.longitude IS NOT NULL')
-    .andWhere(`${distanceFormula} <= :radius`)
-    .setParameters({
-      lat: Number(latitude),
-      lng: Number(longitude),
-      radius: radiusMeters,
+    const queryBuilder = this.repo
+      .createQueryBuilder('store')
+      .leftJoinAndSelect('store.subcategory', 'subcategory')
+      .leftJoinAndSelect('store.city', 'city')
+      .addSelect(distanceFormula, 'distance') // ✅ Always returns a number
+      .where('store.is_active = true')
+      .andWhere('store.status = :approvedStatus', {
+        approvedStatus: StoreStatus.APPROVED,
+      })
+      .andWhere('store.latitude IS NOT NULL')
+      .andWhere('store.longitude IS NOT NULL')
+      .andWhere(`${distanceFormula} <= :radius`)
+      .setParameters({
+        lat: Number(latitude),
+        lng: Number(longitude),
+        radius: radiusMeters,
+      });
+
+    if (storeType) {
+      queryBuilder.andWhere('store.store_type = :storeType', { storeType });
+    }
+
+    if (name) {
+      queryBuilder.andWhere('store.name LIKE :name', { name: `%${name}%` });
+    }
+
+    if (sub_category_id) {
+      queryBuilder.andWhere('store.subcategory_id = :sub_category_id', {
+        sub_category_id,
+      });
+    }
+
+    const total = await queryBuilder.getCount();
+
+    if (page && limit) {
+      queryBuilder.skip((page - 1) * limit).take(limit);
+    }
+
+    queryBuilder.orderBy('distance', 'ASC');
+
+    const rawResults = await queryBuilder.getRawAndEntities();
+
+    // ✅ Enhanced mapping with better error handling
+    const stores = rawResults.entities.map((store, index) => {
+      const rawRow = rawResults.raw[index];
+      const distanceValue = rawRow?.distance ?? rawRow?.store_distance ?? 0;
+
+      (store as any).distance =
+        typeof distanceValue === 'number'
+          ? distanceValue
+          : parseFloat(distanceValue) || 0;
+
+      return store;
     });
 
-  if (storeType) {
-    queryBuilder.andWhere('store.store_type = :storeType', { storeType });
+    return { stores, total };
   }
-
-  if (name) {
-    queryBuilder.andWhere('store.name LIKE :name', { name: `%${name}%` });
-  }
-
-  const total = await queryBuilder.getCount();
-
-  if (page && limit) {
-    queryBuilder.skip((page - 1) * limit).take(limit);
-  }
-
-  queryBuilder.orderBy('distance', 'ASC');
-
-  const rawResults = await queryBuilder.getRawAndEntities();
-
-  // ✅ Enhanced mapping with better error handling
-  const stores = rawResults.entities.map((store, index) => {
-    const rawRow = rawResults.raw[index];
-    const distanceValue = rawRow?.distance ?? rawRow?.store_distance ?? 0;
-    
-    (store as any).distance = typeof distanceValue === 'number' 
-      ? distanceValue 
-      : parseFloat(distanceValue) || 0;
-    
-    return store;
-  });
-
-  return { stores, total };
-}
   async findAllStores(
     storeType?: 'in_store' | 'online' | 'both',
     page?: number,
     limit?: number,
+    sub_category_id?: string,
   ) {
     const queryBuilder = this.repo
       .createQueryBuilder('store')
@@ -138,6 +147,12 @@ async findNearbyStores(
     // Filter by store type
     if (storeType) {
       queryBuilder.andWhere('store.store_type = :storeType', { storeType });
+    }
+
+    if (sub_category_id) {
+      queryBuilder.andWhere('store.subcategory_id = :sub_category_id', {
+        sub_category_id,
+      });
     }
 
     // Get total count before pagination
