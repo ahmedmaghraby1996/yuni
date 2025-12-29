@@ -2,8 +2,6 @@ import { Otp } from '../entities/auth/otp.entity';
 import { User } from '../entities/user/user.entity';
 import { Address } from '../entities/user/address.entity';
 
-
-
 import { Transaction } from '../entities/wallet/transaction.entity';
 import { Wallet } from '../entities/wallet/wallet.entity';
 import { NotificationEntity } from '../entities/notification/notification.entity';
@@ -28,38 +26,38 @@ import { Message } from '../entities/chat/messages.entity';
 import { Package } from '../entities/package/package.entity';
 import { Subscription } from '../entities/subscription/subscription.entity';
 import { SystemVariable } from '../entities/system-variables/system-variable.entity';
-
-
-
+import { OfferUsage } from '../entities/offer/offer-usage.entity';
+import { StoreFollow } from '../entities/store/store-follow.entity';
 
 export const DB_ENTITIES = [
   User,
   Address,
   Otp,
-Country,
+  Country,
   Transaction,
   Wallet,
   NotificationEntity,
   Banar,
-OfferView,
-FavoriteOffer,
+  OfferView,
+  FavoriteOffer,
   SuggestionsComplaints,
   FaqQuestion,
   StaticPage,
   ContactUs,
-    City,
-    Country,
-    Store,
-    Offer,
-    OfferImages,
-    Category,
-    SubCategory,
-    Chat,
-    Message,
-    Package,
-    Subscription,
-    SystemVariable
-
+  City,
+  Country,
+  Store,
+  Offer,
+  OfferImages,
+  Category,
+  SubCategory,
+  Chat,
+  Message,
+  Package,
+  Subscription,
+  SystemVariable,
+  OfferUsage,
+  StoreFollow,
 ];
 
 export const DB_VIEWS = [];

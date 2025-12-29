@@ -39,4 +39,8 @@ export class GetStoreRequest {
   @IsOptional()
   @IsString()
   sub_category_id?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  recommend?: boolean;
 }

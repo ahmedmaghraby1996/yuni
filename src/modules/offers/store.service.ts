@@ -8,12 +8,16 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 
+import { StoreFollow } from 'src/infrastructure/entities/store/store-follow.entity';
+
 @Injectable()
 export class StoreService extends BaseService<Store> {
   constructor(
     @InjectRepository(Store)
     public readonly repo: Repository<Store>,
     @Inject(REQUEST) private readonly _request: Request,
+    @InjectRepository(StoreFollow)
+    private readonly storeFollowRepo: Repository<StoreFollow>,
   ) {
     super(repo);
   }
@@ -26,8 +30,8 @@ export class StoreService extends BaseService<Store> {
   }
 
   //with active offers and images
-  getDetailsWithOffers(id: string) {
-    return this.repo
+  async getDetailsWithOffers(id: string) {
+    const store = await this.repo
       .createQueryBuilder('store')
       .leftJoinAndSelect(
         'store.offers',
@@ -39,8 +43,35 @@ export class StoreService extends BaseService<Store> {
       .leftJoinAndSelect('store.subcategory', 'subcategory')
       .leftJoinAndSelect('store.city', 'city')
       .leftJoinAndSelect('store.user', 'user')
+      .leftJoinAndSelect('store.followers', 'followers')
       .where('store.id = :id', { id })
       .getOne();
+
+    if (store) {
+      store.is_followed = store.followers?.some(
+        (f) => f.user_id === this._request.user?.id,
+      );
+    }
+    return store;
+  }
+
+  async toggleFollowStore(store_id: string) {
+    const follow = await this.storeFollowRepo.findOne({
+      where: {
+        store_id: store_id,
+        user_id: this._request.user.id,
+      },
+    });
+    if (follow) {
+      await this.storeFollowRepo.remove(follow);
+      return false; // unfollowed
+    } else {
+      await this.storeFollowRepo.save({
+        store_id: store_id,
+        user_id: this._request.user.id,
+      });
+      return true; // followed
+    }
   }
 
   async findNearbyStores(
@@ -52,6 +83,7 @@ export class StoreService extends BaseService<Store> {
     page?: number,
     limit?: number,
     sub_category_id?: string,
+    recommend?: boolean,
   ) {
     // ✅ ROUND ensures we always get a numeric value (even 0)
     const distanceFormula = `
@@ -110,7 +142,11 @@ export class StoreService extends BaseService<Store> {
       queryBuilder.skip((page - 1) * limit).take(limit);
     }
 
-    queryBuilder.orderBy('distance', 'ASC');
+    if (recommend) {
+      queryBuilder.orderBy('store.views', 'DESC');
+    } else {
+      queryBuilder.orderBy('distance', 'ASC');
+    }
 
     const rawResults = await queryBuilder.getRawAndEntities();
 

@@ -12,6 +12,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import { FavoriteOfferService, OffersService } from './offers.service';
 import { CreateOfferRequest } from './dto/requests/create-offer.request';
 
@@ -20,7 +21,7 @@ import { I18nResponse } from 'src/core/helpers/i18n.helper';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { plainToInstance } from 'class-transformer';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
@@ -101,7 +102,16 @@ export class OffersController {
 
   @Get('store')
   async getStore(@Query() query: GetStoreRequest) {
-    const { lat, lng, store_type, name, page, limit, sub_category_id } = query;
+    const {
+      lat,
+      lng,
+      store_type,
+      name,
+      page,
+      limit,
+      sub_category_id,
+      recommend,
+    } = query;
     const pageNum = page || 1;
     const limitNum = limit || 10;
 
@@ -115,6 +125,7 @@ export class OffersController {
         pageNum,
         limitNum,
         sub_category_id,
+        recommend,
       );
       const result = plainToInstance(BranchResponse, stores, {
         excludeExtraneousValues: true,
@@ -162,6 +173,15 @@ export class OffersController {
     const response = this._i18nResponse.entity(result);
 
     return new ActionResponse(response);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
+  @ApiOperation({ summary: 'Follow or Unfollow a Store' })
+  @Post('store/follow/:id')
+  async followStore(@Param('id') id: string) {
+    return await this.storeService.toggleFollowStore(id);
   }
 
   @ApiBearerAuth()
@@ -337,18 +357,42 @@ export class OffersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.CLIENT)
+  @ApiOperation({ summary: 'Get Nearby Offers' })
   @Get('nearby-offers')
+  @ApiQuery({ name: 'lat', required: true, type: String })
+  @ApiQuery({ name: 'lng', required: true, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({
+    name: 'order_by',
+    required: false,
+    enum: ['most_used', 'added_recently'],
+  })
   async getNearbyOffers(
     @Query('lat') lat: string,
     @Query('lng') lng: string,
-    @Query('radius') radius?: number,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+    @Query('order_by')
+    order_by: 'most_used' | 'added_recently' = 'added_recently',
   ) {
-    const offers = await this.offersService.findNearbyOffers(lat, lng, radius);
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 20;
+
+    const { offers, total } = await this.offersService.findNearbyOffers(
+      lat,
+      lng,
+      order_by,
+      pageNum,
+      limitNum,
+    );
     const result = plainToInstance(OfferResponse, offers, {
       excludeExtraneousValues: true,
     });
     const response = this._i18nResponse.entity(result);
-    return new ActionResponse(response);
+    return new PaginatedResponse(response, {
+      meta: { total, page: pageNum, limit: limitNum },
+    });
   }
   //DELETE OFFER
   @ApiBearerAuth()
@@ -380,6 +424,15 @@ export class OffersController {
   async addRemoveFavorite(@Param('id') id: string) {
     const offer = await this.offersService.addRemoveFavorite(id);
     return offer;
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
+  @ApiOperation({ summary: 'Toggle Offer Active Status (Used/Not Used)' })
+  @Post('toggle-active/:id')
+  async toggleOfferStatus(@Param('id') id: string) {
+    return await this.offersService.toggleOfferStatus(id);
   }
 
   //get favorite offers

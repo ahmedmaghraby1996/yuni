@@ -59,6 +59,12 @@ export class BranchResponse {
   is_active: boolean;
 
   @Expose()
+  description: string;
+
+  @Expose()
+  views: number;
+
+  @Expose()
   status: StoreStatus;
 
   @Expose()
@@ -76,28 +82,29 @@ export class BranchResponse {
   @Expose()
   website_link: string;
 
-
   @Expose()
   @Type(() => UserResponse)
-  user: UserResponse
-  
-@Expose()
-city_id: string;
-@Expose()
-  @Transform((value) =>value.obj?.city)
+  user: UserResponse;
+
+  @Expose()
+  city_id: string;
+  @Expose()
+  @Transform((value) => value.obj?.city)
   city: City;
 
-@Expose()
-is_online: boolean;
+  @Expose()
+  is_online: boolean;
 
-@Expose()
-store_type: 'in_store' | 'online' | 'both';
+  @Expose()
+  store_type: 'in_store' | 'online' | 'both';
 
-@Expose()
+  @Expose()
+  distance: number;
 
-distance: number;
+  @Expose()
+  @Type(() => OfferResponse)
+  offers: OfferResponse[];
 
-@Expose()
-@Type(() => OfferResponse)
-offers: OfferResponse[];
+  @Expose()
+  is_followed: boolean;
 }

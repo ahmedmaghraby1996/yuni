@@ -1,8 +1,8 @@
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtModule, JwtModuleOptions } from "@nestjs/jwt";
-import { JwtStrategy } from "src/modules/authentication/strategies/jwt.strategy";
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
+import { JwtStrategy } from 'src/modules/authentication/strategies/jwt.strategy';
 
-export default () => (
+export default () =>
   JwtModule.registerAsync({
     imports: [ConfigModule],
     useFactory: async (config: ConfigService) => ({
@@ -10,8 +10,7 @@ export default () => (
       ...jwtOptions(config),
     }),
     inject: [ConfigService],
-  })
-);
+  });
 
 export const jwtOptions = (config: ConfigService): JwtModuleOptions => ({
   secret: config.get<string>('app.key'),
@@ -20,5 +19,5 @@ export const jwtOptions = (config: ConfigService): JwtModuleOptions => ({
 
 export const jwtSignOptions = (config: ConfigService) => ({
   secret: config.get<string>('app.key'),
-  expiresIn: config.get<string>('JWT_EXPIRATION'),
+  expiresIn: '2d',
 });

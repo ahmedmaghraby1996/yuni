@@ -17,6 +17,7 @@ import { Offer } from '../offer/offer.entity';
 import { Category } from '../category/category.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { SubCategory } from '../category/subcategory.entity';
+import { StoreFollow } from './store-follow.entity';
 @Entity()
 export class Store extends OwnedEntity {
   @Column({ nullable: true })
@@ -69,10 +70,20 @@ export class Store extends OwnedEntity {
   @Column({ default: 0 })
   is_active: boolean;
 
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ default: 0 })
+  views: number;
+
   @Column({ default: false })
   is_online: boolean;
 
-  @Column({ type: 'enum', enum: ['in_store', 'online', 'both'], default: 'in_store' })
+  @Column({
+    type: 'enum',
+    enum: ['in_store', 'online', 'both'],
+    default: 'in_store',
+  })
   store_type: 'in_store' | 'online' | 'both';
 
   @Column({ nullable: true })
@@ -112,13 +123,18 @@ export class Store extends OwnedEntity {
   @ManyToMany(() => Offer, (offer) => offer.stores)
   offers: Offer[];
 
-@ManyToOne(()=>SubCategory  )
-subcategory: SubCategory;
-@Column({nullable:true})
-subcategory_id:string;
+  @ManyToOne(() => SubCategory)
+  subcategory: SubCategory;
+  @Column({ nullable: true })
+  subcategory_id: string;
 
-@Column({nullable:true})
-distance:number;
+  @Column({ nullable: true })
+  distance: number;
+
+  @OneToMany(() => StoreFollow, (storeFollow) => storeFollow.store)
+  followers: StoreFollow[];
+
+  is_followed: boolean;
 
   @BeforeInsert()
   saveLocation() {

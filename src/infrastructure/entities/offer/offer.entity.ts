@@ -61,13 +61,13 @@ export class Offer extends AuditableEntity {
   offer_price: number;
 
   @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-offer_percentage: number; // Example: 0.15 = 15%
+  offer_percentage: number; // Example: 0.15 = 15%
 
   @Column({ nullable: true })
   code: string;
 
-  @Column({nullable:true})
-distance:number;
+  @Column({ nullable: true })
+  distance: number;
 
   @ManyToMany(() => Store, (store) => store.offers)
   @JoinTable()
@@ -82,6 +82,9 @@ distance:number;
   is_active: boolean;
   @Column({ default: 0 })
   views: number;
+
+  @Column({ default: 0 })
+  uses: number;
 
   constructor(partial: Partial<Offer>) {
     super();
