@@ -6,6 +6,7 @@ import { City } from 'src/infrastructure/entities/city/city.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { UserResponse } from './response/user-response';
 import { OfferResponse } from 'src/modules/offers/dto/responses/offer-response';
+import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 
 export class BranchResponse {
   @Expose()
@@ -104,6 +105,10 @@ export class BranchResponse {
   @Expose()
   @Type(() => OfferResponse)
   offers: OfferResponse[];
+
+  @Expose()
+  @Type(() => SubCategory)
+  subcategory: SubCategory;
 
   @Expose()
   is_followed: boolean;

@@ -2,7 +2,7 @@ import { Inject, Injectable, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { CreateOfferRequest } from './dto/requests/create-offer.request';
 import { CreateOfferTransaction } from './util/create-offer.transaction';
 import { UpdateOfferTransaction } from './util/update-offer.transaction';
@@ -106,21 +106,9 @@ export class OffersService extends BaseService<Offer> {
     order_by: 'most_used' | 'added_recently' = 'added_recently',
     page: number = 1,
     limit: number = 10,
+    name?: string,
   ) {
     const radiusMeters = 10000;
-    // ... [distanceFormula code remains the same, but it's long so I will keep the change focused]
-    // I need to be careful with replace_file_content context.
-    // The previous tool call output shows lines ~103-154 for findNearbyOffers.
-
-    // Let's replace the signature and the specific ordering block.
-    // Re-reading file content to ensure context match.
-    // Line 103 starts async findNearbyOffers.
-    // Line 150 starts if (order_by === 'most_used').
-
-    // I'll execute two replacements on the same file if needed or one large one if context allows.
-    // The previous view_file of offers.service.ts showed the method starting at line 103.
-    // I'll replace the method signature and the sort logic.
-
     // حساب المسافة بدقة + حماية من NaN و NULL
     const distanceFormula = `
     ROUND(
@@ -146,6 +134,7 @@ export class OffersService extends BaseService<Offer> {
       .leftJoinAndSelect('offer.images', 'images')
       .leftJoinAndSelect('offer.subcategory', 'subcategory')
       .leftJoinAndSelect('offer.stores', 'stores') // Fix: Join stores so we can access stores.latitude
+      .leftJoinAndSelect('stores.subcategory', 'store_subcategory')
       .addSelect(distanceFormula, 'distance')
       .where('offer.is_active = true')
       .andWhere('stores.is_active = true')
@@ -159,8 +148,19 @@ export class OffersService extends BaseService<Offer> {
         lat: Number(latitude),
         lng: Number(longitude),
         radius: radiusMeters,
-      })
-      .orderBy('distance', 'ASC');
+      });
+
+    if (name) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('offer.title_ar LIKE :name', { name: `%${name}%` })
+            .orWhere('offer.title_en LIKE :name', { name: `%${name}%` })
+            .orWhere('stores.name LIKE :name', { name: `%${name}%` });
+        }),
+      );
+    }
+
+    queryBuilder.orderBy('distance', 'ASC');
 
     if (order_by === 'most_used') {
       queryBuilder.orderBy('offer.uses', 'DESC');

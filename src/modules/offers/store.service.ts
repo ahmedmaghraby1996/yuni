@@ -173,7 +173,7 @@ export class StoreService extends BaseService<Store> {
   ) {
     const queryBuilder = this.repo
       .createQueryBuilder('store')
-      .leftJoinAndSelect('store.category', 'category')
+      .leftJoinAndSelect('store.subcategory', 'subcategory')
       .leftJoinAndSelect('store.city', 'city')
       .leftJoinAndSelect('store.user', 'user')
       .where('store.is_active = true AND store.status = :approvedStatus', {

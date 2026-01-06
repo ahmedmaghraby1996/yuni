@@ -363,6 +363,7 @@ export class OffersController {
   @ApiQuery({ name: 'lng', required: true, type: String })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({
     name: 'order_by',
     required: false,
@@ -373,6 +374,7 @@ export class OffersController {
     @Query('lng') lng: string,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 20,
+    @Query('name') name?: string,
     @Query('order_by')
     order_by: 'most_used' | 'added_recently' = 'added_recently',
   ) {
@@ -385,6 +387,7 @@ export class OffersController {
       order_by,
       pageNum,
       limitNum,
+      name,
     );
     const result = plainToInstance(OfferResponse, offers, {
       excludeExtraneousValues: true,
