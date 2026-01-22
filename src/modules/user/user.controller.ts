@@ -142,16 +142,16 @@ export class UserController {
     if (is_active == true) {
       applyQueryFilters(query, `code== `);
     } else if (is_active == false) {
-     
       applyQueryFilters(query, `code=! `);
     }
-    const count= await this.userService.count(query)
+    const count = await this.userService.count(query);
     const users = await this.userService.findAll(query);
     const usersResponse = plainToInstance(AgentResponse, users, {
       excludeExtraneousValues: true,
-    })
-    return new PaginatedResponse(usersResponse, { meta: { total: count, ...query } });
-    
+    });
+    return new PaginatedResponse(usersResponse, {
+      meta: { total: count, ...query },
+    });
   }
 
   @Get('/agent/:id')
@@ -207,20 +207,44 @@ export class UserController {
   }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
   @Get('profile')
   async getProile() {
-    return new ActionResponse(
-      plainToInstance(
-        UserResponse,
-        await this.userService._repo.findOne({
-          where: { id: this.request.user.id },
-          relations: { city: true, subscriptions: true },
-          order: { subscriptions: { created_at: 'DESC' } },
-        }),
-        { excludeExtraneousValues: true },
-      ),
+    const user = await this.userService._repo.findOne({
+      where: { id: this.request.user.id },
+      relations: {
+        city: true,
+        subscriptions: true,
+        favorite_sections: true,
+      },
+      order: { subscriptions: { created_at: 'DESC' } },
+    });
+
+    const userResponse = plainToInstance(UserResponse, user, {
+      excludeExtraneousValues: true,
+    });
+
+    // Calculate profile completion percentage
+    let completedFields = 0;
+    const totalFields = 11;
+
+    if (user.name) completedFields++;
+    if (user.email) completedFields++;
+    if (user.phone) completedFields++;
+    if (user.city_id || user.city) completedFields++;
+    if (user.avatar) completedFields++;
+    if (user.gender) completedFields++;
+    if (user.birth_date) completedFields++;
+    if (user.school_name) completedFields++;
+    if (user.major) completedFields++;
+    if (user.language) completedFields++;
+    if (user.favorite_sections && user.favorite_sections.length > 0)
+      completedFields++;
+
+    userResponse.profile_completion_percentage = Math.round(
+      (completedFields / totalFields) * 100,
     );
+
+    return new ActionResponse(this._i18nResponse.entity(userResponse));
   }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)

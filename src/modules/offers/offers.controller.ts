@@ -45,6 +45,7 @@ import { SubCategoryService } from './sub_category.service';
 import { Not } from 'typeorm';
 import { StoreService } from './store.service';
 import { BranchResponse } from '../user/dto/branch.response';
+import { UserResponse } from '../user/dto/response/user-response';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
@@ -162,6 +163,21 @@ export class OffersController {
     });
     const response = this._i18nResponse.entity(result);
     return new PaginatedResponse(response, { meta: { total, ...query } });
+  }
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
+  @ApiOperation({ summary: 'Get Stores Followed by User' })
+  @Get('store/following')
+  async getFollowingStores(@Query() query: PaginatedRequest) {
+    const { stores, total } = await this.storeService.getFollowingStores(query);
+    const result = plainToInstance(BranchResponse, stores, {
+      excludeExtraneousValues: true,
+    });
+    const response = this._i18nResponse.entity(result);
+    return new PaginatedResponse(response, {
+      meta: { total, ...query },
+    });
   }
 
   @Get('store/:id')

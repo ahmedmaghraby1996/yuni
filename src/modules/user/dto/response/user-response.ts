@@ -7,6 +7,7 @@ import { toUrl } from 'src/core/helpers/file.helper';
 import { City } from 'src/infrastructure/entities/city/city.entity';
 import { Package } from 'src/infrastructure/entities/package/package.entity';
 import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
+import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 
 export class UserResponse {
   @Expose()
@@ -48,7 +49,27 @@ export class UserResponse {
     if (value.obj?.subscriptions?.length > 0) return value.obj.subscriptions[0];
     else return null;
   })
+  @Expose()
   subscription: Subscription;
+
+  @Expose()
+  birth_date: Date;
+
+  @Expose()
+  school_name: string;
+
+  @Expose()
+  major: string;
+
+  @Expose()
+  language: string;
+
+  @Expose()
+  @Type(() => SubCategory)
+  favorite_sections: SubCategory[];
+
+  @Expose()
+  profile_completion_percentage: number;
 }
 
 export class AgentResponse extends UserResponse {
@@ -57,7 +78,7 @@ export class AgentResponse extends UserResponse {
 
   @Expose()
   @Type(() => City)
-  city:City
+  city: City;
 
   @Expose()
   cv: string;
@@ -84,17 +105,15 @@ export class AgentResponse extends UserResponse {
   nickname: string;
 
   @Expose()
-  @Transform(( value ) => {
-    return value.obj?.wallet ? value.obj?.wallet?.balance : 0;})
+  @Transform((value) => {
+    return value.obj?.wallet ? value.obj?.wallet?.balance : 0;
+  })
   wallet_balance: number;
 
   @Expose()
   @Type(() => UserResponse)
   merchants: UserResponse[];
-
-
 }
-
 
 export class AcceptAgentRequest {
   @ApiProperty()

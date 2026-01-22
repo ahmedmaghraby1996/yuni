@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { BaseUserService } from 'src/core/base/service/user-service.base';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
+import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 
 import { StoreFollow } from 'src/infrastructure/entities/store/store-follow.entity';
+import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
 
 @Injectable()
 export class StoreService extends BaseService<Store> {
@@ -18,6 +20,8 @@ export class StoreService extends BaseService<Store> {
     @Inject(REQUEST) private readonly _request: Request,
     @InjectRepository(StoreFollow)
     private readonly storeFollowRepo: Repository<StoreFollow>,
+    @InjectRepository(Offer)
+    private readonly offerRepo: Repository<Offer>,
   ) {
     super(repo);
   }
@@ -72,6 +76,46 @@ export class StoreService extends BaseService<Store> {
       });
       return true; // followed
     }
+  }
+
+  async getStoreFollowers(store_id: string, query: PaginatedRequest) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [followers, total] = await this.storeFollowRepo.findAndCount({
+      where: { store_id: store_id },
+      relations: ['user', 'user.city'],
+      skip: skip,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+
+    return { users: followers.map((f) => f.user), total };
+  }
+
+  async getFollowingStores(query: PaginatedRequest) {
+    const page = query.page || 1;
+    const limit = query.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const [follows, total] = await this.storeFollowRepo.findAndCount({
+      where: { user_id: this._request.user.id },
+      relations: ['store', 'store.city', 'store.subcategory'],
+      skip: skip,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+
+    const stores = follows
+      .filter((f) => f.store)
+      .map((f) => {
+        // Manually populating is_followed since we are fetching from follows table
+        f.store.is_followed = true;
+        return f.store;
+      });
+
+    return { stores, total };
   }
 
   async findNearbyStores(
@@ -163,8 +207,11 @@ export class StoreService extends BaseService<Store> {
       return store;
     });
 
+    await this.enrichWithHighestDiscountOffer(stores as unknown as Store[]);
+
     return { stores, total };
   }
+
   async findAllStores(
     storeType?: 'in_store' | 'online' | 'both',
     page?: number,
@@ -202,6 +249,68 @@ export class StoreService extends BaseService<Store> {
 
     const stores = await queryBuilder.getMany();
 
+    await this.enrichWithHighestDiscountOffer(stores);
+
     return { stores, total };
+  }
+
+  private async enrichWithHighestDiscountOffer(stores: Store[]) {
+    if (!stores.length) return;
+
+    const storeIds = stores.map((s) => s.id);
+
+    // Fetch active offers for these stores with just enough info to determine the best one
+    // We get all active offers linked to these stores
+    const allOffersRaw = await this.offerRepo
+      .createQueryBuilder('offer')
+      .innerJoin('offer.stores', 'store')
+      .select(['offer.id', 'offer.offer_percentage', 'store.id'])
+      .where('store.id IN (:...storeIds)', { storeIds })
+      .andWhere('offer.is_active = true')
+      .getRawMany(); // returns { offer_id, offer_offer_percentage, store_id }
+
+    // Find best offer ID for each store
+    const bestOfferMap = new Map<string, string>(); // store_id -> offer_id
+
+    for (const raw of allOffersRaw) {
+      const storeId = raw.store_id;
+      const offerId = raw.offer_id;
+      const percentage = parseFloat(raw.offer_offer_percentage) || 0;
+
+      if (!bestOfferMap.has(storeId)) {
+        bestOfferMap.set(storeId, offerId);
+      } else {
+        const currentBestId = bestOfferMap.get(storeId);
+        const currentBest = allOffersRaw.find(
+          (r) => r.offer_id === currentBestId,
+        );
+        const currentPercentage =
+          parseFloat(currentBest?.offer_offer_percentage) || 0;
+
+        if (percentage > currentPercentage) {
+          bestOfferMap.set(storeId, offerId);
+        }
+      }
+    }
+
+    const bestOfferIds = Array.from(new Set(bestOfferMap.values()));
+
+    if (bestOfferIds.length > 0) {
+      // Fetch full offer details for the winners
+      const bestOffers = await this.offerRepo.find({
+        where: { id: In(bestOfferIds) },
+        relations: ['images'],
+      });
+
+      // Map back to stores
+      for (const store of stores) {
+        const bestOfferId = bestOfferMap.get(store.id);
+        if (bestOfferId) {
+          (store as any).highest_discount_offer = bestOffers.find(
+            (o) => o.id === bestOfferId,
+          );
+        }
+      }
+    }
   }
 }

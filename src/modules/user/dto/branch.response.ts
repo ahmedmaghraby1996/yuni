@@ -107,6 +107,10 @@ export class BranchResponse {
   offers: OfferResponse[];
 
   @Expose()
+  @Type(() => OfferResponse)
+  highest_discount_offer: OfferResponse;
+
+  @Expose()
   @Type(() => SubCategory)
   subcategory: SubCategory;
 

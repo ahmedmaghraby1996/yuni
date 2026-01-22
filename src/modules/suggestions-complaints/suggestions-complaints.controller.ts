@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { SuggestionsComplaintsService } from './suggestions-complaints.service';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { SuggestionsComplaints } from 'src/infrastructure/entities/suggestions-complaints/suggestions-complaints.entity';
@@ -12,35 +20,44 @@ import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { query } from 'express';
 import { SuggestionsComplaintResponse } from './dto/suggestions-complaints-response';
 import { plainToClass, plainToInstance } from 'class-transformer';
-import { applyQueryIncludes } from 'src/core/helpers/service-related.helper';
+import {
+  applyQueryFilters,
+  applyQueryIncludes,
+} from 'src/core/helpers/service-related.helper';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
+import { Inject } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
 
 @ApiTags('Suggestions-complaints')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, )
+@Roles(Role.ADMIN, Role.CLIENT)
 @ApiBearerAuth()
 @Controller('suggestions-complaints')
 export class SuggestionsComplaintsController {
   constructor(
+    @Inject(REQUEST) private readonly _request: Request,
     private readonly suggestionsComplaintsService: SuggestionsComplaintsService,
   ) {}
 
   @Get()
   async getAllSuggestionsComplaints(@Query() query: PaginatedRequest) {
-    applyQueryIncludes(query, "user");
+    applyQueryIncludes(query, 'user');
+    applyQueryFilters(query, `user_id=${this._request.user.id}`);
     const result = await this.suggestionsComplaintsService.findAll(query);
-    const count= await this.suggestionsComplaintsService.count(query)
+    const count = await this.suggestionsComplaintsService.count(query);
     return new PaginatedResponse<SuggestionsComplaintResponse[]>(
       plainToInstance(SuggestionsComplaintResponse, result, {
         excludeExtraneousValues: true,
-      }),{meta:{...query,total:count}}
+      }),
+      { meta: { ...query, total: count } },
     );
   }
 
-  @Get("/:id")
-  async getSingleSuggestionsComplaints(@Param("id") id: string) {
-    
-    const result = await this.suggestionsComplaintsService.getSingleSuggestionsComplaint(id);
+  @Get('/:id')
+  async getSingleSuggestionsComplaints(@Param('id') id: string) {
+    const result =
+      await this.suggestionsComplaintsService.getSingleSuggestionsComplaint(id);
     return new ActionResponse<SuggestionsComplaintResponse>(
       plainToInstance(SuggestionsComplaintResponse, result, {
         excludeExtraneousValues: true,

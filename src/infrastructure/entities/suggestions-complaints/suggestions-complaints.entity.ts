@@ -6,21 +6,21 @@ import { AuditableEntity } from 'src/infrastructure/base/auditable.entity';
 
 @Entity()
 export class SuggestionsComplaints extends AuditableEntity {
+  @Column()
+  title: string;
 
+  @Column()
+  description: string;
 
-  @Column()  
-  title:string;
+  @ManyToOne(() => User, (user) => user.suggestionsComplaints)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+  @Column({ nullable: true })
+  user_id: string;
 
-  @Column()  
-  description:string;
+  @Column({ nullable: true })
+  email: string;
 
-  @ManyToOne(()=>User,(user)=>user.suggestionsComplaints)
-  @JoinColumn({name:'user_id'})
-  user:User
-  @Column({nullable:true})
-  user_id:string
-
-  @Column({nullable:true})
-  email:string
-    
+  @Column({ default: 'OPEN' })
+  status: 'OPEN' | 'CLOSED';
 }
