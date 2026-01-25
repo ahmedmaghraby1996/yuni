@@ -35,7 +35,8 @@ export class StoreService extends BaseService<Store> {
 
   //with active offers and images
   async getDetailsWithOffers(id: string) {
-    const store = await this.repo
+    const userId = this._request.user?.id;
+    let query = this.repo
       .createQueryBuilder('store')
       .leftJoinAndSelect(
         'store.offers',
@@ -47,14 +48,22 @@ export class StoreService extends BaseService<Store> {
       .leftJoinAndSelect('store.subcategory', 'subcategory')
       .leftJoinAndSelect('store.city', 'city')
       .leftJoinAndSelect('store.user', 'user')
-      .leftJoinAndSelect('store.followers', 'followers')
-      .where('store.id = :id', { id })
-      .getOne();
+      .where('store.id = :id', { id });
+
+    if (userId) {
+      query = query.leftJoinAndSelect(
+        'store.followers',
+        'followers',
+        'followers.user_id = :userId',
+        { userId },
+      );
+    }
+    // .leftJoinAndSelect('store.followers', 'followers')
+
+    const store = await query.getOne();
 
     if (store) {
-      store.is_followed = store.followers?.some(
-        (f) => f.user_id === this._request.user?.id,
-      );
+      store.is_followed = userId && store.followers?.length > 0 ? true : false;
     }
     return store;
   }

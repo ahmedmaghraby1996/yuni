@@ -23,6 +23,7 @@ import { plainToInstance } from 'class-transformer';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
+import { JwtOptionalAuthGuard } from '../authentication/guards/jwt-optional-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import {
@@ -191,6 +192,7 @@ export class OffersController {
   }
 
   @Get('store/:id')
+  @UseGuards(JwtOptionalAuthGuard)
   async geStoredetials(@Param('id') id: string) {
     const stores = await this.storeService.getDetailsWithOffers(id);
     const result = plainToInstance(BranchResponse, stores, {
