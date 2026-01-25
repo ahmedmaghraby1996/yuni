@@ -190,9 +190,9 @@ export class OffersController {
       meta: { total, ...query },
     });
   }
-
-  @Get('store/:id')
+  @ApiBearerAuth()
   @UseGuards(JwtOptionalAuthGuard)
+  @Get('store/:id')
   async geStoredetials(@Param('id') id: string) {
     const stores = await this.storeService.getDetailsWithOffers(id);
     const result = plainToInstance(BranchResponse, stores, {
