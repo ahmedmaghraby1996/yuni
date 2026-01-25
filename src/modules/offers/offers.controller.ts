@@ -100,7 +100,9 @@ export class OffersController {
       meta: { total, ...PaginatedRequest },
     });
   }
-
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT, Role.STORE)
   @Get('store')
   async getStore(@Query() query: GetStoreRequest) {
     const {
@@ -169,8 +171,16 @@ export class OffersController {
   @Roles(Role.CLIENT)
   @ApiOperation({ summary: 'Get Stores Followed by User' })
   @Get('store/following')
-  async getFollowingStores(@Query() query: PaginatedRequest) {
-    const { stores, total } = await this.storeService.getFollowingStores(query);
+  async getFollowingStores(
+    @Query() query: PaginatedRequest,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+  ) {
+    const { stores, total } = await this.storeService.getFollowingStores(
+      query,
+      lat,
+      lng,
+    );
     const result = plainToInstance(BranchResponse, stores, {
       excludeExtraneousValues: true,
     });
@@ -197,7 +207,7 @@ export class OffersController {
   @ApiOperation({ summary: 'Follow or Unfollow a Store' })
   @Post('store/follow/:id')
   async followStore(@Param('id') id: string) {
-    return await this.storeService.toggleFollowStore(id);
+    return new ActionResponse(await this.storeService.toggleFollowStore(id));
   }
 
   @ApiBearerAuth()
@@ -442,7 +452,7 @@ export class OffersController {
   @Post('add-remove-favorite/:id')
   async addRemoveFavorite(@Param('id') id: string) {
     const offer = await this.offersService.addRemoveFavorite(id);
-    return offer;
+    return new ActionResponse(offer);
   }
 
   @ApiBearerAuth()

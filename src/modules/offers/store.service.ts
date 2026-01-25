@@ -94,7 +94,11 @@ export class StoreService extends BaseService<Store> {
     return { users: followers.map((f) => f.user), total };
   }
 
-  async getFollowingStores(query: PaginatedRequest) {
+  async getFollowingStores(
+    query: PaginatedRequest,
+    lat?: string,
+    lng?: string,
+  ) {
     const page = query.page || 1;
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
@@ -112,10 +116,44 @@ export class StoreService extends BaseService<Store> {
       .map((f) => {
         // Manually populating is_followed since we are fetching from follows table
         f.store.is_followed = true;
+
+        if (lat && lng && f.store.latitude && f.store.longitude) {
+          f.store.distance = this.calculateDistance(
+            Number(lat),
+            Number(lng),
+            Number(f.store.latitude),
+            Number(f.store.longitude),
+          );
+        }
+
         return f.store;
       });
 
     return { stores, total };
+  }
+
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371000; // Radius of the earth in m
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in m
+    return parseFloat(d.toFixed(2));
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI / 180);
   }
 
   async findNearbyStores(
@@ -208,6 +246,7 @@ export class StoreService extends BaseService<Store> {
     });
 
     await this.enrichWithHighestDiscountOffer(stores as unknown as Store[]);
+    await this.enrichWithIsFollowed(stores as unknown as Store[]);
 
     return { stores, total };
   }
@@ -250,6 +289,7 @@ export class StoreService extends BaseService<Store> {
     const stores = await queryBuilder.getMany();
 
     await this.enrichWithHighestDiscountOffer(stores);
+    await this.enrichWithIsFollowed(stores);
 
     return { stores, total };
   }
@@ -311,6 +351,26 @@ export class StoreService extends BaseService<Store> {
           );
         }
       }
+    }
+  }
+
+  private async enrichWithIsFollowed(stores: Store[]) {
+    if (!this._request.user?.id || !stores.length) return;
+
+    const storeIds = stores.map((s) => s.id);
+
+    const follows = await this.storeFollowRepo.find({
+      where: {
+        user_id: this._request.user.id,
+        store_id: In(storeIds),
+      },
+      select: ['store_id'],
+    });
+
+    const followedStoreIds = new Set(follows.map((f) => f.store_id));
+
+    for (const store of stores) {
+      (store as any).is_followed = followedStoreIds.has(store.id);
     }
   }
 }

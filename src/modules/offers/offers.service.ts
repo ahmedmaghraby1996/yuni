@@ -305,13 +305,14 @@ export class OffersService extends BaseService<Offer> {
     });
     if (favorite) {
       await this.favoriteOfferRepo.remove(favorite);
+      return false;
     } else {
       await this.favoriteOfferRepo.save({
         offer_id: offer_id,
         user_id: this.request.user.id,
       });
+      return true;
     }
-    return true;
   }
 
   async findOne(id: string) {
