@@ -3,6 +3,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { IsNotEmpty, IsString } from 'class-validator';
 import e from 'express';
 
+import { extractPhoneDetails } from 'src/core/helpers/phone.helper';
 import { toUrl } from 'src/core/helpers/file.helper';
 import { City } from 'src/infrastructure/entities/city/city.entity';
 import { Package } from 'src/infrastructure/entities/package/package.entity';
@@ -16,6 +17,19 @@ export class UserResponse {
   name: string;
 
   @Expose()
+  @Transform(({ obj }) => {
+    if (!obj.phone) return null;
+    const details = extractPhoneDetails(obj.phone);
+    return details?.code || null; // Return null if code is empty string or not found
+  })
+  code: string;
+
+  @Expose()
+  @Transform(({ obj }) => {
+    if (!obj.phone) return null;
+    const details = extractPhoneDetails(obj.phone);
+    return details?.phone || obj.phone;
+  })
   phone: string;
 
   @Expose()
