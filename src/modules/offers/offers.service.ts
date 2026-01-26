@@ -85,15 +85,26 @@ export class OffersService extends BaseService<Offer> {
         await this.offerUsageRepo.save(usage);
         // await this.repo.increment({ id: offer_id }, 'uses', 1);
       }
+      return usage.is_active;
     } else {
-      await this.offerUsageRepo.save({
+      const newUsage = await this.offerUsageRepo.save({
         offer_id: offer_id,
         user_id: this.request.user.id,
         is_active: true,
       });
       await this.repo.increment({ id: offer_id }, 'uses', 1);
+      return newUsage.is_active;
     }
-    return true;
+  }
+
+  async toggleOfferIsActive(offer_id: string) {
+    const offer = await this.repo.findOne({ where: { id: offer_id } });
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+    offer.is_active = !offer.is_active;
+    await this.repo.save(offer);
+    return offer.is_active;
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -463,7 +463,16 @@ export class OffersController {
   @ApiOperation({ summary: 'Toggle Offer Active Status (Used/Not Used)' })
   @Post('toggle-active/:id')
   async toggleOfferStatus(@Param('id') id: string) {
-    return await this.offersService.toggleOfferStatus(id);
+    return new ActionResponse(await this.offersService.toggleOfferStatus(id));
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE, Role.ADMIN)
+  @ApiOperation({ summary: 'Toggle Offer Visibility (is_active)' })
+  @Post('toggle-is-active/:id')
+  async toggleOfferIsActive(@Param('id') id: string) {
+    return new ActionResponse(await this.offersService.toggleOfferIsActive(id));
   }
 
   //get favorite offers
