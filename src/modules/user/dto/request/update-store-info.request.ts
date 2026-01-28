@@ -16,28 +16,37 @@ export class UpdateStoreInfoRequest {
     example: 'My Store',
     default: 'My Store',
   })
-   @IsOptional()
+  @IsOptional()
   @IsString()
   name: string;
+  @ApiProperty({
+    required: false,
+    description: 'Store email',
+    example: 'example@mail.com',
+    default: 'example@mail.com',
+  })
+  @IsOptional()
+  @IsString()
+  email: string;
 
-  id:string
+  id: string;
   @ApiProperty({
     required: false,
     description: 'Store address',
     example: 'My Address',
     default: 'My Address',
   })
- @IsOptional()
+  @IsOptional()
   @IsString()
   address: string;
   // LATITUDE AND LONGITUDE
   @ApiProperty({
-    required: false ,
+    required: false,
     description: 'Store latitude',
     example: '24.7136',
     default: '24.7136',
   })
- @IsOptional()
+  @IsOptional()
   @IsLatitude()
   latitude: number;
 
@@ -177,16 +186,16 @@ export class UpdateStoreInfoRequest {
   @IsOptional()
   @IsString()
   category_id: string;
-    @ApiProperty({ required: false, type: Boolean })
-    @IsOptional()
-    @Transform(({ value }) => {
-      if (typeof value === 'string') {
-        return value.toLowerCase() === 'true';
-      }
-      return Boolean(value);
-    })
-    @IsBoolean()
-    is_active?: boolean;
+  @ApiProperty({ required: false, type: Boolean })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  })
+  @IsBoolean()
+  is_active?: boolean;
 }
 
 export class UpdateBranchInfoRequest {
@@ -208,6 +217,16 @@ export class UpdateBranchInfoRequest {
   @IsOptional()
   @IsString()
   name: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Store email',
+    example: 'example@mail.com',
+    default: 'example@mail.com',
+  })
+  @IsOptional()
+  @IsString()
+  email: string;
 
   @ApiProperty({
     required: false,

@@ -150,6 +150,7 @@ export class UserService extends BaseService<User> {
     if (req.is_active != null) store.is_active = req.is_active;
     store.first_phone = req.first_phone;
     store.second_phone = req.second_phone;
+    if (req.email) store.email = req.email;
 
     if (req?.logo) {
       const resizedImage = await this.imageManager.resize(req.logo, {
@@ -194,6 +195,7 @@ export class UserService extends BaseService<User> {
     if (req.latitude) store.latitude = req.latitude;
     if (req.longitude) store.longitude = req.longitude;
     if (req.city_id) store.city_id = req.city_id;
+    if (req.email) store.email = req.email;
 
     return await this.storeRepo.save(store);
   }

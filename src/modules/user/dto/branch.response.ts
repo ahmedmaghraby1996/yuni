@@ -116,4 +116,7 @@ export class BranchResponse {
 
   @Expose()
   is_followed: boolean;
+
+  @Expose()
+  email: string;
 }
