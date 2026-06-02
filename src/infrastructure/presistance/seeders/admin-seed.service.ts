@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
 import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 
@@ -11,6 +12,7 @@ export class AdminSeedService implements OnApplicationBootstrap {
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly configService: ConfigService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -20,7 +22,8 @@ export class AdminSeedService implements OnApplicationBootstrap {
 
     if (adminExists) return;
 
-    const password = await bcrypt.hash('Admin@123456', bcrypt.genSaltSync(10));
+    const appKey = this.configService.get<string>('app.key');
+    const password = await bcrypt.hash('Admin@123456' + appKey, bcrypt.genSaltSync(10));
 
     const admin = this.userRepository.create({
       name: 'Super Admin',
