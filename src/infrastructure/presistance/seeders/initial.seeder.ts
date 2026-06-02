@@ -6,8 +6,10 @@ import { BannerSeeder } from './banner.seeder';
 import { StoreSeeder } from './store.seeder';
 import { OfferSeeder } from './offer.seeder';
 import { FaqSeeder } from './faq.seeder';
+import { AdminUserSeeder } from './admin-user.seeder';
 
 export const DB_SEEDERS = [
+  AdminUserSeeder,
   // UsersSeeder,
   // AddressSeeder,
   // CitySeeder,

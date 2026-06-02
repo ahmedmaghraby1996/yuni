@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "node dist/infrastructure/presistance/seeders/seeder",
     "seed:refresh": "node dist/infrastructure/presistance/seeders/seeder --refresh",
+    "seed:dev": "ts-node -r tsconfig-paths/register src/infrastructure/presistance/seeders/seeder.ts",
     "update": "npx ncu -u -f \"/nestjs*/\" && npm install"
   },
   "dependencies": {

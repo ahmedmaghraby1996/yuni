@@ -19,16 +19,17 @@ import { SuggestionsComplaintsModule } from 'src/modules/suggestions-complaints/
 import { TransactionModule } from 'src/modules/transaction/transaction.module';
 import { UserModule } from 'src/modules/user/user.module';
 
-function filterByAdminTag(document: OpenAPIObject): OpenAPIObject {
+function isAdminOperation(operation: any): boolean {
+  return operation && typeof operation === 'object' && operation['x-admin'] === true;
+}
+
+function filterByAdminExtension(document: OpenAPIObject): OpenAPIObject {
   const filteredPaths: Record<string, any> = {};
   for (const [path, pathItem] of Object.entries(document.paths || {})) {
     const filteredMethods: Record<string, any> = {};
     for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
-      if (operation && typeof operation === 'object' && Array.isArray(operation.tags) && operation.tags.includes('Admin')) {
-        filteredMethods[method] = {
-          ...operation,
-          tags: operation.tags.filter((t: string) => t !== 'Admin'),
-        };
+      if (isAdminOperation(operation)) {
+        filteredMethods[method] = operation;
       }
     }
     if (Object.keys(filteredMethods).length > 0) {
@@ -38,13 +39,12 @@ function filterByAdminTag(document: OpenAPIObject): OpenAPIObject {
   return { ...document, paths: filteredPaths };
 }
 
-function filterOutAdminTag(document: OpenAPIObject): OpenAPIObject {
+function filterOutAdminExtension(document: OpenAPIObject): OpenAPIObject {
   const filteredPaths: Record<string, any> = {};
   for (const [path, pathItem] of Object.entries(document.paths || {})) {
     const filteredMethods: Record<string, any> = {};
     for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
-      const hasAdminTag = operation && typeof operation === 'object' && Array.isArray(operation.tags) && operation.tags.includes('Admin');
-      if (!hasAdminTag) {
+      if (!isAdminOperation(operation)) {
         filteredMethods[method] = operation;
       }
     }
@@ -97,8 +97,8 @@ export default (app: INestApplication, config: ConfigService) => {
     operationIdFactory,
   });
 
-  const publicDocument = filterOutAdminTag(fullDocument);
-  const adminDocument = filterByAdminTag(fullDocument);
+  const publicDocument = filterOutAdminExtension(fullDocument);
+  const adminDocument = filterByAdminExtension(fullDocument);
 
   SwaggerModule.setup('swagger', app, publicDocument);
   SwaggerModule.setup('swagger/admin', app, adminDocument, {

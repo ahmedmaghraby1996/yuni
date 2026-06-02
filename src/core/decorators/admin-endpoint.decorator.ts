@@ -1,4 +1,4 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExtension } from '@nestjs/swagger';
 
-export const AdminEndpoint = () => applyDecorators(ApiTags('Admin'), ApiBearerAuth());
+export const AdminEndpoint = () => applyDecorators(ApiExtension('x-admin', true), ApiBearerAuth());
