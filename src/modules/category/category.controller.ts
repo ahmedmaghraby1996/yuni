@@ -1,6 +1,7 @@
 import { Body, ClassSerializerInterceptor, Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { SubCategoryService } from '../offers/sub_category.service';
@@ -17,6 +18,7 @@ import { ActionResponse } from 'src/core/base/responses/action.response';
 import { UploadValidator } from 'src/core/validators/upload.validator';
 import { CreateCategoryRequest, CreateSubCategoryRequest, UpdateCategoryRequest, UpdateSubCategoryRequest } from './dto/request/create-category.request';
 import { applyQueryIncludes } from 'src/core/helpers/service-related.helper';
+@AdminEndpoint()
 @ApiTags('Category')
 @ApiHeader({
   name: 'Accept-Language',

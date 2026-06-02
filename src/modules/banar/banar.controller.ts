@@ -4,6 +4,7 @@ import {
     Controller, Delete, Get, Param, Patch, Post, Query, UploadedFile, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { BanarService } from './banar.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
@@ -35,6 +36,7 @@ export class BanarController {
         private readonly banarService: BanarService,
     ) { }
 
+    @AdminEndpoint()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Post()
     @Roles(Role.ADMIN)
@@ -50,6 +52,7 @@ export class BanarController {
         const result = plainToInstance(BannerResponse, banner, { excludeExtraneousValues: true })
         return new ActionResponse<BannerResponse>(result);
     }
+    @AdminEndpoint()
     @Roles(Role.ADMIN)
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Get()
@@ -130,6 +133,7 @@ export class BanarController {
     }
 
 
+    @AdminEndpoint()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Patch(":id")
     @Roles(Role.ADMIN)
@@ -147,6 +151,7 @@ export class BanarController {
         return new ActionResponse<BannerResponse>(result);
     }
 
+    @AdminEndpoint()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(":id")
     @Roles(Role.ADMIN)

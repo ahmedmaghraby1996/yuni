@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
 import { AuthenticationModule } from 'src/modules/authentication/authentication.module';
 import { BanarModule } from 'src/modules/banar/banar.module';
@@ -19,11 +19,44 @@ import { SuggestionsComplaintsModule } from 'src/modules/suggestions-complaints/
 import { TransactionModule } from 'src/modules/transaction/transaction.module';
 import { UserModule } from 'src/modules/user/user.module';
 
+function filterByAdminTag(document: OpenAPIObject): OpenAPIObject {
+  const filteredPaths: Record<string, any> = {};
+  for (const [path, pathItem] of Object.entries(document.paths || {})) {
+    const filteredMethods: Record<string, any> = {};
+    for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
+      if (operation && typeof operation === 'object' && Array.isArray(operation.tags) && operation.tags.includes('Admin')) {
+        filteredMethods[method] = operation;
+      }
+    }
+    if (Object.keys(filteredMethods).length > 0) {
+      filteredPaths[path] = filteredMethods;
+    }
+  }
+  return { ...document, paths: filteredPaths };
+}
+
+function filterOutAdminTag(document: OpenAPIObject): OpenAPIObject {
+  const filteredPaths: Record<string, any> = {};
+  for (const [path, pathItem] of Object.entries(document.paths || {})) {
+    const filteredMethods: Record<string, any> = {};
+    for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
+      const hasAdminTag = operation && typeof operation === 'object' && Array.isArray(operation.tags) && operation.tags.includes('Admin');
+      if (!hasAdminTag) {
+        filteredMethods[method] = operation;
+      }
+    }
+    if (Object.keys(filteredMethods).length > 0) {
+      filteredPaths[path] = filteredMethods;
+    }
+  }
+  return { ...document, paths: filteredPaths };
+}
+
 export default (app: INestApplication, config: ConfigService) => {
   const operationIdFactory = (controllerKey: string, methodKey: string) =>
     methodKey;
 
-  const publicConfig = new DocumentBuilder()
+  const baseConfig = new DocumentBuilder()
     .addBearerAuth()
     .setTitle(`${config.get('APP_NAME')} API`)
     .setDescription(`${config.get('APP_NAME')} API description`)
@@ -40,7 +73,7 @@ export default (app: INestApplication, config: ConfigService) => {
     .addServer(config.get('APP_HOST'))
     .build();
 
-  const publicDocument = SwaggerModule.createDocument(app, publicConfig, {
+  const fullDocument = SwaggerModule.createDocument(app, baseConfig, {
     include: [
       AuthenticationModule,
       UserModule,
@@ -61,5 +94,11 @@ export default (app: INestApplication, config: ConfigService) => {
     operationIdFactory,
   });
 
+  const publicDocument = filterOutAdminTag(fullDocument);
+  const adminDocument = filterByAdminTag(fullDocument);
+
   SwaggerModule.setup('swagger', app, publicDocument);
+  SwaggerModule.setup('swagger/admin', app, adminDocument, {
+    swaggerOptions: { persistAuthorization: true },
+  });
 };

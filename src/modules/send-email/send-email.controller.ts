@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Head, Header, Headers, Inject, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
@@ -9,7 +10,7 @@ import { Router } from 'src/core/base/router';
 import { SendEmailService } from './send-email.service';
 import { SendMessageRequest } from './dto/request/send-message.request';
 
-@ApiBearerAuth()
+@AdminEndpoint()
 @ApiTags("Send Messages")
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
 @UseGuards(JwtAuthGuard, RolesGuard)

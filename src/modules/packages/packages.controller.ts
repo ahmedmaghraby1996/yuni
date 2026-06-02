@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { PackagesService } from './packages.service';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -23,7 +24,7 @@ import { ActionResponse } from 'src/core/base/responses/action.response';
   required: false,
   description: 'Language header: en, ar',
 })
-@ApiBearerAuth()
+@AdminEndpoint()
 @UseGuards(JwtAuthGuard)
 @Roles(Role.ADMIN)
 @ApiTags('Packages')

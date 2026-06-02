@@ -29,6 +29,7 @@ import {
   ApiHeader,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { UserService } from './user.service';
 import { UpdateFcmRequest } from './dto/update-fcm.request';
 import { REQUEST } from '@nestjs/core';
@@ -98,7 +99,7 @@ export class UserController {
     const subscribe = await this.userService.buyPackage(package_id);
     return new ActionResponse(subscribe);
   }
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('')
@@ -166,7 +167,7 @@ export class UserController {
     );
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('activate-agent/:id')
@@ -178,7 +179,7 @@ export class UserController {
     return new ActionResponse(agent);
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('reject-agent/:id')
@@ -333,7 +334,7 @@ export class UserController {
       { name: 'catalogue', maxCount: 1 },
     ]),
   )
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiConsumes('multipart/form-data')
   @Roles(Role.ADMIN)
@@ -361,7 +362,7 @@ export class UserController {
     return new ActionResponse(storeInfo);
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('approve-store/:id')
@@ -369,7 +370,7 @@ export class UserController {
     return this.userService.adminAcceptStore(id);
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('reject-store/:id')

@@ -22,6 +22,7 @@ import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { plainToInstance } from 'class-transformer';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { JwtOptionalAuthGuard } from '../authentication/guards/jwt-optional-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -155,6 +156,7 @@ export class OffersController {
     }
   }
 
+  @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Get('admin/store')
   async getAllStore(@Query() query: PaginatedRequest) {
@@ -220,7 +222,7 @@ export class OffersController {
     const offer = await this.offersService.createOffer(req);
     return offer;
   }
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
   @Put('update')
@@ -229,7 +231,7 @@ export class OffersController {
     return offer;
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
   @Put('update/:offer_id')
@@ -271,7 +273,7 @@ export class OffersController {
     });
   }
   //
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
   @Get('/admin/all')
@@ -426,7 +428,7 @@ export class OffersController {
     });
   }
   //DELETE OFFER
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
   @Delete('delete/:id')
@@ -466,7 +468,7 @@ export class OffersController {
     return new ActionResponse(await this.offersService.toggleOfferStatus(id));
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
   @ApiOperation({ summary: 'Toggle Offer Visibility (is_active)' })
@@ -526,7 +528,7 @@ export class OffersController {
     return new ActionResponse(response);
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
   @Get('admin/details/:id')

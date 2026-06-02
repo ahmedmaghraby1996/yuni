@@ -14,7 +14,10 @@ async function bootstrap() {
  // helmet
   app.use(compression());
   app.setGlobalPrefix('v1', {
-    exclude: [{ path: 'swagger', method: RequestMethod.GET }],
+    exclude: [
+      { path: 'swagger', method: RequestMethod.GET },
+      { path: 'swagger/admin', method: RequestMethod.GET },
+    ],
   });
 
   const config = app.get<ConfigService>(ConfigService);

@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { plainToInstance } from 'class-transformer';
 
 import { NotificationResponse } from '../dto/notification.response';
@@ -70,6 +71,7 @@ export class NotificationController {
     }
   }
 
+  @AdminEndpoint()
   @Get("/:id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN,)
@@ -94,6 +96,7 @@ return new ActionResponse<NotificationResponse>(
     return new ActionResponse<NotificationResponse>(response);
   }
 
+  @AdminEndpoint()
   @Roles(Role.ADMIN,)
   @Post('send-to-users')
   async sendToUsers(
@@ -101,6 +104,7 @@ return new ActionResponse<NotificationResponse>(
   ) {
     await this.notificationService.sendToUsers(sendToUsersNotificationRequest);
   }
+  @AdminEndpoint()
   @Post('send-to-all')
   async sendToAll(
     @Body() sendToUsersNotificationRequest: SendToAllUsersNotificationRequest,

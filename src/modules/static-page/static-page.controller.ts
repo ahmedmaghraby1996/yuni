@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
@@ -40,6 +41,7 @@ export class StaticPageController {
     @Inject(REQUEST) private readonly request: Request,
   ) {}
 
+  @AdminEndpoint()
   @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

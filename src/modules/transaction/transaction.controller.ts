@@ -9,6 +9,7 @@ import {
   applyQuerySort,
 } from 'src/core/helpers/service-related.helper';
 import { ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { plainToInstance } from 'class-transformer';
@@ -53,6 +54,7 @@ export class TransactionController {
     return new ActionResponse(await this.transactionService.getWallet());
   }
 
+  @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Post()
   async makeTransaction(@Body() request: MakeTransactionRequest) {
@@ -61,6 +63,7 @@ export class TransactionController {
     );
   }
 
+  @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Post('set-agent-percentage')
   async set(@Body() request: setAgentPercentageRequest) {
@@ -69,6 +72,7 @@ export class TransactionController {
     );
   }
 
+  @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Get('earnings')
   async getEarnings() {

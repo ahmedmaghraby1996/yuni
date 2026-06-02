@@ -26,6 +26,7 @@ import {
   ApiHeader,
   ApiTags,
 } from '@nestjs/swagger';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { Router } from 'src/core/base/router';
@@ -188,8 +189,8 @@ export class AuthenticationController {
     );
   }
 
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Post('create/city')
   async createCity(@Body() req: CreateCityRequest) {
@@ -198,8 +199,8 @@ export class AuthenticationController {
     return new ActionResponse(city);
   }
 
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Put('edit/city/:id')
   async updateCity(@Param('id') id: string, @Body() req: UpdateCityRequest) {
@@ -209,8 +210,8 @@ export class AuthenticationController {
     return new ActionResponse(city);
   }
 
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
   @Roles(Role.ADMIN)
   @Delete('delete/city/:id')
   async delete(@Param('id') id: string) {
