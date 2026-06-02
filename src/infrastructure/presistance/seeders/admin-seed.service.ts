@@ -16,14 +16,21 @@ export class AdminSeedService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    const appKey = this.configService.get<string>('app.key');
+    const password = await bcrypt.hash('Admin@123456' + appKey, bcrypt.genSaltSync(10));
+
     const adminExists = await this.userRepository.findOne({
       where: { username: 'superadmin' },
     });
 
-    if (adminExists) return;
-
-    const appKey = this.configService.get<string>('app.key');
-    const password = await bcrypt.hash('Admin@123456' + appKey, bcrypt.genSaltSync(10));
+    if (adminExists) {
+      const isCorrect = await bcrypt.compare('Admin@123456' + appKey, adminExists.password);
+      if (!isCorrect) {
+        await this.userRepository.update(adminExists.id, { password });
+        this.logger.log('Admin password corrected');
+      }
+      return;
+    }
 
     const admin = this.userRepository.create({
       name: 'Super Admin',
@@ -38,6 +45,6 @@ export class AdminSeedService implements OnApplicationBootstrap {
     });
 
     await this.userRepository.save(admin);
-    this.logger.log('Admin user seeded: superadmin / Admin@123456');
+    this.logger.log('Admin user seeded — username: superadmin, password: Admin@123456');
   }
 }
