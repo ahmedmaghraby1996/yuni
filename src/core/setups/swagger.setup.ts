@@ -25,7 +25,10 @@ function filterByAdminTag(document: OpenAPIObject): OpenAPIObject {
     const filteredMethods: Record<string, any> = {};
     for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
       if (operation && typeof operation === 'object' && Array.isArray(operation.tags) && operation.tags.includes('Admin')) {
-        filteredMethods[method] = operation;
+        filteredMethods[method] = {
+          ...operation,
+          tags: operation.tags.filter((t: string) => t !== 'Admin'),
+        };
       }
     }
     if (Object.keys(filteredMethods).length > 0) {
@@ -53,7 +56,7 @@ function filterOutAdminTag(document: OpenAPIObject): OpenAPIObject {
 }
 
 export default (app: INestApplication, config: ConfigService) => {
-  const operationIdFactory = (controllerKey: string, methodKey: string) =>
+  const operationIdFactory = (_controllerKey: string, methodKey: string) =>
     methodKey;
 
   const baseConfig = new DocumentBuilder()
