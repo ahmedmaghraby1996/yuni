@@ -13,4 +13,7 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run seed:dev && npm run start:dev"]
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+
+CMD ["./docker-entrypoint.sh"]

@@ -14,5 +14,7 @@ COPY . .
 RUN npm run build
 EXPOSE 3000
 
-# Start the app
-CMD ["sh", "-c", "npm run seed && npm run start:prod"]
+COPY docker-entrypoint.prod.sh .
+RUN chmod +x docker-entrypoint.prod.sh
+
+CMD ["./docker-entrypoint.prod.sh"]
