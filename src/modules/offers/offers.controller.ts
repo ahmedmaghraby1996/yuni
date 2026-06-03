@@ -37,6 +37,8 @@ import { ActionResponse } from 'src/core/base/responses/action.response';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { CategoryService } from '../category/category.service';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
+import { CreateOfferRequest } from './dto/requests/create-offer.request';
 
 @ApiTags('Offers')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
@@ -224,6 +226,39 @@ export class OffersController {
     if (!offer) throw new NotFoundException('Offer not found');
     offer.is_favorite = offer.favorites?.some(f => String(f.user_id) === String(this.request.user?.id)) ?? false;
     return new ActionResponse(this._i18nResponse.entity(plainToInstance(OfferResponse, offer, { excludeExtraneousValues: true })));
+  }
+
+  // ─── Store ─────────────────────────────────────────────────────────────────
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
+  @Get('my-offers')
+  async getStoreOffers(@Query() query: PaginatedRequest) {
+    applyQueryIncludes(query, 'stores');
+    applyQueryIncludes(query, 'subcategory');
+    applyQueryIncludes(query, 'images');
+    applyQueryFilters(query, `user_id=${this.request.user.id}`);
+    const total = await this.offersService.count(query);
+    const offers = await this.offersService.findAll(query);
+    const result = plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, ...query } });
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
+  @Post()
+  async createOffer(@Body() req: CreateOfferRequest) {
+    return await this.offersService.createOffer(req);
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
+  @Post('make-special/:id')
+  async makeSpecialOffer(@Param('id') id: string) {
+    return await this.offersService.makeSepcial(id);
   }
 
   // ─── Admin ─────────────────────────────────────────────────────────────────

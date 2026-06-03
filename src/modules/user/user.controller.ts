@@ -4,72 +4,44 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Inject,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
-  Req,
-  Res,
   UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { ActionResponse } from 'src/core/base/responses/action.response';
-import {
-  ApiBearerAuth,
-  ApiConsumes,
-  ApiHeader,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
+import { StoreOfferUserResponse } from '../offers/dto/responses/store-offer-user.response';
 import { UserService } from './user.service';
 import { UpdateFcmRequest } from './dto/update-fcm.request';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
-import {
-  applyQueryFilters,
-  applyQueryIncludes,
-} from 'src/core/helpers/service-related.helper';
+import { applyQueryFilters, applyQueryIncludes } from 'src/core/helpers/service-related.helper';
 import { plainToInstance } from 'class-transformer';
-import {
-  AcceptAgentRequest,
-  AgentResponse,
-  UserResponse,
-} from './dto/response/user-response';
+import { AcceptAgentRequest, AgentResponse, UserResponse } from './dto/response/user-response';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { GetUserRequest } from './dto/get-user.request';
-import {
-  FileFieldsInterceptor,
-  FileInterceptor,
-} from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
 import { RegisterResponse } from '../authentication/dto/responses/register.response';
 import { UpdateProfileRequest } from './dto/update-profile-request';
-import { ILike, Repository } from 'typeorm';
 import { PaymentResponseInterface } from './dto/response/payment.response';
-import { InjectRepository } from '@nestjs/typeorm';
-import { toUrl } from 'src/core/helpers/file.helper';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
-import {
-  UpdateBranchInfoRequest,
-  UpdateStoreInfoRequest,
-} from './dto/request/update-store-info.request';
+import { UpdateBranchInfoRequest, UpdateStoreInfoRequest } from './dto/request/update-store-info.request';
 import { AddBranchRequest } from './dto/request/add-branch.request';
 import { BranchResponse } from './dto/branch.response';
-import { Agent } from 'http';
-import { app } from 'firebase-admin';
 
 @ApiHeader({
   name: 'Accept-Language',
@@ -99,6 +71,17 @@ export class UserController {
   @Post('subscribe/:package_id')
   async subscribePackage(@Param('package_id') package_id: string) {
     return new ActionResponse(await this.userService.buyPackage(package_id));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get users who used store codes with usage count per user' })
+  @Get('code-users')
+  async getCodeUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
+    const { results, total } = await this.userService.getStoreOfferUsers(Number(page), Number(limit));
+    const data = plainToInstance(StoreOfferUserResponse, results, { excludeExtraneousValues: true });
+    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
   @AdminEndpoint()
@@ -191,11 +174,7 @@ export class UserController {
   }
 
   @Post('confirm/payment')
-  async handleWebhook(
-    @Body() body: any,
-    // assuming URWAY sends it in header
-  ) {
-    const expectedApiKey = process.env.URWAY_WEBHOOK_API_KEY;
+  async handleWebhook(@Body() body: any) {
     console.log(this.request.headers);
     // 1. Validate API Key
     // if (
