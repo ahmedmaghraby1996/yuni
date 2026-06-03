@@ -17,6 +17,7 @@ async function bootstrap() {
     exclude: [
       { path: 'swagger', method: RequestMethod.GET },
       { path: 'swagger/admin', method: RequestMethod.GET },
+      { path: 'swagger/store', method: RequestMethod.GET },
     ],
   });
 

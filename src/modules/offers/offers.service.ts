@@ -97,6 +97,45 @@ export class OffersService extends BaseService<Offer> {
     }
   }
 
+  async getStoreOfferUsers(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const userId = this.request.user.id;
+
+    const baseQb = () =>
+      this.offerUsageRepo
+        .createQueryBuilder('usage')
+        .innerJoin('usage.offer', 'offer')
+        .innerJoin('offer.stores', 'store')
+        .innerJoin('usage.user', 'user')
+        .where('store.user_id = :userId', { userId })
+        .andWhere('usage.is_active = true')
+        .andWhere('usage.deleted_at IS NULL');
+
+    const totalRaw = await baseQb()
+      .select('COUNT(DISTINCT usage.user_id)', 'cnt')
+      .getRawOne();
+    const total = parseInt(totalRaw?.cnt ?? '0', 10);
+
+    const results = await baseQb()
+      .select([
+        'usage.user_id AS userId',
+        'user.name AS name',
+        'user.phone AS phone',
+        'user.avatar AS avatar',
+        'COUNT(DISTINCT usage.id) AS activated_count', // mapped to codes_count in DTO
+      ])
+      .groupBy('usage.user_id')
+      .addGroupBy('user.name')
+      .addGroupBy('user.phone')
+      .addGroupBy('user.avatar')
+      .orderBy('activated_count', 'DESC')
+      .offset(skip)
+      .limit(limit)
+      .getRawMany();
+
+    return { results, total };
+  }
+
   async toggleOfferIsActive(offer_id: string) {
     const offer = await this.repo.findOne({ where: { id: offer_id } });
     if (!offer) {

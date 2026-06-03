@@ -23,6 +23,7 @@ import { plainToInstance } from 'class-transformer';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { JwtOptionalAuthGuard } from '../authentication/guards/jwt-optional-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -42,6 +43,7 @@ import { app } from 'firebase-admin';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { OfferResponse } from './dto/responses/offer-response';
+import { StoreOfferUserResponse } from './dto/responses/store-offer-user.response';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { SubCategoryService } from './sub_category.service';
 import { Not } from 'typeorm';
@@ -215,7 +217,7 @@ export class OffersController {
     return new ActionResponse(await this.storeService.toggleFollowStore(id));
   }
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
   @Post('create')
@@ -253,7 +255,26 @@ export class OffersController {
     return offer;
   }
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get users who activated store offers with activation count' })
+  @Get('store/offer-users')
+  async getStoreOfferUsers(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    const { results, total } = await this.offersService.getStoreOfferUsers(
+      Number(page),
+      Number(limit),
+    );
+    const data = plainToInstance(StoreOfferUserResponse, results, {
+      excludeExtraneousValues: true,
+    });
+    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
+  }
+
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
   @Get('store-offers')
@@ -441,7 +462,7 @@ export class OffersController {
     return await this.offersService.softDelete(id);
   }
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
   @Post('make-special/:id')

@@ -30,6 +30,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { UserService } from './user.service';
 import { UpdateFcmRequest } from './dto/update-fcm.request';
 import { REQUEST } from '@nestjs/core';
@@ -83,7 +84,7 @@ export class UserController {
     @Inject(REQUEST) private request: Request,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Get('packages')
@@ -302,7 +303,7 @@ export class UserController {
       { name: 'catalogue', maxCount: 1 },
     ]),
   )
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiConsumes('multipart/form-data')
   @Roles(Role.STORE)
@@ -378,7 +379,7 @@ export class UserController {
     return this.userService.adminRejectStore(id);
   }
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Put('update-branch-info')
@@ -397,7 +398,7 @@ export class UserController {
     return new ActionResponse(branch);
   }
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Post('add-branch')
@@ -405,7 +406,7 @@ export class UserController {
     const branch = await this.userService.createBranch(req);
     return new ActionResponse(branch);
   }
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Get('get-branches')

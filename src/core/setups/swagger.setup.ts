@@ -15,36 +15,26 @@ import { PackagesModule } from 'src/modules/packages/packages.module';
 import { SendEmailModule } from 'src/modules/send-email/send-email.module';
 import { StaticPageModule } from 'src/modules/static-page/static-page.module';
 import { SuggestionsComplaintsModule } from 'src/modules/suggestions-complaints/suggestions-complaints.module';
-
 import { TransactionModule } from 'src/modules/transaction/transaction.module';
 import { UserModule } from 'src/modules/user/user.module';
 
-function isAdminOperation(operation: any): boolean {
-  return operation && typeof operation === 'object' && operation['x-admin'] === true;
+function isAdminOperation(op: any): boolean {
+  return op && typeof op === 'object' && op['x-admin'] === true;
 }
 
-function filterByAdminExtension(document: OpenAPIObject): OpenAPIObject {
+function isStoreOperation(op: any): boolean {
+  return op && typeof op === 'object' && op['x-store'] === true;
+}
+
+function filterPaths(
+  document: OpenAPIObject,
+  predicate: (op: any) => boolean,
+): OpenAPIObject {
   const filteredPaths: Record<string, any> = {};
   for (const [path, pathItem] of Object.entries(document.paths || {})) {
     const filteredMethods: Record<string, any> = {};
     for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
-      if (isAdminOperation(operation)) {
-        filteredMethods[method] = operation;
-      }
-    }
-    if (Object.keys(filteredMethods).length > 0) {
-      filteredPaths[path] = filteredMethods;
-    }
-  }
-  return { ...document, paths: filteredPaths };
-}
-
-function filterOutAdminExtension(document: OpenAPIObject): OpenAPIObject {
-  const filteredPaths: Record<string, any> = {};
-  for (const [path, pathItem] of Object.entries(document.paths || {})) {
-    const filteredMethods: Record<string, any> = {};
-    for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
-      if (!isAdminOperation(operation)) {
+      if (predicate(operation)) {
         filteredMethods[method] = operation;
       }
     }
@@ -97,11 +87,23 @@ export default (app: INestApplication, config: ConfigService) => {
     operationIdFactory,
   });
 
-  const publicDocument = filterOutAdminExtension(fullDocument);
-  const adminDocument = filterByAdminExtension(fullDocument);
+  // Public: exclude admin and store-only endpoints
+  const publicDocument = filterPaths(
+    fullDocument,
+    (op) => !isAdminOperation(op) && !isStoreOperation(op),
+  );
+
+  // Admin: only admin-marked endpoints
+  const adminDocument = filterPaths(fullDocument, isAdminOperation);
+
+  // Store: only store-marked endpoints
+  const storeDocument = filterPaths(fullDocument, isStoreOperation);
 
   SwaggerModule.setup('swagger', app, publicDocument);
   SwaggerModule.setup('swagger/admin', app, adminDocument, {
+    swaggerOptions: { persistAuthorization: true },
+  });
+  SwaggerModule.setup('swagger/store', app, storeDocument, {
     swaggerOptions: { persistAuthorization: true },
   });
 };
