@@ -277,6 +277,7 @@ export class OffersController {
   }
 
   @AdminEndpoint()
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
   @Delete('delete/:id')
