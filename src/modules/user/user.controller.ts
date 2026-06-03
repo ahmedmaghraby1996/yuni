@@ -84,22 +84,23 @@ export class UserController {
     @Inject(REQUEST) private request: Request,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
+
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Get('packages')
   async getPackages() {
     const packages = await this.userService.getPackage();
-    const result = this._i18nResponse.entity(packages);
-    return new ActionResponse(result);
+    return new ActionResponse(this._i18nResponse.entity(packages));
   }
-  @ApiBearerAuth()
+
+  @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('subscribe/:package_id')
   async subscribePackage(@Param('package_id') package_id: string) {
-    const subscribe = await this.userService.buyPackage(package_id);
-    return new ActionResponse(subscribe);
+    return new ActionResponse(await this.userService.buyPackage(package_id));
   }
+
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

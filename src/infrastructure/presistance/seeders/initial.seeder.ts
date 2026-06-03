@@ -7,9 +7,11 @@ import { StoreSeeder } from './store.seeder';
 import { OfferSeeder } from './offer.seeder';
 import { FaqSeeder } from './faq.seeder';
 import { AdminUserSeeder } from './admin-user.seeder';
+import { PackagesSeeder } from './packages.seeder';
 
 export const DB_SEEDERS = [
   AdminUserSeeder,
+  PackagesSeeder,
   // UsersSeeder,
   // AddressSeeder,
   // CitySeeder,

@@ -1,5 +1,4 @@
 import {
-  applyDecorators,
   Body,
   Controller,
   Delete,
@@ -13,199 +12,71 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { FavoriteOfferService, OffersService } from './offers.service';
-import { CreateOfferRequest } from './dto/requests/create-offer.request';
-
+import { OffersService } from './offers.service';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { plainToInstance } from 'class-transformer';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
-import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { JwtOptionalAuthGuard } from '../authentication/guards/jwt-optional-auth.guard';
+import { StoreService } from './store.service';
+import { BranchResponse } from '../user/dto/branch.response';
+import { GetStoreRequest } from './dto/requests/get-store.request';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
-import {
-  UpdateAdminOfferRequest,
-  UpdateOfferRequest,
-} from './dto/requests/update-offer.request';
-import { GetStoreRequest } from './dto/requests/get-store.request';
-import { query } from 'express';
-import {
-  applyQueryFilters,
-  applyQueryIncludes,
-  applyQuerySort,
-} from 'src/core/helpers/service-related.helper';
-import { app } from 'firebase-admin';
+import { UpdateAdminOfferRequest, UpdateOfferRequest } from './dto/requests/update-offer.request';
+import { applyQueryFilters, applyQueryIncludes, applyQuerySort } from 'src/core/helpers/service-related.helper';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { OfferResponse } from './dto/responses/offer-response';
-import { StoreOfferUserResponse } from './dto/responses/store-offer-user.response';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { SubCategoryService } from './sub_category.service';
-import { Not } from 'typeorm';
-import { StoreService } from './store.service';
-import { BranchResponse } from '../user/dto/branch.response';
-import { UserResponse } from '../user/dto/response/user-response';
 import { ActionResponse } from 'src/core/base/responses/action.response';
-import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { CategoryService } from '../category/category.service';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+
 @ApiTags('Offers')
-@ApiHeader({
-  name: 'Accept-Language',
-  required: false,
-  description: 'Language header: en, ar',
-})
+@ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
 @Controller('offers')
 export class OffersController {
   constructor(
     private readonly offersService: OffersService,
+    private readonly storeService: StoreService,
     private readonly categoryService: CategoryService,
     protected readonly subCategoryService: SubCategoryService,
-    private readonly storeService: StoreService,
-    private readonly favoriteOfferService: FavoriteOfferService,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
     @Inject(REQUEST) private readonly request: Request,
   ) {}
 
-  @Get('/sub-categories')
-  async getSubCategories(@Query() PaginatedRequest: PaginatedRequest) {
-    applyQueryFilters(PaginatedRequest, `is_active=1`);
-    applyQuerySort(PaginatedRequest, 'order_by=asc');
-    const subcategories = await this.subCategoryService.findAll(
-      PaginatedRequest,
-    );
-    const total = await this.subCategoryService.count(PaginatedRequest);
-    const response = plainToInstance(SubCategory, subcategories, {
-      excludeExtraneousValues: true,
-    });
+  // ─── Public ────────────────────────────────────────────────────────────────
 
-    const result = this._i18nResponse.entity(response);
-    return new PaginatedResponse(result, {
-      meta: { total, ...PaginatedRequest },
-    });
-  }
-  @Get('/categories')
-  async getCategories(@Query() PaginatedRequest: PaginatedRequest) {
-    applyQueryFilters(PaginatedRequest, `is_active=1`);
-    applyQuerySort(PaginatedRequest, 'order_by=asc');
-    const categories = await this.categoryService.findAll(PaginatedRequest);
-    const total = await this.categoryService.count(PaginatedRequest);
-    const response = plainToInstance(Category, categories, {
-      excludeExtraneousValues: true,
-    });
-    //
-    const result = this._i18nResponse.entity(response);
-    return new PaginatedResponse(result, {
-      meta: { total, ...PaginatedRequest },
-    });
-  }
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.CLIENT, Role.STORE)
   @Get('store')
   async getStore(@Query() query: GetStoreRequest) {
-    const {
-      lat,
-      lng,
-      store_type,
-      name,
-      page,
-      limit,
-      sub_category_id,
-      recommend,
-    } = query;
+    const { lat, lng, store_type, name, page, limit, sub_category_id, recommend } = query;
     const pageNum = page || 1;
     const limitNum = limit || 10;
-
     if (lat && lng) {
-      const { stores, total } = await this.storeService.findNearbyStores(
-        lat,
-        lng,
-        10000,
-        store_type,
-        name,
-        pageNum,
-        limitNum,
-        sub_category_id,
-        recommend,
-      );
-      const result = plainToInstance(BranchResponse, stores, {
-        excludeExtraneousValues: true,
-      });
-      const response = this._i18nResponse.entity(result);
-      return new PaginatedResponse(response, {
-        meta: { total, page: pageNum, limit: limitNum },
-      });
-    } else {
-      const { stores, total } = await this.storeService.findAllStores(
-        store_type,
-        pageNum,
-        limitNum,
-        sub_category_id,
-      );
-      const result = plainToInstance(BranchResponse, stores, {
-        excludeExtraneousValues: true,
-      });
-      const response = this._i18nResponse.entity(result);
-      return new PaginatedResponse(response, {
-        meta: { total, page: pageNum, limit: limitNum },
-      });
+      const { stores, total } = await this.storeService.findNearbyStores(lat, lng, 10000, store_type, name, pageNum, limitNum, sub_category_id, recommend);
+      const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
+      return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, page: pageNum, limit: limitNum } });
     }
+    const { stores, total } = await this.storeService.findAllStores(store_type, pageNum, limitNum, sub_category_id);
+    const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
+    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, page: pageNum, limit: limitNum } });
   }
 
-  @AdminEndpoint()
-  @Roles(Role.ADMIN)
-  @Get('admin/store')
-  async getAllStore(@Query() query: PaginatedRequest) {
-    applyQueryIncludes(query, 'user');
-    applyQueryIncludes(query, 'city');
-    const total = await this.storeService.count(query);
-    const stores = await this.storeService.findAll(query);
-    const result = plainToInstance(BranchResponse, stores, {
-      excludeExtraneousValues: true,
-    });
-    const response = this._i18nResponse.entity(result);
-    return new PaginatedResponse(response, { meta: { total, ...query } });
-  }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.CLIENT)
   @ApiOperation({ summary: 'Get Stores Followed by User' })
   @Get('store/following')
-  async getFollowingStores(
-    @Query() query: PaginatedRequest,
-    @Query('lat') lat?: string,
-    @Query('lng') lng?: string,
-  ) {
-    const { stores, total } = await this.storeService.getFollowingStores(
-      query,
-      lat,
-      lng,
-    );
-    const result = plainToInstance(BranchResponse, stores, {
-      excludeExtraneousValues: true,
-    });
-    const response = this._i18nResponse.entity(result);
-    return new PaginatedResponse(response, {
-      meta: { total, ...query },
-    });
-  }
-  @ApiBearerAuth()
-  @UseGuards(JwtOptionalAuthGuard)
-  @Get('store/:id')
-  async geStoredetials(@Param('id') id: string) {
-    const stores = await this.storeService.getDetailsWithOffers(id);
-    const result = plainToInstance(BranchResponse, stores, {
-      excludeExtraneousValues: true,
-    });
-    const response = this._i18nResponse.entity(result);
-
-    return new ActionResponse(response);
+  async getFollowingStores(@Query() query: PaginatedRequest, @Query('lat') lat?: string, @Query('lng') lng?: string) {
+    const { stores, total } = await this.storeService.getFollowingStores(query, lat, lng);
+    const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
+    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, ...query } });
   }
 
   @ApiBearerAuth()
@@ -217,128 +88,36 @@ export class OffersController {
     return new ActionResponse(await this.storeService.toggleFollowStore(id));
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE)
-  @Post('create')
-  async createOffer(@Body() req: CreateOfferRequest) {
-    const offer = await this.offersService.createOffer(req);
-    return offer;
-  }
-  @AdminEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.ADMIN)
-  @Put('update')
-  async updateOffer(@Body() req: UpdateOfferRequest) {
-    const offer = await this.offersService.updateOffer(req);
-    return offer;
-  }
-
-  @AdminEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.ADMIN)
-  @Put('update/:offer_id')
-  async updateAdminOffer(
-    @Param('offer_id') offer_id,
-    @Body() req: UpdateAdminOfferRequest,
-  ) {
-    req.id = offer_id;
-    const offer = await this.offersService.updateOffer(req);
-    return offer;
-  }
   @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.CLIENT)
-  @Post('view-increment/:id')
-  async viewCount(@Param('id') offer_id: string) {
-    const offer = await this.offersService.viewIncrement(offer_id);
-    return offer;
+  @UseGuards(JwtOptionalAuthGuard)
+  @Get('store/:id')
+  async getStoreDetails(@Param('id') id: string) {
+    const store = await this.storeService.getDetailsWithOffers(id);
+    const result = plainToInstance(BranchResponse, store, { excludeExtraneousValues: true });
+    return new ActionResponse(this._i18nResponse.entity(result));
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE)
-  @ApiOperation({ summary: 'Get users who activated store offers with activation count' })
-  @Get('store/offer-users')
-  async getStoreOfferUsers(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-  ) {
-    const { results, total } = await this.offersService.getStoreOfferUsers(
-      Number(page),
-      Number(limit),
-    );
-    const data = plainToInstance(StoreOfferUserResponse, results, {
-      excludeExtraneousValues: true,
-    });
-    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
+  @Get('sub-categories')
+  async getSubCategories(@Query() query: PaginatedRequest) {
+    applyQueryFilters(query, `is_active=1`);
+    applyQuerySort(query, 'order_by=asc');
+    const subcategories = await this.subCategoryService.findAll(query);
+    const total = await this.subCategoryService.count(query);
+    const result = this._i18nResponse.entity(plainToInstance(SubCategory, subcategories, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, ...query } });
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE)
-  @Get('store-offers')
-  async getStoreOffers(@Query() query: PaginatedRequest) {
-    applyQueryIncludes(query, 'stores');
-    applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'images');
-    applyQueryIncludes(query, 'stores');
-    applyQueryFilters(query, `user_id=${this.request.user.id}`);
-    const total = await this.offersService.count(query);
-    const offers = await this.offersService.findAll(query);
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PaginatedResponse(result, {
-      meta: { total, ...query },
-    });
+  @Get('categories')
+  async getCategories(@Query() query: PaginatedRequest) {
+    applyQueryFilters(query, `is_active=1`);
+    applyQuerySort(query, 'order_by=asc');
+    const categories = await this.categoryService.findAll(query);
+    const total = await this.categoryService.count(query);
+    const result = this._i18nResponse.entity(plainToInstance(Category, categories, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, ...query } });
   }
-  //
-  @AdminEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.ADMIN)
-  @Get('/admin/all')
-  async getAdminOffers(@Query() query: PaginatedRequest) {
-    const storesId = this.extractStoreId(query.filters);
 
-    applyQueryIncludes(query, 'stores');
-    applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'images');
-    applyQuerySort(query, 'created_at=DESC');
-    // applyQueryFilters(query, `stores.is_active=1`);
-    applyQueryFilters(
-      query,
-      `stores.status=${StoreStatus.APPROVED},stores.is_active=1`,
-    );
-    if (storesId) {
-      applyQueryFilters(
-        query,
-        `stores.status=${StoreStatus.APPROVED},stores.is_active=1,stores.id=${storesId}`,
-      );
-    }
-    applyQueryIncludes(query, 'favorites');
-
-    const total = await this.offersService.count(query);
-    const offers = await this.offersService.findAll(query);
-    offers.map((offer) => {
-      offer.is_favorite =
-        offer.favorites?.some(
-          (favorite) =>
-            String(favorite.user_id) === String(this.request.user.id),
-        ) ?? false;
-
-      return offer;
-    });
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-
-    return new PaginatedResponse(result, {
-      meta: { total, ...query },
-    });
-  }
-  //store
+  // ─── Client ────────────────────────────────────────────────────────────────
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -346,43 +125,18 @@ export class OffersController {
   @Get('all-offers')
   async getClientOffers(@Query() query: PaginatedRequest) {
     const storesId = this.extractStoreId(query.filters);
-
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
     applyQueryIncludes(query, 'images');
     applyQuerySort(query, 'created_at=DESC');
-    // applyQueryFilters(query, `stores.is_active=1`);
-    applyQueryFilters(
-      query,
-      `stores.status=${StoreStatus.APPROVED},stores.is_active=1`,
-    );
-    if (storesId) {
-      applyQueryFilters(
-        query,
-        `stores.status=${StoreStatus.APPROVED},stores.is_active=1,stores.id=${storesId}`,
-      );
-    }
+    applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1`);
+    if (storesId) applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1,stores.id=${storesId}`);
     applyQueryIncludes(query, 'favorites');
-
     const total = await this.offersService.count(query);
     const offers = await this.offersService.findAll(query);
-    offers.map((offer) => {
-      offer.is_favorite =
-        offer.favorites?.some(
-          (favorite) =>
-            String(favorite.user_id) === String(this.request.user.id),
-        ) ?? false;
-
-      return offer;
-    });
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-
-    const response = this._i18nResponse.entity(result);
-    return new PaginatedResponse(response, {
-      meta: { total, ...query },
-    });
+    offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
+    const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, ...query } });
   }
 
   @ApiBearerAuth()
@@ -391,19 +145,8 @@ export class OffersController {
   @Get('best-offers')
   async getBestOffers(@Query('lat') lat: string, @Query('lng') lng: string) {
     const offers = await this.offersService.findBestOffers(lat, lng);
-    offers.map((offer) => {
-      offer.is_favorite =
-        offer.favorites?.some(
-          (favorite) =>
-            String(favorite.user_id) === String(this.request.user.id),
-        ) ?? false;
-      return offer;
-    });
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-    const response = this._i18nResponse.entity(result);
-    return new ActionResponse(response);
+    offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
+    return new ActionResponse(this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true })));
   }
 
   @ApiBearerAuth()
@@ -416,60 +159,26 @@ export class OffersController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
-  @ApiQuery({
-    name: 'order_by',
-    required: false,
-    enum: ['most_used', 'added_recently'],
-  })
+  @ApiQuery({ name: 'order_by', required: false, enum: ['most_used', 'added_recently'] })
   async getNearbyOffers(
     @Query('lat') lat: string,
     @Query('lng') lng: string,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
     @Query('name') name?: string,
-    @Query('order_by')
-    order_by: 'most_used' | 'added_recently' = 'added_recently',
+    @Query('order_by') order_by: 'most_used' | 'added_recently' = 'added_recently',
   ) {
-    const pageNum = Number(page) || 1;
-    const limitNum = Number(limit) || 20;
-
-    const { offers, total } = await this.offersService.findNearbyOffers(
-      lat,
-      lng,
-      order_by,
-      pageNum,
-      limitNum,
-      name,
-    );
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-    const response = this._i18nResponse.entity(result);
-    return new PaginatedResponse(response, {
-      meta: { total, page: pageNum, limit: limitNum },
-    });
-  }
-  //DELETE OFFER
-  @AdminEndpoint()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE, Role.ADMIN)
-  @Delete('delete/:id')
-  async deleteOffer(@Param('id') id: string) {
-    const offer = await this.offersService.findOne(id);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
-    return await this.offersService.softDelete(id);
+    const { offers, total } = await this.offersService.findNearbyOffers(lat, lng, order_by, Number(page), Number(limit), name);
+    const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
-  @StoreEndpoint()
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE)
-  @Post('make-special/:id')
-  async makeSpecialOffer(@Param('id') id: string) {
-    const offer = await this.offersService.makeSepcial(id);
-
-    return offer;
+  @Roles(Role.CLIENT)
+  @Post('view-increment/:id')
+  async viewCount(@Param('id') id: string) {
+    return await this.offersService.viewIncrement(id);
   }
 
   @ApiBearerAuth()
@@ -477,8 +186,7 @@ export class OffersController {
   @Roles(Role.CLIENT)
   @Post('add-remove-favorite/:id')
   async addRemoveFavorite(@Param('id') id: string) {
-    const offer = await this.offersService.addRemoveFavorite(id);
-    return new ActionResponse(offer);
+    return new ActionResponse(await this.offersService.addRemoveFavorite(id));
   }
 
   @ApiBearerAuth()
@@ -490,6 +198,59 @@ export class OffersController {
     return new ActionResponse(await this.offersService.toggleOfferStatus(id));
   }
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
+  @Get('favorite-offers')
+  async getFavoriteOffers(@Query() query: PaginatedRequest) {
+    applyQueryIncludes(query, 'stores');
+    applyQueryIncludes(query, 'subcategory');
+    applyQueryIncludes(query, 'images');
+    applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1`);
+    applyQueryIncludes(query, 'favorites');
+    applyQueryFilters(query, `favorites.user_id=${this.request.user.id}`);
+    const total = await this.offersService.count(query);
+    const offers = await this.offersService.findAll(query);
+    const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, ...query } });
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalAuthGuard)
+  @Roles(Role.CLIENT, Role.STORE)
+  @Get('details/:id')
+  async getOfferById(@Param('id') id: string) {
+    const offer = await this.offersService.findOne(id);
+    if (!offer) throw new NotFoundException('Offer not found');
+    offer.is_favorite = offer.favorites?.some(f => String(f.user_id) === String(this.request.user?.id)) ?? false;
+    return new ActionResponse(this._i18nResponse.entity(plainToInstance(OfferResponse, offer, { excludeExtraneousValues: true })));
+  }
+
+  // ─── Admin ─────────────────────────────────────────────────────────────────
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin/store')
+  async adminGetAllStores(@Query() query: PaginatedRequest) {
+    applyQueryIncludes(query, 'user');
+    applyQueryIncludes(query, 'city');
+    const total = await this.storeService.count(query);
+    const stores = await this.storeService.findAll(query);
+    const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
+    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, ...query } });
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE, Role.ADMIN)
+  @Delete('delete/:id')
+  async deleteOffer(@Param('id') id: string) {
+    const offer = await this.offersService.findOne(id);
+    if (!offer) throw new NotFoundException('Offer not found');
+    return await this.offersService.softDelete(id);
+  }
+
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
@@ -499,55 +260,40 @@ export class OffersController {
     return new ActionResponse(await this.offersService.toggleOfferIsActive(id));
   }
 
-  //get favorite offers
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
-  @Roles(Role.CLIENT)
-  @Get('favorite-offers')
-  async getClientFavoriteOffers(@Query() query: PaginatedRequest) {
+  @Roles(Role.ADMIN)
+  @Put('update')
+  async updateOffer(@Body() req: UpdateOfferRequest) {
+    return await this.offersService.updateOffer(req);
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
+  @Put('update/:offer_id')
+  async updateAdminOffer(@Param('offer_id') offer_id: string, @Body() req: UpdateAdminOfferRequest) {
+    req.id = offer_id;
+    return await this.offersService.updateOffer(req);
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin/all')
+  async getAdminOffers(@Query() query: PaginatedRequest) {
+    const storesId = this.extractStoreId(query.filters);
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
     applyQueryIncludes(query, 'images');
-    // applyQueryFilters(query, `stores.is_active=1`);
-
-    applyQueryFilters(
-      query,
-      `stores.status=${StoreStatus.APPROVED},stores.is_active=1`,
-    );
+    applyQuerySort(query, 'created_at=DESC');
+    applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1`);
+    if (storesId) applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1,stores.id=${storesId}`);
     applyQueryIncludes(query, 'favorites');
-    applyQueryFilters(query, `favorites.user_id=${this.request.user.id}`);
-
     const total = await this.offersService.count(query);
     const offers = await this.offersService.findAll(query);
-
-    const result = plainToInstance(OfferResponse, offers, {
-      excludeExtraneousValues: true,
-    });
-
-    const response = this._i18nResponse.entity(result);
-    return new PaginatedResponse(response, {
-      meta: { total, ...query },
-    });
-  }
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @Roles(Role.STORE, Role.CLIENT)
-  @Get('details/:id')
-  async getOfferById(@Param('id') id: string) {
-    const offer = await this.offersService.findOne(id);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
-    const result = plainToInstance(OfferResponse, offer, {
-      excludeExtraneousValues: true,
-    });
-    result.is_favorite =
-      offer.favorites?.some(
-        (favorite) => String(favorite.user_id) === String(this.request.user.id),
-      ) ?? false;
-    const response = this._i18nResponse.entity(result);
-
-    return new ActionResponse(response);
+    offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
+    return new PaginatedResponse(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }), { meta: { total, ...query } });
   }
 
   @AdminEndpoint()
@@ -556,24 +302,14 @@ export class OffersController {
   @Get('admin/details/:id')
   async getAdminOfferById(@Param('id') id: string) {
     const offer = await this.offersService.findOne(id);
-    if (!offer) {
-      throw new NotFoundException('Offer not found');
-    }
-    const result = plainToInstance(OfferResponse, offer, {
-      excludeExtraneousValues: true,
-    });
-
-    return new ActionResponse(result);
+    if (!offer) throw new NotFoundException('Offer not found');
+    return new ActionResponse(plainToInstance(OfferResponse, offer, { excludeExtraneousValues: true }));
   }
+
   private extractStoreId(filters: string | string[]): string | null {
     if (!filters) return null;
-    // normalize to array
-    const filterArr = Array.isArray(filters) ? filters : [filters];
-
-    const storeFilter = filterArr.find((f) => f.startsWith('stores.id='));
-    if (!storeFilter) return null;
-
-    // return everything after "stores.id="
-    return storeFilter.substring('stores.id='.length) || null;
+    const arr = Array.isArray(filters) ? filters : [filters];
+    const f = arr.find(x => x.startsWith('stores.id='));
+    return f ? f.substring('stores.id='.length) || null : null;
   }
 }
