@@ -105,4 +105,14 @@ export class StoreController {
     const result = plainToInstance(BranchResponse, branches, { excludeExtraneousValues: true });
     return new ActionResponse(this._i18nResponse.entity(result));
   }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Get('branches/:id')
+  async getBranchById(@Param('id') id: string) {
+    const branch = await this.userService.getBranchById(id);
+    const result = plainToInstance(BranchResponse, branch, { excludeExtraneousValues: true });
+    return new ActionResponse(this._i18nResponse.entity(result));
+  }
 }

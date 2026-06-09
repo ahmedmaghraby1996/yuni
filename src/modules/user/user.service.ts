@@ -272,6 +272,15 @@ export class UserService extends BaseService<User> {
     });
     return branches;
   }
+
+  async getBranchById(id: string) {
+    const branch = await this.storeRepo.findOne({
+      where: { id },
+      relations: { subcategory: true, offers: true, city: true },
+    });
+    if (!branch) throw new NotFoundException('branch not found');
+    return branch;
+  }
   async deleteBranch(id: string) {
     const branch = await this.storeRepo.findOne({
       where: { id: id },
