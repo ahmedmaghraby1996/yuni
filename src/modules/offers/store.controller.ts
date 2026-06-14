@@ -1,6 +1,5 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -9,13 +8,10 @@ import {
   Post,
   Put,
   Query,
-  UploadedFiles,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
@@ -25,7 +21,7 @@ import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { BranchResponse } from '../user/dto/branch.response';
-import { UpdateBranchInfoRequest, UpdateStoreInfoRequest } from '../user/dto/request/update-store-info.request';
+import { UpdateBranchInfoRequest } from '../user/dto/request/update-store-info.request';
 import { AddBranchRequest } from '../user/dto/request/add-branch.request';
 import { UserService } from '../user/user.service';
 import { OffersService } from './offers.service';
@@ -51,27 +47,10 @@ export class StoreController {
 
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
   @Post('subscribe/:package_id')
   async subscribePackage(@Param('package_id') package_id: string) {
-    return new ActionResponse(await this.userService.buyPackage(package_id));
-  }
-
-  @StoreEndpoint()
-  @UseInterceptors(ClassSerializerInterceptor, FileFieldsInterceptor([
-    { name: 'logo', maxCount: 1 },
-    { name: 'catalogue', maxCount: 1 },
-  ]))
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiConsumes('multipart/form-data')
-  @Roles(Role.STORE)
-  @Put('info')
-  async updateStoreInfo(
-    @Body() req: UpdateStoreInfoRequest,
-    @UploadedFiles() files: { logo?: Express.Multer.File[]; catalogue?: Express.Multer.File[] },
-  ) {
-    if (files?.logo?.[0]) req.logo = files.logo[0];
-    if (files?.catalogue?.[0]) req.catalogue = files.catalogue[0];
-    return new ActionResponse(await this.userService.updateMainStoreInfo(req));
+    return new ActionResponse(await this.userService.subscribePackage(package_id));
   }
 
   @StoreEndpoint()

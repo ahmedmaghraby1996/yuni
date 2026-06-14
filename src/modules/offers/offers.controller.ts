@@ -233,43 +233,32 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
-  @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1], description: 'Filter by active status (1=active, 0=inactive)' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1] })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Search in title_ar or title_en (case-insensitive)' })
-  @ApiQuery({ name: 'start_date', required: false, type: String, description: 'Filter offers with start_date >= this date (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'end_date', required: false, type: String, description: 'Filter offers with end_date <= this date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'start_date', required: false, type: String, description: 'Offers with start_date >= this date or no start_date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'end_date', required: false, type: String, description: 'Offers with end_date <= this date or no end_date (YYYY-MM-DD)' })
   @Get('my-offers')
   async getStoreOffers(
-    @Query() query: PaginatedRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
     @Query('is_active') is_active?: string,
     @Query('name') name?: string,
     @Query('start_date') start_date?: string,
     @Query('end_date') end_date?: string,
   ) {
-    applyQueryIncludes(query, 'stores');
-    applyQueryIncludes(query, 'subcategory');
-    applyQueryIncludes(query, 'images');
-
-    // Build mandatory AND conditions
-    applyQueryFilters(query, `user_id=${this.request.user.id}`);
-    if (is_active !== undefined && is_active !== '') applyQueryFilters(query, `is_active=${is_active}`);
-    if (start_date) applyQueryFilters(query, `start_date>=${start_date}`);
-    if (end_date) applyQueryFilters(query, `end_date<=${end_date}`);
-
-    // Name search: (title_ar ILike) OR (title_en ILike) — duplicate filter entries
-    if (name && name.trim()) {
-      const current: string[] = Array.isArray(query.filters)
-        ? [...query.filters]
-        : query.filters ? [query.filters as string] : [];
-      query.filters = [
-        ...current.map((f) => `${f},title_ar#${name.trim()}`),
-        ...current.map((f) => `${f},title_en#${name.trim()}`),
-      ];
-    }
-
-    const total = await this.offersService.count(query);
-    const offers = await this.offersService.findAll(query);
+    const { offers, total } = await this.offersService.getMyOffers({
+      userId: this.request.user.id,
+      page: Number(page),
+      limit: Number(limit),
+      is_active,
+      name,
+      start_date,
+      end_date,
+    });
     const result = plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true });
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
   @StoreEndpoint()

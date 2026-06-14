@@ -371,6 +371,53 @@ export class OffersService extends BaseService<Offer> {
     }
   }
 
+  async getMyOffers(params: {
+    userId: string;
+    page: number;
+    limit: number;
+    is_active?: string;
+    name?: string;
+    start_date?: string;
+    end_date?: string;
+  }) {
+    const { userId, page, limit, is_active, name, start_date, end_date } = params;
+
+    const qb = this.repo
+      .createQueryBuilder('offer')
+      .leftJoinAndSelect('offer.stores', 'store')
+      .leftJoinAndSelect('offer.subcategory', 'subcategory')
+      .leftJoinAndSelect('offer.images', 'images')
+      .where('offer.user_id = :userId', { userId })
+      .andWhere('offer.deleted_at IS NULL');
+
+    if (is_active !== undefined && is_active !== '') {
+      qb.andWhere('offer.is_active = :is_active', { is_active: is_active === '1' || is_active === 'true' });
+    }
+
+    if (name && name.trim()) {
+      qb.andWhere('(offer.title_ar LIKE :name OR offer.title_en LIKE :name)', {
+        name: `%${name.trim()}%`,
+      });
+    }
+
+    if (start_date) {
+      qb.andWhere('(offer.start_date >= :start_date OR offer.start_date IS NULL)', { start_date });
+    }
+
+    if (end_date) {
+      qb.andWhere('(offer.end_date <= :end_date OR offer.end_date IS NULL)', { end_date });
+    }
+
+    const total = await qb.getCount();
+    const offers = await qb
+      .orderBy('offer.created_at', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getMany();
+
+    return { offers, total };
+  }
+
   async findOne(id: string) {
     const offer = await this.repo.findOne({
       where: { id: id },

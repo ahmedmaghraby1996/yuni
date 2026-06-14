@@ -39,9 +39,7 @@ import { RegisterResponse } from '../authentication/dto/responses/register.respo
 import { UpdateProfileRequest } from './dto/update-profile-request';
 import { PaymentResponseInterface } from './dto/response/payment.response';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
-import { UpdateBranchInfoRequest, UpdateStoreInfoRequest } from './dto/request/update-store-info.request';
-import { AddBranchRequest } from './dto/request/add-branch.request';
-import { BranchResponse } from './dto/branch.response';
+import { UpdateStoreInfoRequest } from './dto/request/update-store-info.request';
 
 @ApiHeader({
   name: 'Accept-Language',
@@ -60,22 +58,6 @@ export class UserController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
-  @Get('packages')
-  async getPackages() {
-    const packages = await this.userService.getPackage();
-    return new ActionResponse(this._i18nResponse.entity(packages));
-  }
-
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Post('subscribe/:package_id')
-  async subscribePackage(@Param('package_id') package_id: string) {
-    return new ActionResponse(await this.userService.buyPackage(package_id));
-  }
-
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
   @ApiOperation({ summary: 'Get users who used store codes with usage count per user' })
   @Get('code-users')
   async getCodeUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
@@ -90,7 +72,6 @@ export class UserController {
   @Get('')
   async getAll(@Query() query: PaginatedRequest) {
     applyQueryIncludes(query, 'city');
-
     const users = await this.userService.findAll(query);
     const usersResponse = await Promise.all(
       users.map(async (user) => {
@@ -110,13 +91,9 @@ export class UserController {
       }),
     );
     const total = await this.userService.count(query);
-
     return new PaginatedResponse(usersResponse, { meta: { total, ...query } });
   }
 
-  // @ApiBearerAuth()
-  // @UseGuards(JwtAuthGuard, RolesGuard)
-  // @Roles(Role.ADMIN)
   @Get('/agents')
   async getAllAgents(
     @Query() query: PaginatedRequest,
@@ -146,7 +123,6 @@ export class UserController {
       where: { id: id },
       relations: { city: true, wallet: true, merchants: true },
     });
-
     return new ActionResponse(
       plainToInstance(AgentResponse, user, { excludeExtraneousValues: true }),
     );
@@ -176,17 +152,10 @@ export class UserController {
   @Post('confirm/payment')
   async handleWebhook(@Body() body: any) {
     console.log(this.request.headers);
-    // 1. Validate API Key
-    // if (
-    //   !this.request.headers.apiKey ||
-    //   this.request.headers.apiKey !== expectedApiKey
-    // ) {
-    //   throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    // }
     const paymentResponse = Object.assign(new PaymentResponseInterface(), body);
-
     return this.userService.confirmPayment(paymentResponse);
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('profile')
@@ -205,10 +174,8 @@ export class UserController {
       excludeExtraneousValues: true,
     });
 
-    // Calculate profile completion percentage
     let completedFields = 0;
     const totalFields = 11;
-
     if (user.name) completedFields++;
     if (user.email) completedFields++;
     if (user.phone) completedFields++;
@@ -219,8 +186,7 @@ export class UserController {
     if (user.school_name) completedFields++;
     if (user.major) completedFields++;
     if (user.language) completedFields++;
-    if (user.favorite_sections && user.favorite_sections.length > 0)
-      completedFields++;
+    if (user.favorite_sections && user.favorite_sections.length > 0) completedFields++;
 
     userResponse.profile_completion_percentage = Math.round(
       (completedFields / totalFields) * 100,
@@ -228,9 +194,9 @@ export class UserController {
 
     return new ActionResponse(this._i18nResponse.entity(userResponse));
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  //update fcm token
   @Put('/fcm-token')
   async updateFcmToken(@Body() req: UpdateFcmRequest) {
     const user = await this.userService.findOne(this.request.user.id);
@@ -240,15 +206,13 @@ export class UserController {
       await this.userService.findOne(this.request.user.id),
     );
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('avatarFile'))
   @ApiConsumes('multipart/form-data')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiBearerAuth()
   @Put('update-profile')
   async updateProfile(
-    // @Query() query: GetUserRequest,
     @Body() request: UpdateProfileRequest,
     @UploadedFile(new UploadValidator().build())
     avatarFile: Express.Multer.File,
@@ -260,15 +224,13 @@ export class UserController {
       plainToInstance(
         RegisterResponse,
         await this.userService.updateProfile(this.request.user.id, request),
-        {
-          excludeExtraneousValues: true,
-        },
+        { excludeExtraneousValues: true },
       ),
     );
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  //update fcm token
   @Delete('/delete')
   async deleteUser(@Query() query: GetUserRequest) {
     return new ActionResponse(
@@ -276,38 +238,6 @@ export class UserController {
     );
   }
 
-  @UseInterceptors(
-    ClassSerializerInterceptor,
-    FileFieldsInterceptor([
-      { name: 'logo', maxCount: 1 },
-      { name: 'catalogue', maxCount: 1 },
-    ]),
-  )
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @ApiConsumes('multipart/form-data')
-  @Roles(Role.STORE)
-  @Put('store-info')
-  async updateStoreInfo(
-    @Body() req: UpdateStoreInfoRequest,
-    @UploadedFiles()
-    files: {
-      logo?: Express.Multer.File[];
-      catalogue?: Express.Multer.File[];
-    },
-  ) {
-    if (files.logo && files.logo.length > 0) {
-      req.logo = files.logo[0];
-    }
-    if (files.catalogue && files.catalogue.length > 0) {
-      req.catalogue = files.catalogue[0];
-    }
-
-    // Now you can safely use `logo` and `catalogue`
-
-    const storeInfo = await this.userService.updateMainStoreInfo(req);
-    return new ActionResponse(storeInfo);
-  }
   @UseInterceptors(
     ClassSerializerInterceptor,
     FileFieldsInterceptor([
@@ -335,9 +265,6 @@ export class UserController {
     if (files?.catalogue && files.catalogue?.length > 0) {
       req.catalogue = files.catalogue[0];
     }
-    console.log(req);
-
-    // Now you can safely use `logo` and `catalogue`
     req.id = id;
     const storeInfo = await this.userService.updateMainStoreInfo(req);
     return new ActionResponse(storeInfo);
@@ -359,46 +286,6 @@ export class UserController {
     return this.userService.adminRejectStore(id);
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Put('update-branch-info')
-  async updateBranchInfo(@Body() req: UpdateBranchInfoRequest) {
-    const storeInfo = await this.userService.updateBranchInfo(req);
-    return new ActionResponse(storeInfo);
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  //DELETE BRANCH
-  @Roles(Role.STORE, Role.ADMIN)
-  @Delete('delete-branch/:id')
-  async deleteBranch(@Param('id') id: string) {
-    const branch = await this.userService.deleteBranch(id);
-    return new ActionResponse(branch);
-  }
-
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Post('add-branch')
-  async addBranch(@Body() req: AddBranchRequest) {
-    const branch = await this.userService.createBranch(req);
-    return new ActionResponse(branch);
-  }
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Get('get-branches')
-  async getBranch() {
-    const branch = await this.userService.getBranches();
-
-    const resposne = plainToInstance(BranchResponse, branch, {
-      excludeExtraneousValues: true,
-    });
-    const result = this._i18nResponse.entity(resposne);
-    return new ActionResponse(result);
-  }
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Get('/:id')
@@ -421,7 +308,6 @@ export class UserController {
             role: user.roles[0],
             created_at: user.created_at,
             subscriptions: user.subscriptions,
-
             city: user.city,
           },
           { excludeExtraneousValues: true },
@@ -429,11 +315,12 @@ export class UserController {
       ),
     );
   }
+
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post('test/payment')
   async testPayment() {
-    const amount = '10.00'; // Example amount
+    const amount = '10.00';
     return await this.userService.makePayment(amount);
   }
 }

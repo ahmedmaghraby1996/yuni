@@ -350,6 +350,37 @@ export class UserService extends BaseService<User> {
     });
   }
 
+  async subscribePackage(package_id: string) {
+    const pkg = await this.packageRepo.findOne({
+      where: { id: package_id, is_active: true },
+    });
+    if (!pkg) throw new NotFoundException('Package not found');
+
+    // Replace any existing subscription for this user
+    await this.subscriptionRepo.delete({ user_id: this.request.user.id });
+
+    const subscription = await this.subscriptionRepo.save({
+      name_ar: pkg.name_ar,
+      name_en: pkg.name_en,
+      description_ar: pkg.description_ar,
+      description_en: pkg.description_en,
+      price: pkg.price,
+      user_id: this.request.user.id,
+      package_id: pkg.id,
+      expire_at: new Date(Date.now() + pkg.duration * 24 * 60 * 60 * 1000),
+      is_active: true,
+    });
+
+    // Record payment transaction (creates wallet if not exists)
+    await this.transactionService.makeTransaction({
+      user_id: this.request.user.id,
+      amount: -pkg.price,
+      type: TransactionTypes.STORE_PAYMENT,
+    });
+
+    return { subscription, package: pkg };
+  }
+
   async rejectAgent(id: string) {
     const user = await this._repo.findOne({ where: { id: id } });
     if (!user) throw new NotFoundException('agent not found');
