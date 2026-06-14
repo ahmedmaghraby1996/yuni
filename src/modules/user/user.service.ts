@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/infrastructure/entities/user/user.entity';
-import { DataSource, In, MoreThan, Repository } from 'typeorm';
+import { DataSource, ILike, In, MoreThan, Repository } from 'typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { randNum } from 'src/core/helpers/cast.helper';
 import { plainToInstance } from 'class-transformer';
@@ -41,6 +41,7 @@ import { agent } from 'supertest';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
+import { City } from 'src/infrastructure/entities/city/city.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseService<User> {
@@ -72,6 +73,8 @@ export class UserService extends BaseService<User> {
     private readonly subCategoryRepo: Repository<SubCategory>,
     @InjectRepository(OfferUsage)
     private readonly offerUsageRepo: Repository<OfferUsage>,
+    @InjectRepository(City)
+    private readonly cityRepo: Repository<City>,
   ) {
     super(userRepo);
   }
@@ -259,15 +262,17 @@ export class UserService extends BaseService<User> {
     return await this.storeRepo.save(branch);
   }
 
-  async getBranches(is_main_branch?: boolean) {
+  async getCities() {
+    return this.cityRepo.find({ order: { order_by: 'ASC' } });
+  }
+
+  async getBranches(is_active?: boolean, name?: string, city_id?: string) {
+    const where: any = { user_id: this.request.user.id };
+    if (is_active !== undefined) where.is_active = is_active;
+    if (name) where.name = ILike(`%${name}%`);
+    if (city_id) where.city_id = city_id;
     const branches = await this.storeRepo.find({
-      where:
-        is_main_branch == true
-          ? {
-              user_id: this.request.user.id,
-              is_main_branch: true,
-            }
-          : { user_id: this.request.user.id },
+      where,
       relations: { subcategory: true, offers: true, city: true },
     });
     return branches;

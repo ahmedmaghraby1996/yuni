@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -14,6 +15,7 @@ import * as fs from 'fs';
 import { OfferImages } from 'src/infrastructure/entities/offer/offer-images.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
+import { Role } from 'src/infrastructure/data/enums/role.enum';
 
 @Injectable()
 export class UpdateOfferTransaction extends BaseTransaction<
@@ -39,6 +41,16 @@ export class UpdateOfferTransaction extends BaseTransaction<
 
       if (!existingOffer) {
         throw new NotFoundException(`Offer with ID ${req.id} not found.`);
+      }
+
+      const user = this.request.user;
+      const roles: string[] = user?.roles || [];
+      const isAdmin = roles.includes(Role.ADMIN) || roles.includes(Role.SUPERADMIN);
+
+      if (!isAdmin && existingOffer.user_id !== user?.id) {
+        throw new ForbiddenException(
+          `You do not have permission to update this offer.`,
+        );
       }
       if(req.subcategory_id){
       const subcategory = await context.findOne(SubCategory, {
@@ -80,12 +92,21 @@ export class UpdateOfferTransaction extends BaseTransaction<
         });
       });
 
-      if(req?.stores?.length > 0) {
+      if (req?.stores?.length > 0) {
+        const storeWhereClause: any = {
+          id: In(req.stores),
+        };
+        if (!isAdmin) {
+          storeWhereClause.user_id = user?.id;
+        }
         const stores = await context.find(Store, {
-          where: {
-            id: In(req.stores),
-          },
+          where: storeWhereClause,
         });
+        if (!isAdmin && stores.length !== req.stores.length) {
+          throw new ForbiddenException(
+            'You can only associate your own stores with this offer.',
+          );
+        }
         existingOffer.stores = stores;
       }
       await context.save(existingOffer);

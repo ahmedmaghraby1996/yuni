@@ -10,6 +10,7 @@ import {
 } from 'src/core/helpers/service-related.helper';
 import { ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { plainToInstance } from 'class-transformer';
@@ -30,6 +31,8 @@ import { Roles } from '../authentication/guards/roles.decorator';
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
+  @StoreEndpoint()
+  @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
   @Get()
   async getTransactions(@Query() query: PaginatedRequest) {
     applyQuerySort(query, 'created_at=desc');
@@ -49,6 +52,8 @@ export class TransactionController {
     }
   }
 
+  @StoreEndpoint()
+  @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
   @Get('wallet')
   async getWallet() {
     return new ActionResponse(await this.transactionService.getWallet());

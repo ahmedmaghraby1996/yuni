@@ -26,7 +26,7 @@ import { BranchResponse } from '../user/dto/branch.response';
 import { GetStoreRequest } from './dto/requests/get-store.request';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
-import { UpdateAdminOfferRequest, UpdateOfferRequest } from './dto/requests/update-offer.request';
+import { UpdateAdminOfferRequest, UpdateOfferRequest, UpdateStoreOfferRequest } from './dto/requests/update-offer.request';
 import { applyQueryFilters, applyQueryIncludes, applyQuerySort } from 'src/core/helpers/service-related.helper';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
@@ -233,12 +233,26 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1], description: 'Filter by active status (1=active, 0=inactive)' })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by offer name (case-insensitive)' })
+  @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter offers created from this date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter offers created up to this date (YYYY-MM-DD)' })
   @Get('my-offers')
-  async getStoreOffers(@Query() query: PaginatedRequest) {
+  async getStoreOffers(
+    @Query() query: PaginatedRequest,
+    @Query('is_active') is_active?: string,
+    @Query('name') name?: string,
+    @Query('date_from') date_from?: string,
+    @Query('date_to') date_to?: string,
+  ) {
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
     applyQueryIncludes(query, 'images');
     applyQueryFilters(query, `user_id=${this.request.user.id}`);
+    if (is_active !== undefined && is_active !== '') applyQueryFilters(query, `is_active=${is_active}`);
+    if (name) applyQueryFilters(query, `name#${name}`);
+    if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
+    if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
     const total = await this.offersService.count(query);
     const offers = await this.offersService.findAll(query);
     const result = plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true });
@@ -256,9 +270,28 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get offer by code — validates the code is active and not expired' })
+  @Get('code/:code')
+  async getOfferByCode(@Param('code') code: string) {
+    const offer = await this.offersService.getOfferByCode(code);
+    return new ActionResponse(this._i18nResponse.entity(plainToInstance(OfferResponse, offer, { excludeExtraneousValues: true })));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
   @Post('make-special/:id')
   async makeSpecialOffer(@Param('id') id: string) {
     return await this.offersService.makeSepcial(id);
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
+  @Put('store/update/:offer_id')
+  async updateStoreOffer(@Param('offer_id') offer_id: string, @Body() req: UpdateStoreOfferRequest) {
+    req.id = offer_id;
+    return await this.offersService.updateOffer(req);
   }
 
   // ─── Admin ─────────────────────────────────────────────────────────────────

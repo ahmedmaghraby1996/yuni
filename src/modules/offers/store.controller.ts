@@ -8,13 +8,14 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
@@ -27,6 +28,7 @@ import { BranchResponse } from '../user/dto/branch.response';
 import { UpdateBranchInfoRequest, UpdateStoreInfoRequest } from '../user/dto/request/update-store-info.request';
 import { AddBranchRequest } from '../user/dto/request/add-branch.request';
 import { UserService } from '../user/user.service';
+import { OffersService } from './offers.service';
 
 @ApiTags('Store')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
@@ -34,6 +36,7 @@ import { UserService } from '../user/user.service';
 export class StoreController {
   constructor(
     private readonly userService: UserService,
+    private readonly offersService: OffersService,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
 
@@ -99,11 +102,29 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1] })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by branch name (case-insensitive)' })
+  @ApiQuery({ name: 'city_id', required: false, type: String })
   @Get('branches')
-  async getBranches() {
-    const branches = await this.userService.getBranches();
+  async getBranches(
+    @Query('is_active') is_active?: string,
+    @Query('name') name?: string,
+    @Query('city_id') city_id?: string,
+  ) {
+    const isActiveBool = is_active !== undefined && is_active !== '' ? is_active === '1' || is_active === 'true' : undefined;
+    const branches = await this.userService.getBranches(isActiveBool, name, city_id);
     const result = plainToInstance(BranchResponse, branches, { excludeExtraneousValues: true });
     return new ActionResponse(this._i18nResponse.entity(result));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get all cities' })
+  @Get('cities')
+  async getCities() {
+    const cities = await this.userService.getCities();
+    return new ActionResponse(this._i18nResponse.entity(cities));
   }
 
   @StoreEndpoint()
@@ -114,5 +135,24 @@ export class StoreController {
     const branch = await this.userService.getBranchById(id);
     const result = plainToInstance(BranchResponse, branch, { excludeExtraneousValues: true });
     return new ActionResponse(this._i18nResponse.entity(result));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Store performance reports' })
+  @ApiQuery({ name: 'period', required: false, enum: ['today', 'week', 'month', 'year'], description: 'Preset date period' })
+  @ApiQuery({ name: 'branch_id', required: false, type: String, description: 'Filter by branch' })
+  @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Custom start date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Custom end date (YYYY-MM-DD)' })
+  @Get('reports')
+  async getReports(
+    @Query('period') period?: string,
+    @Query('branch_id') branch_id?: string,
+    @Query('date_from') date_from?: string,
+    @Query('date_to') date_to?: string,
+  ) {
+    const report = await this.offersService.getStoreReports(period, branch_id, date_from, date_to);
+    return new ActionResponse(report);
   }
 }

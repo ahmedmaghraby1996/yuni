@@ -153,3 +153,6 @@ export class UpdateAdminOfferRequest {
     
     is_active: boolean;
 }
+
+export class UpdateStoreOfferRequest extends UpdateAdminOfferRequest {}
+

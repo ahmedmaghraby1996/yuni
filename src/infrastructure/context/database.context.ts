@@ -28,6 +28,7 @@ import { Subscription } from '../entities/subscription/subscription.entity';
 import { SystemVariable } from '../entities/system-variables/system-variable.entity';
 import { OfferUsage } from '../entities/offer/offer-usage.entity';
 import { StoreFollow } from '../entities/store/store-follow.entity';
+import { SupportTicket } from '../entities/support-ticket/support-ticket.entity';
 
 export const DB_ENTITIES = [
   User,
@@ -58,6 +59,7 @@ export const DB_ENTITIES = [
   SystemVariable,
   OfferUsage,
   StoreFollow,
+  SupportTicket,
 ];
 
 export const DB_VIEWS = [];

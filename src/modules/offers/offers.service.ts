@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException, Req } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
@@ -13,6 +13,8 @@ import { REQUEST } from '@nestjs/core';
 import { FavoriteOffer } from 'src/infrastructure/entities/offer/favorite-offer.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
+import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
+import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 
 @Injectable()
 export class OffersService extends BaseService<Offer> {
@@ -26,7 +28,11 @@ export class OffersService extends BaseService<Offer> {
     private readonly favoriteOfferRepo: Repository<FavoriteOffer>,
     @InjectRepository(OfferUsage)
     private readonly offerUsageRepo: Repository<OfferUsage>,
-    private readonly updateOfferTransaction: UpdateOfferTransaction, // Reusing the same transaction for update
+    private readonly updateOfferTransaction: UpdateOfferTransaction,
+    @InjectRepository(Transaction)
+    private readonly transactionRepo: Repository<Transaction>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepo: Repository<Subscription>,
   ) {
     super(repo);
   }
@@ -380,6 +386,232 @@ export class OffersService extends BaseService<Offer> {
       throw new NotFoundException('Offer not found');
     }
     return offer;
+  }
+
+  async getOfferByCode(code: string) {
+    const offer = await this.repo.findOne({
+      where: { code },
+      relations: {
+        subcategory: true,
+        images: true,
+        stores: true,
+      },
+    });
+
+    if (!offer) throw new NotFoundException('Invalid code');
+    if (!offer.is_active) throw new BadRequestException('Offer is not active');
+    if (offer.end_date && new Date(offer.end_date) < new Date()) {
+      throw new BadRequestException('Offer has expired');
+    }
+
+    return offer;
+  }
+
+  async getStoreReports(period?: string, branch_id?: string, date_from?: string, date_to?: string) {
+    const userId = this.request.user.id;
+    const { startDate, endDate } = this.buildDateRange(period, date_from, date_to);
+
+    const buildUsageQb = () => {
+      const qb = this.offerUsageRepo
+        .createQueryBuilder('usage')
+        .innerJoin('usage.offer', 'offer')
+        .innerJoin('offer.stores', 'store')
+        .where('store.user_id = :userId', { userId })
+        .andWhere('usage.is_active = true')
+        .andWhere('usage.deleted_at IS NULL');
+      if (branch_id) qb.andWhere('store.id = :branch_id', { branch_id });
+      if (startDate) qb.andWhere('usage.created_at >= :startDate', { startDate });
+      if (endDate) qb.andWhere('usage.created_at <= :endDate', { endDate });
+      return qb;
+    };
+
+    const buildViewQb = () => {
+      const qb = this.offerViewRepo
+        .createQueryBuilder('view')
+        .innerJoin('view.offer', 'offer')
+        .innerJoin('offer.stores', 'store')
+        .where('store.user_id = :userId', { userId })
+        .andWhere('view.deleted_at IS NULL');
+      if (branch_id) qb.andWhere('store.id = :branch_id', { branch_id });
+      if (startDate) qb.andWhere('view.created_at >= :startDate', { startDate });
+      if (endDate) qb.andWhere('view.created_at <= :endDate', { endDate });
+      return qb;
+    };
+
+    const [
+      totalUsageRaw,
+      bestOfferRaw,
+      worstOfferRaw,
+      totalViewsRaw,
+      dailyUsageRaw,
+      peakHoursRaw,
+      monthlyRevenueRaw,
+      branchPerformanceRaw,
+      subscriptionTotalRaw,
+      walletTotalRaw,
+    ] = await Promise.all([
+      // ── Summary ──────────────────────────────────────────────────
+      buildUsageQb().select('COUNT(usage.id)', 'cnt').getRawOne(),
+
+      buildUsageQb()
+        .select(['offer.id AS offer_id', 'offer.title_ar AS title_ar', 'offer.title_en AS title_en', 'COUNT(usage.id) AS usage_count'])
+        .groupBy('offer.id').addGroupBy('offer.title_ar').addGroupBy('offer.title_en')
+        .orderBy('usage_count', 'DESC').limit(1).getRawOne(),
+
+      buildUsageQb()
+        .select(['offer.id AS offer_id', 'offer.title_ar AS title_ar', 'offer.title_en AS title_en', 'COUNT(usage.id) AS usage_count'])
+        .groupBy('offer.id').addGroupBy('offer.title_ar').addGroupBy('offer.title_en')
+        .orderBy('usage_count', 'ASC').limit(1).getRawOne(),
+
+      buildViewQb().select('COUNT(view.id)', 'cnt').getRawOne(),
+
+      // ── Daily usage trend (by day of week) ───────────────────────
+      buildUsageQb()
+        .select(['DAYOFWEEK(usage.created_at) AS day_of_week', 'COUNT(usage.id) AS count'])
+        .groupBy('DAYOFWEEK(usage.created_at)')
+        .orderBy('day_of_week', 'ASC')
+        .getRawMany(),
+
+      // ── Peak hours ────────────────────────────────────────────────
+      buildUsageQb()
+        .select(['HOUR(usage.created_at) AS hour', 'COUNT(usage.id) AS count'])
+        .groupBy('HOUR(usage.created_at)')
+        .orderBy('count', 'DESC')
+        .limit(3)
+        .getRawMany(),
+
+      // ── Monthly revenue trend (last 6 months) ────────────────────
+      buildUsageQb()
+        .select(['MONTH(usage.created_at) AS month', 'YEAR(usage.created_at) AS year', 'SUM(offer.original_price) AS revenue'])
+        .groupBy('YEAR(usage.created_at)').addGroupBy('MONTH(usage.created_at)')
+        .orderBy('year', 'ASC').addOrderBy('month', 'ASC')
+        .limit(6)
+        .getRawMany(),
+
+      // ── Branch performance ────────────────────────────────────────
+      buildUsageQb()
+        .select(['store.id AS branch_id', 'store.name AS branch_name', 'COUNT(usage.id) AS usage_count'])
+        .groupBy('store.id').addGroupBy('store.name')
+        .orderBy('usage_count', 'DESC')
+        .getRawMany(),
+
+      // ── Subscription payments ─────────────────────────────────────
+      this.subscriptionRepo
+        .createQueryBuilder('sub')
+        .select('SUM(sub.price)', 'total')
+        .where('sub.user_id = :userId', { userId })
+        .getRawOne(),
+
+      // ── Wallet transactions ───────────────────────────────────────
+      this.transactionRepo
+        .createQueryBuilder('tx')
+        .select('SUM(tx.amount)', 'total')
+        .where('tx.user_id = :userId', { userId })
+        .getRawOne(),
+    ]);
+
+    // ── Process summary ───────────────────────────────────────────
+    const total_coupons_used = parseInt(totalUsageRaw?.cnt ?? '0', 10);
+    const total_customer_reach = parseInt(totalViewsRaw?.cnt ?? '0', 10);
+    const conversion_rate = total_customer_reach > 0
+      ? parseFloat(((total_coupons_used / total_customer_reach) * 100).toFixed(1))
+      : 0;
+
+    const toOfferSummary = (raw: any) => raw
+      ? { id: raw.offer_id, title_ar: raw.title_ar, title_en: raw.title_en, usage_count: parseInt(raw.usage_count, 10) }
+      : null;
+
+    // ── Daily usage trend ─────────────────────────────────────────
+    // MySQL DAYOFWEEK: 1=Sun, 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat
+    const dayNames = { 1: 'الأحد', 2: 'الاثنين', 3: 'الثلاثاء', 4: 'الأربعاء', 5: 'الخميس', 6: 'الجمعة', 7: 'السبت' };
+    const daily_usage_trend = Object.entries(dayNames).map(([dow, name]) => {
+      const row = dailyUsageRaw.find((r: any) => String(r.day_of_week) === dow);
+      return { day: name, count: row ? parseInt(row.count, 10) : 0 };
+    });
+
+    // ── Peak hours ────────────────────────────────────────────────
+    const formatHour = (h: number) => {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const hour = h % 12 === 0 ? 12 : h % 12;
+      return `${hour}${period}`;
+    };
+    const peakHoursSorted = peakHoursRaw.map((r: any) => parseInt(r.hour, 10)).sort((a, b) => a - b);
+    const peak_hours = peakHoursSorted.length >= 2
+      ? `${formatHour(peakHoursSorted[0])} - ${formatHour(peakHoursSorted[peakHoursSorted.length - 1])}`
+      : peakHoursSorted.length === 1 ? formatHour(peakHoursSorted[0]) : null;
+
+    // ── Monthly revenue trend ─────────────────────────────────────
+    const revenue_trend = monthlyRevenueRaw.map((r: any, i: number) => ({
+      label: i + 1,
+      month: parseInt(r.month, 10),
+      year: parseInt(r.year, 10),
+      revenue: parseFloat(r.revenue ?? '0'),
+    }));
+
+    // ── Branch performance ────────────────────────────────────────
+    const branchTotal = branchPerformanceRaw.reduce((sum: number, r: any) => sum + parseInt(r.usage_count, 10), 0);
+    const branch_performance = branchPerformanceRaw.map((r: any) => ({
+      branch_id: r.branch_id,
+      branch_name: r.branch_name,
+      usage_count: parseInt(r.usage_count, 10),
+      percentage: branchTotal > 0 ? parseFloat(((parseInt(r.usage_count, 10) / branchTotal) * 100).toFixed(1)) : 0,
+    }));
+
+    // ── Financial summary ─────────────────────────────────────────
+    const subscription_payments = parseFloat(subscriptionTotalRaw?.total ?? '0');
+    const wallet_transactions = parseFloat(walletTotalRaw?.total ?? '0');
+
+    const revenueRaw = await buildUsageQb().select('SUM(offer.original_price)', 'total').getRawOne();
+    const financial = {
+      total_revenue: parseFloat(revenueRaw?.total ?? '0'),
+      subscription_payments,
+      wallet_transactions,
+      refund_summary: 0,
+    };
+
+    return {
+      // Summary cards
+      total_code_usage: total_coupons_used,
+      total_coupons_used,
+      total_customer_reach,
+      conversion_rate,
+      best_offer: toOfferSummary(bestOfferRaw),
+      worst_offer: toOfferSummary(worstOfferRaw),
+      // Charts
+      daily_usage_trend,
+      peak_hours,
+      revenue_trend,
+      // Branch comparison
+      branch_performance,
+      // Financial
+      financial,
+    };
+  }
+
+  private buildDateRange(period?: string, date_from?: string, date_to?: string): { startDate?: Date; endDate?: Date } {
+    if (date_from || date_to) {
+      return {
+        startDate: date_from ? new Date(date_from) : undefined,
+        endDate: date_to ? new Date(date_to) : undefined,
+      };
+    }
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    switch (period) {
+      case 'today':
+        return { startDate: today, endDate: now };
+      case 'week': {
+        const start = new Date(today);
+        start.setDate(today.getDate() - today.getDay());
+        return { startDate: start, endDate: now };
+      }
+      case 'month':
+        return { startDate: new Date(now.getFullYear(), now.getMonth(), 1), endDate: now };
+      case 'year':
+        return { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+      default:
+        return {};
+    }
   }
 }
 

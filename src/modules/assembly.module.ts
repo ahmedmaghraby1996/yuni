@@ -16,6 +16,7 @@ import { BanarModule } from './banar/banar.module';
 import { ChatModule } from './chat/chat.module';
 import { PackagesModule } from './packages/packages.module';
 import { CategoryModule } from './category/category.module';
+import { SupportTicketModule } from './support-ticket/support-ticket.module';
 
 
 @Module({
@@ -32,7 +33,8 @@ import { CategoryModule } from './category/category.module';
     BanarModule,
     ChatModule,
     PackagesModule,
-    CategoryModule
+    CategoryModule,
+    SupportTicketModule,
   ],
   exports: [],
 })

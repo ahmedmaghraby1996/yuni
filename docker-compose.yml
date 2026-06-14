@@ -2,10 +2,13 @@ version: '3.8'
 
 services:
   offers-station-api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     image: offers-station-api:latest
     container_name: offers-station-api
     hostname: offers-station-api
+    stop_grace_period: 30s
     depends_on:
       mysql-server-offers-station:
         condition: service_healthy
@@ -20,7 +23,13 @@ services:
       - DATABASE_PORT=3306
       - DATABASE_NAME=offers_station
       - DATABASE_USER=root_user
-      - DATABASE_PASSWORD=Yf7@qP9!xLm2wM3z    
+      - DATABASE_PASSWORD=Yf7@qP9!xLm2wM3z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/v1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   mysql-server-offers-station:
     image: mysql:8.0
