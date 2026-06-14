@@ -234,25 +234,38 @@ export class OffersController {
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
   @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1], description: 'Filter by active status (1=active, 0=inactive)' })
-  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by offer name (case-insensitive)' })
-  @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter offers created from this date (YYYY-MM-DD)' })
-  @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter offers created up to this date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Search in title_ar or title_en (case-insensitive)' })
+  @ApiQuery({ name: 'start_date', required: false, type: String, description: 'Filter offers with start_date >= this date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'end_date', required: false, type: String, description: 'Filter offers with end_date <= this date (YYYY-MM-DD)' })
   @Get('my-offers')
   async getStoreOffers(
     @Query() query: PaginatedRequest,
     @Query('is_active') is_active?: string,
     @Query('name') name?: string,
-    @Query('date_from') date_from?: string,
-    @Query('date_to') date_to?: string,
+    @Query('start_date') start_date?: string,
+    @Query('end_date') end_date?: string,
   ) {
     applyQueryIncludes(query, 'stores');
     applyQueryIncludes(query, 'subcategory');
     applyQueryIncludes(query, 'images');
+
+    // Build mandatory AND conditions
     applyQueryFilters(query, `user_id=${this.request.user.id}`);
     if (is_active !== undefined && is_active !== '') applyQueryFilters(query, `is_active=${is_active}`);
-    if (name) applyQueryFilters(query, `name#${name}`);
-    if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
-    if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
+    if (start_date) applyQueryFilters(query, `start_date>=${start_date}`);
+    if (end_date) applyQueryFilters(query, `end_date<=${end_date}`);
+
+    // Name search: (title_ar ILike) OR (title_en ILike) — duplicate filter entries
+    if (name && name.trim()) {
+      const current: string[] = Array.isArray(query.filters)
+        ? [...query.filters]
+        : query.filters ? [query.filters as string] : [];
+      query.filters = [
+        ...current.map((f) => `${f},title_ar#${name.trim()}`),
+        ...current.map((f) => `${f},title_en#${name.trim()}`),
+      ];
+    }
+
     const total = await this.offersService.count(query);
     const offers = await this.offersService.findAll(query);
     const result = plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true });

@@ -17,6 +17,7 @@ import { StaticPageModule } from 'src/modules/static-page/static-page.module';
 import { SuggestionsComplaintsModule } from 'src/modules/suggestions-complaints/suggestions-complaints.module';
 import { TransactionModule } from 'src/modules/transaction/transaction.module';
 import { UserModule } from 'src/modules/user/user.module';
+import { SupportTicketModule } from 'src/modules/support-ticket/support-ticket.module';
 
 function isAdminOperation(op: any): boolean {
   return op && typeof op === 'object' && op['x-admin'] === true;
@@ -83,6 +84,7 @@ export default (app: INestApplication, config: ConfigService) => {
       PackagesModule,
       CategoryModule,
       TransactionModule,
+      SupportTicketModule,
     ],
     operationIdFactory,
   });
