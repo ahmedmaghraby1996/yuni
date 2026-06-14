@@ -5,17 +5,21 @@ import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import {
   applyQueryFilters,
-  applyQueryIncludes,
   applyQuerySort,
 } from 'src/core/helpers/service-related.helper';
-import { ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiQuery, ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { plainToInstance } from 'class-transformer';
 import { TransactionResponse } from './dto/response/transaction-response';
-import { MakeTransactionRequest, setAgentPercentageRequest } from './dto/requests/make-transaction-request';
+import {
+  MakeTransactionRequest,
+  WalletChargeRequest,
+  WalletRefundRequest,
+  setAgentPercentageRequest,
+} from './dto/requests/make-transaction-request';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from '../authentication/guards/roles.decorator';
 
@@ -33,23 +37,27 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
+  @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
+  @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter from date (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter to date (YYYY-MM-DD)' })
   @Get()
-  async getTransactions(@Query() query: PaginatedRequest) {
+  async getTransactions(
+    @Query() query: PaginatedRequest,
+    @Query('number') number?: string,
+    @Query('date_from') date_from?: string,
+    @Query('date_to') date_to?: string,
+  ) {
     applyQuerySort(query, 'created_at=desc');
-    applyQueryIncludes(query, 'user');
     if (!this.transactionService.currentUser.roles.includes(Role.ADMIN))
-      applyQueryFilters(
-        query,
-        `user_id=${this.transactionService.currentUser.id}`,
-      );
-    const transaction = await this.transactionService.findAll(query);
+      applyQueryFilters(query, `user_id=${this.transactionService.currentUser.id}`);
+    if (number) applyQueryFilters(query, `number=${number}`);
+    if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
+    if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
 
-    if (query.page && query.limit) {
-      const total = await this.transactionService.count(query);
-      return new PaginatedResponse(transaction, { meta: { total, ...query } });
-    } else {
-      return new ActionResponse(plainToInstance(TransactionResponse, transaction, { excludeExtraneousValues: true }));
-    }
+    const total = await this.transactionService.count(query);
+    const transactions = await this.transactionService.findAll(query);
+    const result = plainToInstance(TransactionResponse, transactions, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, ...query } });
   }
 
   @StoreEndpoint()
@@ -57,6 +65,24 @@ export class TransactionController {
   @Get('wallet')
   async getWallet() {
     return new ActionResponse(await this.transactionService.getWallet());
+  }
+
+  @StoreEndpoint()
+  @Roles(Role.STORE)
+  @Post('charge')
+  async chargeWallet(@Body() req: WalletChargeRequest) {
+    return new ActionResponse(
+      plainToInstance(TransactionResponse, await this.transactionService.chargeWallet(req), { excludeExtraneousValues: true }),
+    );
+  }
+
+  @StoreEndpoint()
+  @Roles(Role.STORE)
+  @Post('refund')
+  async refundWallet(@Body() req: WalletRefundRequest) {
+    return new ActionResponse(
+      plainToInstance(TransactionResponse, await this.transactionService.refundWallet(req), { excludeExtraneousValues: true }),
+    );
   }
 
   @AdminEndpoint()

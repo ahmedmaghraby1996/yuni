@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { Wallet } from 'src/infrastructure/entities/wallet/wallet.entity';
 import { Repository } from 'typeorm';
-import { MakeTransactionRequest } from './dto/requests/make-transaction-request';
+import { MakeTransactionRequest, WalletChargeRequest, WalletRefundRequest } from './dto/requests/make-transaction-request';
 import { plainToInstance } from 'class-transformer';
 import { BaseUserService } from 'src/core/base/service/user-service.base';
 import { Request } from 'express';
@@ -85,6 +85,29 @@ if (req.date || req.iban || req.bank) {
       user_id: this.currentUser.id,
     });
     return wallet;
+  }
+
+  async chargeWallet(req: WalletChargeRequest) {
+    return this.makeTransaction(
+      new MakeTransactionRequest({
+        user_id: this.currentUser.id,
+        amount: Number(req.amount),
+        type: TransactionTypes.WALLET_CHARGE,
+      }),
+    );
+  }
+
+  async refundWallet(req: WalletRefundRequest) {
+    const transaction = await this.makeTransaction(
+      new MakeTransactionRequest({
+        user_id: this.currentUser.id,
+        amount: -Math.abs(Number(req.amount)),
+        type: TransactionTypes.WALLET_REFUND,
+      }),
+    );
+    transaction.meta_data = JSON.stringify({ reason: req.reason });
+    await this.transactionRepository.save(transaction);
+    return transaction;
   }
 
 
