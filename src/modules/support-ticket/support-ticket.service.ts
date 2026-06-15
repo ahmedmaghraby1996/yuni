@@ -30,9 +30,11 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     });
   }
 
-  async getMyTickets(page = 1, limit = 10): Promise<{ data: SupportTicket[]; total: number }> {
+  async getMyTickets(page = 1, limit = 10, status?: TicketStatus): Promise<{ data: SupportTicket[]; total: number }> {
+    const where: any = { user_id: this.request.user.id };
+    if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
-      where: { user_id: this.request.user.id },
+      where,
       order: { created_at: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,

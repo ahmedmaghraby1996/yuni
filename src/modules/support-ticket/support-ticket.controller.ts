@@ -48,12 +48,14 @@ export class SupportTicketController {
   @ApiOperation({ summary: 'Get my support tickets' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
   @Get()
   async getMyTickets(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
+    @Query('status') status?: TicketStatus,
   ) {
-    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit));
+    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status);
     const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }

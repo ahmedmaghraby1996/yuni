@@ -56,6 +56,15 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get current active subscription for the store' })
+  @Get('subscription')
+  async getCurrentSubscription() {
+    return new ActionResponse(await this.userService.getCurrentSubscription());
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
   @Put('branches/:id')
   async updateBranchInfo(@Param('id') id: string, @Body() req: UpdateBranchInfoRequest) {
     req.branch_id = id;
