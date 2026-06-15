@@ -264,6 +264,19 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Get('my-offers/:id')
+  async getStoreOfferById(@Param('id') id: string) {
+    const offer = await this.offersService.getStoreOfferById(id, this.request.user.id);
+    return new ActionResponse(
+      this._i18nResponse.entity(
+        plainToInstance(OfferResponse, offer, { excludeExtraneousValues: true }),
+      ),
+    );
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STORE)
   @Post()
   async createOffer(@Body() req: CreateOfferRequest) {
     return await this.offersService.createOffer(req);

@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, Req } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, Req } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
@@ -431,6 +431,14 @@ export class OffersService extends BaseService<Offer> {
     });
     if (!offer) {
       throw new NotFoundException('Offer not found');
+    }
+    return offer;
+  }
+
+  async getStoreOfferById(id: string, userId: string) {
+    const offer = await this.findOne(id);
+    if (offer.user_id !== userId) {
+      throw new ForbiddenException('You do not have permission to view this offer');
     }
     return offer;
   }
