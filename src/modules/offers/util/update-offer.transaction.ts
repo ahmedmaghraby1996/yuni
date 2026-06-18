@@ -79,15 +79,18 @@ export class UpdateOfferTransaction extends BaseTransaction<
       Object.assign(existingOffer, updatedData);
 
       // Update offer images
-      const newImages = req?.images?.map((image) => {
-        if (!fs.existsSync('storage/offer-images')) {
-          fs.mkdirSync('storage/offer-images');
+      const newImages = req?.images?.map((image, index) => {
+        let imagePath = image;
+        if (!/^https?:\/\//i.test(image) && image.includes('/tmp/')) {
+          if (!fs.existsSync('storage/offer-images')) {
+            fs.mkdirSync('storage/offer-images');
+          }
+          imagePath = image.replace('/tmp/', '/offer-images/');
+          fs.renameSync(image, imagePath);
         }
-        const newPath = image.replace('/tmp/', '/offer-images/');
-        fs.renameSync(image, newPath);
         return new OfferImages({
-          image: newPath,
-          order_by: req.images.indexOf(image),
+          image: imagePath,
+          order_by: index,
           offer_id: existingOffer.id,
         });
       });

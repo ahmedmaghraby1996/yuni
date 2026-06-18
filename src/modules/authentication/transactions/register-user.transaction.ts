@@ -20,7 +20,6 @@ import { Wallet } from 'src/infrastructure/entities/wallet/wallet.entity';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 
-import { where } from 'sequelize';
 import { City } from 'src/infrastructure/entities/city/city.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';

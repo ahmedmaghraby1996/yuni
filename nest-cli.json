@@ -4,7 +4,7 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "assets": [{ "include": "i18n/**/*", "watchAssets": true }]
+    "assets": [{ "include": "i18n/**/*", "outDir": "dist", "watchAssets": true }]
   },
   "schematics": {
     "@nestjs/schematics:controller": {
