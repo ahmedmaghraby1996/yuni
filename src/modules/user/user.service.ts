@@ -314,18 +314,22 @@ export class UserService extends BaseService<User> {
       order: { order_by: 'ASC' },
     });
 
-    const subscription = await this.subscriptionRepo.findOne({
-      where: { user_id: this.request.user.id, expire_at: MoreThan(new Date()) },
-    });
+    const [subscription, store] = await Promise.all([
+      this.subscriptionRepo.findOne({
+        where: { user_id: this.request.user.id, expire_at: MoreThan(new Date()) },
+      }),
+      this.storeRepo.findOne({
+        where: { user_id: this.request.user.id, is_main_branch: true },
+        relations: { city: true, subcategory: true },
+      }),
+    ]);
 
-    const result = packages.map((item) => {
-      if (subscription?.package_id === item.id) {
-        return { ...item, is_current: true };
-      }
-      return { ...item, is_current: false };
-    });
+    const result = packages.map((item) => ({
+      ...item,
+      is_current: subscription?.package_id === item.id,
+    }));
 
-    return result;
+    return { packages: result, store, subscription };
   }
 
   async getCurrentSubscription() {

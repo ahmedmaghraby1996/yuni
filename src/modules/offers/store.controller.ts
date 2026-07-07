@@ -14,8 +14,10 @@ import {
 import { ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
+import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
+import { applyQueryFilters, applyQuerySort } from 'src/core/helpers/service-related.helper';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -25,6 +27,9 @@ import { UpdateBranchInfoRequest } from '../user/dto/request/update-store-info.r
 import { AddBranchRequest } from '../user/dto/request/add-branch.request';
 import { UserService } from '../user/user.service';
 import { OffersService } from './offers.service';
+import { SubCategoryService } from './sub_category.service';
+import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
+import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 
 @ApiTags('Store')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
@@ -33,6 +38,7 @@ export class StoreController {
   constructor(
     private readonly userService: UserService,
     private readonly offersService: OffersService,
+    private readonly subCategoryService: SubCategoryService,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
 
@@ -41,8 +47,25 @@ export class StoreController {
   @Roles(Role.STORE)
   @Get('packages')
   async getPackages() {
-    const packages = await this.userService.getPackage();
-    return new ActionResponse(this._i18nResponse.entity(packages));
+    const { packages, store, subscription } = await this.userService.getPackage();
+    const storeResult = plainToInstance(BranchResponse, store, { excludeExtraneousValues: true });
+    return new ActionResponse(this._i18nResponse.entity({ packages, store: storeResult, subscription }));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get all active subcategories' })
+  @Get('sub-categories')
+  async getSubCategories(@Query() query: PaginatedRequest) {
+    applyQueryFilters(query, 'is_active=1');
+    applyQuerySort(query, 'order_by=asc');
+    const [data, total] = await Promise.all([
+      this.subCategoryService.findAll(query),
+      this.subCategoryService.count(query),
+    ]);
+    const result = this._i18nResponse.entity(plainToInstance(SubCategory, data, { excludeExtraneousValues: true }));
+    return new PaginatedResponse(result, { meta: { total, ...query } });
   }
 
   @StoreEndpoint()
