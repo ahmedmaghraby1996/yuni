@@ -589,12 +589,12 @@ export class OffersService extends BaseService<Offer> {
     const userId = this.request.user.id;
 
     const [topOffersRaw, branchPerfRaw] = await Promise.all([
-      this.offerUsageRepo.createQueryBuilder('usage')
-        .innerJoin('usage.offer', 'offer')
+      // Start from Offer so offers with 0 usage still appear
+      this.repo.createQueryBuilder('offer')
         .innerJoin('offer.stores', 'store')
+        .leftJoin(OfferUsage, 'usage', 'usage.offer_id = offer.id AND usage.is_active = true AND usage.deleted_at IS NULL')
         .where('store.user_id = :userId', { userId })
-        .andWhere('usage.is_active = true')
-        .andWhere('usage.deleted_at IS NULL')
+        .andWhere('offer.deleted_at IS NULL')
         .select([
           'offer.id AS offer_id',
           'offer.title_ar AS title_ar',
@@ -608,12 +608,12 @@ export class OffersService extends BaseService<Offer> {
         .addGroupBy('offer.is_active').addGroupBy('store.name').addGroupBy('store.id')
         .orderBy('usage_count', 'DESC').limit(limit).getRawMany(),
 
-      this.offerUsageRepo.createQueryBuilder('usage')
-        .innerJoin('usage.offer', 'offer')
-        .innerJoin('offer.stores', 'store')
+      // Branch performance: start from Store, left join usages via offers
+      this.storeRepo.createQueryBuilder('store')
+        .leftJoin('store.offers', 'offer')
+        .leftJoin(OfferUsage, 'usage', 'usage.offer_id = offer.id AND usage.is_active = true AND usage.deleted_at IS NULL')
         .where('store.user_id = :userId', { userId })
-        .andWhere('usage.is_active = true')
-        .andWhere('usage.deleted_at IS NULL')
+        .andWhere('store.deleted_at IS NULL')
         .select(['store.id AS branch_id', 'store.name AS branch_name', 'COUNT(usage.id) AS usage_count'])
         .groupBy('store.id').addGroupBy('store.name')
         .orderBy('usage_count', 'DESC').getRawMany(),
@@ -758,7 +758,7 @@ export class OffersService extends BaseService<Offer> {
 
     // ── Daily usage trend ─────────────────────────────────────────
     // MySQL DAYOFWEEK: 1=Sun, 2=Mon, 3=Tue, 4=Wed, 5=Thu, 6=Fri, 7=Sat
-    const dayNames = { 1: 'الأحد', 2: 'الاثنين', 3: 'الثلاثاء', 4: 'الأربعاء', 5: 'الخميس', 6: 'الجمعة', 7: 'السبت' };
+    const dayNames = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat' };
     const daily_usage_trend = Object.entries(dayNames).map(([dow, name]) => {
       const row = dailyUsageRaw.find((r: any) => String(r.day_of_week) === dow);
       return { day: name, count: row ? parseInt(row.count, 10) : 0 };
