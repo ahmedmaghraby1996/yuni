@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { Permission } from '../authentication/guards/permission.decorator';
 import { BranchResponse } from '../user/dto/branch.response';
 import { UpdateBranchInfoRequest } from '../user/dto/request/update-store-info.request';
 import { AddBranchRequest } from '../user/dto/request/add-branch.request';
@@ -45,6 +46,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('packages', 'view')
   @Get('packages')
   async getPackages() {
     const { packages, store, subscription } = await this.userService.getPackage();
@@ -55,6 +57,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'view')
   @ApiOperation({ summary: 'Get all active subcategories' })
   @Get('sub-categories')
   async getSubCategories(@Query() query: PaginatedRequest) {
@@ -71,6 +74,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('packages', 'edit')
   @Post('subscribe/:package_id')
   async subscribePackage(@Param('package_id') package_id: string) {
     return new ActionResponse(await this.userService.subscribePackage(package_id));
@@ -79,6 +83,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('packages', 'view')
   @ApiOperation({ summary: 'Get current active subscription for the store' })
   @Get('subscription')
   async getCurrentSubscription() {
@@ -88,6 +93,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('branches', 'edit')
   @Put('branches/:id')
   async updateBranchInfo(@Param('id') id: string, @Body() req: UpdateBranchInfoRequest) {
     req.branch_id = id;
@@ -97,6 +103,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE, Role.ADMIN)
+  @Permission('branches', 'delete')
   @Delete('branches/:id')
   async deleteBranch(@Param('id') id: string) {
     return new ActionResponse(await this.userService.deleteBranch(id));
@@ -105,6 +112,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('branches', 'add')
   @Post('branches')
   async addBranch(@Body() req: AddBranchRequest) {
     return new ActionResponse(await this.userService.createBranch(req));
@@ -113,6 +121,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('branches', 'view')
   @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1] })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by branch name (case-insensitive)' })
   @ApiQuery({ name: 'city_id', required: false, type: String })
@@ -131,6 +140,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('branches', 'view')
   @ApiOperation({ summary: 'Get all cities' })
   @Get('cities')
   async getCities() {
@@ -141,6 +151,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('branches', 'view')
   @Get('branches/:id')
   async getBranchById(@Param('id') id: string) {
     const branch = await this.userService.getBranchById(id);
@@ -151,6 +162,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('dashboard', 'view')
   @ApiOperation({ summary: 'Dashboard summary cards + monthly performance + daily usage charts' })
   @Get('dashboard')
   async getDashboard() {
@@ -160,6 +172,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('reports', 'view')
   @ApiOperation({ summary: 'Top used offers table + branch performance comparison' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max offers to return (default 10)' })
   @Get('top-offers')
@@ -170,6 +183,7 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('reports', 'view')
   @ApiOperation({ summary: 'Store performance reports' })
   @ApiQuery({ name: 'period', required: false, enum: ['today', 'week', 'month', 'year'], description: 'Preset date period' })
   @ApiQuery({ name: 'branch_id', required: false, type: String, description: 'Filter by branch' })

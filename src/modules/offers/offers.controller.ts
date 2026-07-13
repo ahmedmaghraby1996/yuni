@@ -26,6 +26,7 @@ import { BranchResponse } from '../user/dto/branch.response';
 import { GetStoreRequest } from './dto/requests/get-store.request';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { Permission } from '../authentication/guards/permission.decorator';
 import { UpdateAdminOfferRequest, UpdateOfferRequest, UpdateStoreOfferRequest } from './dto/requests/update-offer.request';
 import { applyQueryFilters, applyQueryIncludes, applyQuerySort } from 'src/core/helpers/service-related.helper';
 import { REQUEST } from '@nestjs/core';
@@ -233,6 +234,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1] })
@@ -264,6 +266,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'view')
   @Get('my-offers/:id')
   async getStoreOfferById(@Param('id') id: string) {
     const offer = await this.offersService.getStoreOfferById(id, this.request.user.id);
@@ -277,6 +280,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'add')
   @Post()
   async createOffer(@Body() req: CreateOfferRequest) {
     return await this.offersService.createOffer(req);
@@ -285,6 +289,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'view')
   @ApiOperation({ summary: 'Get offer by code — validates the code is active and not expired' })
   @Get('code/:code')
   async getOfferByCode(@Param('code') code: string) {
@@ -295,6 +300,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'edit')
   @Post('make-special/:id')
   async makeSpecialOffer(@Param('id') id: string) {
     return await this.offersService.makeSepcial(id);
@@ -303,6 +309,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE)
+  @Permission('offers', 'edit')
   @Put('store/update/:offer_id')
   async updateStoreOffer(@Param('offer_id') offer_id: string, @Body() req: UpdateStoreOfferRequest) {
     req.id = offer_id;
@@ -328,6 +335,7 @@ export class OffersController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
+  @Permission('offers', 'delete')
   @Delete('delete/:id')
   async deleteOffer(@Param('id') id: string) {
     const offer = await this.offersService.findOne(id);

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { Permission } from '../authentication/guards/permission.decorator';
 import { CreateEmployeeRequest } from './dto/create-employee.request';
 import { UpdateEmployeeRequest } from './dto/update-employee.request';
 import { EmployeeResponse } from './dto/employee.response';
@@ -31,6 +32,7 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'add')
   @ApiOperation({ summary: 'Create a new employee for the store' })
   @Post()
   async create(@Body() req: CreateEmployeeRequest) {
@@ -42,6 +44,7 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'view')
   @ApiOperation({ summary: 'Get all employees of the store' })
   @Get()
   async getAll() {
@@ -53,6 +56,7 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'view')
   @ApiOperation({ summary: 'Get employee by ID' })
   @Get(':id')
   async getById(@Param('id') id: string) {
@@ -64,6 +68,7 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'edit')
   @ApiOperation({ summary: 'Update employee info or permissions' })
   @Put(':id')
   async update(@Param('id') id: string, @Body() req: UpdateEmployeeRequest) {
@@ -75,6 +80,7 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'delete')
   @ApiOperation({ summary: 'Delete an employee' })
   @Delete(':id')
   async delete(@Param('id') id: string) {

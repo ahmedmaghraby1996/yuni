@@ -32,6 +32,7 @@ import { plainToInstance } from 'class-transformer';
 import { AcceptAgentRequest, AgentResponse, UserResponse } from './dto/response/user-response';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { Permission } from '../authentication/guards/permission.decorator';
 import { GetUserRequest } from './dto/get-user.request';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
@@ -58,6 +59,7 @@ export class UserController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('customers', 'view')
   @ApiOperation({ summary: 'Get users who used store codes with usage count per user' })
   @Get('code-users')
   async getCodeUsers(@Query('page') page = 1, @Query('limit') limit = 10) {

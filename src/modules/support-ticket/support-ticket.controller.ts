@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { Permission } from '../authentication/guards/permission.decorator';
 import { CreateTicketRequest } from './dto/create-ticket.request';
 import { ReplyTicketRequest } from './dto/reply-ticket.request';
 import { TicketResponse } from './dto/ticket.response';
@@ -35,6 +36,7 @@ export class SupportTicketController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('support', 'add')
   @ApiOperation({ summary: 'Create a support ticket' })
   @Post()
   async createTicket(@Body() req: CreateTicketRequest) {
@@ -45,6 +47,7 @@ export class SupportTicketController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('support', 'view')
   @ApiOperation({ summary: 'Get my support tickets' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -63,6 +66,7 @@ export class SupportTicketController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @Permission('support', 'view')
   @ApiOperation({ summary: 'Get support ticket by id' })
   @Get(':id')
   async getTicketById(@Param('id') id: string) {

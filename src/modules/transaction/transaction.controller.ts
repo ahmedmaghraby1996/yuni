@@ -22,6 +22,7 @@ import {
 } from './dto/requests/make-transaction-request';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from '../authentication/guards/roles.decorator';
+import { Permission } from '../authentication/guards/permission.decorator';
 
 @ApiTags('Transaction')
 @ApiHeader({
@@ -37,6 +38,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
+  @Permission('packages', 'view')
   @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
   @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter from date (YYYY-MM-DD)' })
   @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter to date (YYYY-MM-DD)' })
@@ -62,6 +64,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
+  @Permission('packages', 'view')
   @Get('wallet')
   async getWallet() {
     return new ActionResponse(await this.transactionService.getWallet());
@@ -69,6 +72,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('packages', 'edit')
   @Post('charge')
   async chargeWallet(@Body() req: WalletChargeRequest) {
     return new ActionResponse(
@@ -78,6 +82,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('packages', 'edit')
   @Post('refund')
   async refundWallet(@Body() req: WalletRefundRequest) {
     return new ActionResponse(
