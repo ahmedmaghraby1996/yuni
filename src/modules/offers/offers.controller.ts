@@ -249,7 +249,7 @@ export class OffersController {
     @Query('end_date') end_date?: string,
   ) {
     const { offers, total } = await this.offersService.getMyOffers({
-      userId: this.request.user.id,
+      userId: (this.request.user as any).owner_user_id ?? this.request.user.id,
       page: Number(page),
       limit: Number(limit),
       is_active,

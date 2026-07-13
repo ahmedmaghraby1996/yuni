@@ -79,9 +79,13 @@ export class UserService extends BaseService<User> {
     super(userRepo);
   }
 
+  private get storeOwnerId(): string {
+    return (this.request.user as any).owner_user_id ?? this.request.user.id;
+  }
+
   async getStoreOfferUsers(page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    const userId = this.request.user.id;
+    const userId = this.storeOwnerId;
 
     const baseQb = () =>
       this.offerUsageRepo
@@ -174,7 +178,7 @@ export class UserService extends BaseService<User> {
       this.request.user.roles.includes(Role.ADMIN)
         ? { where: { id: req.id } }
         : {
-            where: { user_id: this.request.user.id, is_main_branch: true },
+            where: { user_id: this.storeOwnerId, is_main_branch: true },
           },
     );
     console.log(req);
@@ -228,8 +232,7 @@ export class UserService extends BaseService<User> {
   async updateBranchInfo(req: UpdateBranchInfoRequest) {
     const store = await this.storeRepo.findOne({
       where: {
-        user_id: this.request.user.id,
-
+        user_id: this.storeOwnerId,
         id: req.branch_id,
       },
     });
@@ -247,7 +250,7 @@ export class UserService extends BaseService<User> {
 
   async createBranch(req: AddBranchRequest) {
     const main_branch = await this.storeRepo.findOne({
-      where: { user_id: this.request.user.id, is_main_branch: true },
+      where: { user_id: this.storeOwnerId, is_main_branch: true },
     });
     if (!main_branch)
       throw new BadRequestException('message.main_branch_not_found');
@@ -267,7 +270,7 @@ export class UserService extends BaseService<User> {
   }
 
   async getBranches(is_active?: boolean, name?: string, city_id?: string) {
-    const where: any = { user_id: this.request.user.id };
+    const where: any = { user_id: this.storeOwnerId };
     if (is_active !== undefined) where.is_active = is_active;
     if (name) where.name = ILike(`%${name}%`);
     if (city_id) where.city_id = city_id;
@@ -316,10 +319,10 @@ export class UserService extends BaseService<User> {
 
     const [subscription, store] = await Promise.all([
       this.subscriptionRepo.findOne({
-        where: { user_id: this.request.user.id, expire_at: MoreThan(new Date()) },
+        where: { user_id: this.storeOwnerId, expire_at: MoreThan(new Date()) },
       }),
       this.storeRepo.findOne({
-        where: { user_id: this.request.user.id, is_main_branch: true },
+        where: { user_id: this.storeOwnerId, is_main_branch: true },
         relations: { city: true, subcategory: true },
       }),
     ]);
@@ -334,7 +337,7 @@ export class UserService extends BaseService<User> {
 
   async getCurrentSubscription() {
     return this.subscriptionRepo.findOne({
-      where: { user_id: this.request.user.id, expire_at: MoreThan(new Date()) },
+      where: { user_id: this.storeOwnerId, expire_at: MoreThan(new Date()) },
     });
   }
 
@@ -367,7 +370,7 @@ export class UserService extends BaseService<User> {
     if (!pkg) throw new NotFoundException('Package not found');
 
     // Replace any existing subscription for this user
-    await this.subscriptionRepo.delete({ user_id: this.request.user.id });
+    await this.subscriptionRepo.delete({ user_id: this.storeOwnerId });
 
     const subscription = await this.subscriptionRepo.save({
       name_ar: pkg.name_ar,
@@ -375,7 +378,7 @@ export class UserService extends BaseService<User> {
       description_ar: pkg.description_ar,
       description_en: pkg.description_en,
       price: pkg.price,
-      user_id: this.request.user.id,
+      user_id: this.storeOwnerId,
       package_id: pkg.id,
       expire_at: new Date(Date.now() + pkg.duration * 24 * 60 * 60 * 1000),
       is_active: true,
@@ -383,7 +386,7 @@ export class UserService extends BaseService<User> {
 
     // Record payment transaction (creates wallet if not exists)
     await this.transactionService.makeTransaction({
-      user_id: this.request.user.id,
+      user_id: this.storeOwnerId,
       amount: -pkg.price,
       type: TransactionTypes.STORE_PAYMENT,
     });

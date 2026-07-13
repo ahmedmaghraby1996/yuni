@@ -25,7 +25,12 @@ export class RolesGuard implements CanActivate {
     const { user } = request;
     if (user.is_active == false)
       throw new UnauthorizedException('message.user_inactive');
-    console.log('user roles:', user);
+
+    // Employees inherit STORE access
+    if (user.roles?.includes(Role.EMPLOYEE) && requiredRoles.includes(Role.STORE)) {
+      return true;
+    }
+
     return requiredRoles.some((role) => user.roles?.includes(role));
   }
 }

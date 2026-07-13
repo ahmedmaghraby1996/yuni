@@ -46,6 +46,10 @@ export class OffersService extends BaseService<Offer> {
     super(repo);
   }
 
+  private get storeOwnerId(): string {
+    return (this.request.user as any).owner_user_id ?? this.request.user.id;
+  }
+
   async createOffer(req: CreateOfferRequest) {
     const offer = await this.createOfferTransaction.run(req);
     return offer;
@@ -58,7 +62,7 @@ export class OffersService extends BaseService<Offer> {
   async makeSepcial(offer_id: string) {
     // make all offers not special
     await this.repo.update(
-      { user_id: this.request.user.id },
+      { user_id: this.storeOwnerId },
       { is_special: false },
     );
     await this.repo.update(offer_id, { is_special: true });
@@ -114,7 +118,7 @@ export class OffersService extends BaseService<Offer> {
 
   async getStoreOfferUsers(page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    const userId = this.request.user.id;
+    const userId = this.storeOwnerId;
 
     const baseQb = () =>
       this.offerUsageRepo
@@ -472,7 +476,7 @@ export class OffersService extends BaseService<Offer> {
   }
 
   async getStoreDashboard() {
-    const userId = this.request.user.id;
+    const userId = this.storeOwnerId;
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterdayStart = new Date(todayStart.getTime() - 86400000);
@@ -586,7 +590,7 @@ export class OffersService extends BaseService<Offer> {
   }
 
   async getTopOffersPerformance(limit = 10) {
-    const userId = this.request.user.id;
+    const userId = this.storeOwnerId;
 
     const [topOffersRaw, branchPerfRaw] = await Promise.all([
       // Start from Offer so offers with 0 usage still appear
@@ -643,7 +647,7 @@ export class OffersService extends BaseService<Offer> {
   }
 
   async getStoreReports(period?: string, branch_id?: string, date_from?: string, date_to?: string) {
-    const userId = this.request.user.id;
+    const userId = this.storeOwnerId;
     const { startDate, endDate } = this.buildDateRange(period, date_from, date_to);
 
     const buildUsageQb = () => {
