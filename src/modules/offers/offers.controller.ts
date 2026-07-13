@@ -21,6 +21,7 @@ import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { ApiBearerAuth, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { JwtOptionalAuthGuard } from '../authentication/guards/jwt-optional-auth.guard';
+import { RolesGuard } from '../authentication/guards/roles.guard';
 import { StoreService } from './store.service';
 import { BranchResponse } from '../user/dto/branch.response';
 import { GetStoreRequest } from './dto/requests/get-store.request';
@@ -232,7 +233,7 @@ export class OffersController {
   // ─── Store ─────────────────────────────────────────────────────────────────
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -264,7 +265,7 @@ export class OffersController {
   }
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'view')
   @Get('my-offers/:id')
@@ -278,7 +279,7 @@ export class OffersController {
   }
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'add')
   @Post()
@@ -287,7 +288,7 @@ export class OffersController {
   }
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'view')
   @ApiOperation({ summary: 'Get offer by code — validates the code is active and not expired' })
@@ -298,7 +299,7 @@ export class OffersController {
   }
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'edit')
   @Post('make-special/:id')
@@ -307,7 +308,7 @@ export class OffersController {
   }
 
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'edit')
   @Put('store/update/:offer_id')
@@ -333,7 +334,7 @@ export class OffersController {
 
   @AdminEndpoint()
   @StoreEndpoint()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE, Role.ADMIN)
   @Permission('offers', 'delete')
   @Delete('delete/:id')
