@@ -151,6 +151,25 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Dashboard summary cards + monthly performance + daily usage charts' })
+  @Get('dashboard')
+  async getDashboard() {
+    return new ActionResponse(await this.offersService.getStoreDashboard());
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Top used offers table + branch performance comparison' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max offers to return (default 10)' })
+  @Get('top-offers')
+  async getTopOffers(@Query('limit') limit = 10) {
+    return new ActionResponse(await this.offersService.getTopOffersPerformance(Number(limit)));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
   @ApiOperation({ summary: 'Store performance reports' })
   @ApiQuery({ name: 'period', required: false, enum: ['today', 'week', 'month', 'year'], description: 'Preset date period' })
   @ApiQuery({ name: 'branch_id', required: false, type: String, description: 'Filter by branch' })
