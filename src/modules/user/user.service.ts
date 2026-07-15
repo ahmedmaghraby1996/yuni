@@ -316,6 +316,7 @@ export class UserService extends BaseService<User> {
     const branches = await this.storeRepo.find({
       where,
       relations: { subcategory: true, offers: true, city: true },
+      order: { created_at: 'DESC' },
     });
     return branches;
   }
