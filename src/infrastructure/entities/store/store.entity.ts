@@ -146,6 +146,9 @@ export class Store extends OwnedEntity {
   @Column({ nullable: true })
   email: string;
 
+  @Column({ nullable: true, unique: true })
+  number: number;
+
   @BeforeUpdate()
   updateLocation() {
     if (this.latitude != null && this.longitude != null) {

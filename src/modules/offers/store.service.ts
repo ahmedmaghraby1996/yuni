@@ -286,6 +286,8 @@ export class StoreService extends BaseService<Store> {
       });
     }
 
+    queryBuilder.orderBy('store.created_at', 'DESC');
+
     // Get total count before pagination
     const total = await queryBuilder.getCount();
 

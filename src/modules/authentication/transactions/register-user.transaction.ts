@@ -82,13 +82,20 @@ export class RegisterUserTransaction extends BaseTransaction<
       const savedUser = await context.save(User, user);
 
       if (req.role == Role.STORE) {
+        const maxResult = await context
+          .createQueryBuilder(Store, 'store')
+          .select('MAX(store.number)', 'max')
+          .getRawOne();
+        const nextNumber = (maxResult?.max ?? 0) + 1;
+
         const store = new Store({
           status: StoreStatus.APPROVED,
           is_active: true,
+          number: nextNumber,
         });
         store.user_id = savedUser.id;
         store.is_main_branch = true;
-     
+
         await context.save(store);
       }
 

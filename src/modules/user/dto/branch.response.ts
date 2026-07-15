@@ -13,6 +13,10 @@ export class BranchResponse {
   id: string;
 
   @Expose()
+  @Transform(({ value }) => (value ? `BR-${value.toString().padStart(5, '0')}` : value))
+  number: string;
+
+  @Expose()
   name: string;
   @Expose()
   is_main_branch: boolean;

@@ -285,6 +285,12 @@ export class UserService extends BaseService<User> {
       );
     }
 
+    const maxResult = await this.storeRepo
+      .createQueryBuilder('store')
+      .select('MAX(store.number)', 'max')
+      .getRawOne();
+    const nextNumber = (maxResult?.max ?? 0) + 1;
+
     const branch = new Store({
       ...req,
       is_main_branch: false,
@@ -292,6 +298,7 @@ export class UserService extends BaseService<User> {
       subcategory_id: main_branch.subcategory_id,
       logo: logoPath,
       is_active: req.is_active ?? false,
+      number: nextNumber,
     });
 
     return await this.storeRepo.save(branch);
