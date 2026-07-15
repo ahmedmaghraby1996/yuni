@@ -269,6 +269,10 @@ export class UpdateBranchInfoRequest {
   @IsString()
   city_id: string;
 
+  @ApiProperty({ required: false, description: 'Store logo', type: 'file' })
+  @IsOptional()
+  logo: Express.Multer.File;
+
   // is_active
   @ApiProperty({
     required: false,
@@ -277,6 +281,13 @@ export class UpdateBranchInfoRequest {
     default: true,
   })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  })
   @IsBoolean()
   is_active: boolean;
 }
+

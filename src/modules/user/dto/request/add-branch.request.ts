@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
+  IsBoolean,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
@@ -67,4 +69,19 @@ export class AddBranchRequest {
   @IsNotEmpty()
   @IsString()
   city_id: string;
+
+  @ApiProperty({ required: false, description: 'Store logo', type: 'file' })
+  @IsOptional()
+  logo: Express.Multer.File;
+
+  @ApiProperty({ required: false, type: Boolean })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  })
+  @IsBoolean()
+  is_active?: boolean;
 }

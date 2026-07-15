@@ -245,6 +245,21 @@ export class UserService extends BaseService<User> {
     if (req.city_id) store.city_id = req.city_id;
     if (req.email) store.email = req.email;
 
+    if (req?.logo) {
+      const resizedImage = await this.imageManager.resize(req.logo, {
+        size: { width: 300, height: 300 },
+        options: {
+          fit: sharp.fit.cover,
+          position: sharp.strategy.entropy,
+        },
+      });
+      const path = await this.storageManager.store(
+        { buffer: resizedImage, originalname: req.logo.originalname },
+        { path: 'stores' },
+      );
+      store.logo = path;
+    }
+
     return await this.storeRepo.save(store);
   }
 
@@ -254,12 +269,29 @@ export class UserService extends BaseService<User> {
     });
     if (!main_branch)
       throw new BadRequestException('message.main_branch_not_found');
+
+    let logoPath = main_branch.logo;
+    if (req?.logo) {
+      const resizedImage = await this.imageManager.resize(req.logo, {
+        size: { width: 300, height: 300 },
+        options: {
+          fit: sharp.fit.cover,
+          position: sharp.strategy.entropy,
+        },
+      });
+      logoPath = await this.storageManager.store(
+        { buffer: resizedImage, originalname: req.logo.originalname },
+        { path: 'stores' },
+      );
+    }
+
     const branch = new Store({
       ...req,
       is_main_branch: false,
       user_id: main_branch.user_id,
       subcategory_id: main_branch.subcategory_id,
-      logo: main_branch.logo,
+      logo: logoPath,
+      is_active: req.is_active ?? false,
     });
 
     return await this.storeRepo.save(branch);

@@ -1,5 +1,6 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -8,10 +9,14 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 
-import { ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadValidator } from 'src/core/validators/upload.validator';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
@@ -94,9 +99,19 @@ export class StoreController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('branches', 'edit')
+  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
+  @ApiConsumes('multipart/form-data')
   @Put('branches/:id')
-  async updateBranchInfo(@Param('id') id: string, @Body() req: UpdateBranchInfoRequest) {
+  async updateBranchInfo(
+    @Param('id') id: string,
+    @Body() req: UpdateBranchInfoRequest,
+    @UploadedFile(new UploadValidator().build())
+    logo: Express.Multer.File,
+  ) {
     req.branch_id = id;
+    if (logo) {
+      req.logo = logo;
+    }
     return new ActionResponse(await this.userService.updateBranchInfo(req));
   }
 
@@ -113,8 +128,17 @@ export class StoreController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('branches', 'add')
+  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
+  @ApiConsumes('multipart/form-data')
   @Post('branches')
-  async addBranch(@Body() req: AddBranchRequest) {
+  async addBranch(
+    @Body() req: AddBranchRequest,
+    @UploadedFile(new UploadValidator().build())
+    logo: Express.Multer.File,
+  ) {
+    if (logo) {
+      req.logo = logo;
+    }
     return new ActionResponse(await this.userService.createBranch(req));
   }
 
