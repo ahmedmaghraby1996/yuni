@@ -136,8 +136,8 @@ export class OffersController {
     applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1`);
     if (storesId) applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1,stores.id=${storesId}`);
     applyQueryIncludes(query, 'favorites');
-    const total = await this.offersService.count(query);
-    const offers = await this.offersService.findAll(query);
+    const total = await this.offersService.countForClient(query);
+    const offers = await this.offersService.findAllForClient(query);
     offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
     const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
     return new PaginatedResponse(result, { meta: { total, ...query } });
@@ -213,8 +213,8 @@ export class OffersController {
     applyQueryFilters(query, `stores.status=${StoreStatus.APPROVED},stores.is_active=1`);
     applyQueryIncludes(query, 'favorites');
     applyQueryFilters(query, `favorites.user_id=${this.request.user.id}`);
-    const total = await this.offersService.count(query);
-    const offers = await this.offersService.findAll(query);
+    const total = await this.offersService.countForClient(query);
+    const offers = await this.offersService.findAllForClient(query);
     const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
     return new PaginatedResponse(result, { meta: { total, ...query } });
   }

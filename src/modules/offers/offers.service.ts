@@ -50,6 +50,62 @@ export class OffersService extends BaseService<Offer> {
     return (this.request.user as any).owner_user_id ?? this.request.user.id;
   }
 
+  private buildClientOffersQb(options: any) {
+    const qb = this.repo
+      .createQueryBuilder('offer')
+      .andWhere('(offer.end_date IS NULL OR offer.end_date >= NOW())');
+
+    if (options?.relations?.stores !== undefined) {
+      qb.leftJoinAndSelect('offer.stores', 'stores');
+    }
+    if (options?.relations?.subcategory !== undefined) {
+      qb.leftJoinAndSelect('offer.subcategory', 'subcategory');
+    }
+    if (options?.relations?.images !== undefined) {
+      qb.leftJoinAndSelect('offer.images', 'images');
+    }
+    if (options?.relations?.favorites !== undefined) {
+      qb.leftJoinAndSelect('offer.favorites', 'favorites');
+    }
+
+    if (options?.where?.length) {
+      options.where.forEach((condition: any, idx: number) => {
+        Object.entries(condition).forEach(([key, value]: [string, any]) => {
+          if (key === 'stores' && value && typeof value === 'object') {
+            Object.entries(value).forEach(([sk, sv]: [string, any]) => {
+              qb.andWhere(`stores.${sk} = :stores_${sk}_${idx}`, { [`stores_${sk}_${idx}`]: sv === true ? 1 : sv });
+            });
+          } else if (key === 'favorites' && value && typeof value === 'object') {
+            Object.entries(value).forEach(([fk, fv]: [string, any]) => {
+              qb.andWhere(`favorites.${fk} = :favorites_${fk}_${idx}`, { [`favorites_${fk}_${idx}`]: fv });
+            });
+          } else {
+            qb.andWhere(`offer.${key} = :offer_${key}_${idx}`, { [`offer_${key}_${idx}`]: value });
+          }
+        });
+      });
+    }
+
+    if (options?.order) {
+      Object.entries(options.order).forEach(([key, dir]: [string, any]) => {
+        qb.addOrderBy(`offer.${key}`, dir);
+      });
+    }
+
+    return qb;
+  }
+
+  async findAllForClient(options: any): Promise<Offer[]> {
+    const qb = this.buildClientOffersQb(options);
+    if (!isNaN(options?.skip)) qb.skip(options.skip);
+    if (!isNaN(options?.take)) qb.take(options.take);
+    return qb.getMany();
+  }
+
+  async countForClient(options: any): Promise<number> {
+    return this.buildClientOffersQb(options).getCount();
+  }
+
   async createOffer(req: CreateOfferRequest) {
     const offer = await this.createOfferTransaction.run(req);
     return offer;
@@ -206,6 +262,7 @@ export class OffersService extends BaseService<Offer> {
       .leftJoinAndSelect('stores.subcategory', 'store_subcategory')
       .addSelect(distanceFormula, 'distance')
       .where('offer.is_active = true')
+      .andWhere('(offer.end_date IS NULL OR offer.end_date >= NOW())')
       .andWhere('stores.is_active = true')
       .andWhere('stores.status = :approvedStatus', {
         approvedStatus: StoreStatus.APPROVED,
@@ -302,6 +359,7 @@ export class OffersService extends BaseService<Offer> {
       .addSelect(`MIN(${distanceFormula})`, 'min_distance')
       .leftJoin('offer.stores', 'stores')
       .where('offer.is_active = true')
+      .andWhere('(offer.end_date IS NULL OR offer.end_date >= NOW())')
       .andWhere('stores.is_active = true')
       .andWhere('stores.status = :approvedStatus')
       .andWhere('stores.latitude IS NOT NULL')
