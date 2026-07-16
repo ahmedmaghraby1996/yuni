@@ -16,12 +16,12 @@ export class CreateOfferRequest {
   description_en: string;
   @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   start_date: Date;
    @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   end_date?: Date;
   @ApiProperty()

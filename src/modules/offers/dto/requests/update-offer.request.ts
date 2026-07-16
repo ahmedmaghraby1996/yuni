@@ -37,12 +37,12 @@ export class UpdateOfferRequest {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   start_date?: Date;
    @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   end_date?: Date;
   @ApiProperty({ required: false })
@@ -108,12 +108,12 @@ export class UpdateAdminOfferRequest {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   start_date?: Date;
    @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => new Date(value))
+  @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   end_date?: Date;
   @ApiProperty({ required: false })
