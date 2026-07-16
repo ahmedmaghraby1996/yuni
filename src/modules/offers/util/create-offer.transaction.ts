@@ -27,17 +27,24 @@ export class CreateOfferTransaction extends BaseTransaction<
     context: EntityManager,
   ): Promise<Offer> {
     try {
-      const user_id = this.request.user.id;
+      const owner_user_id = (this.request.user as any).owner_user_id ?? this.request.user.id;
+
+      const offer_percentage =
+        req.original_price && req.offer_price
+          ? Math.round(((req.original_price - req.offer_price) / req.original_price) * 100 * 100) / 100
+          : null;
+
       const offer = context.create(
         Offer,
-        plainToInstance(Offer, { ...req, user_id }),
+        plainToInstance(Offer, { ...req, user_id: owner_user_id, offer_percentage }),
       );
 
-      const stores = await context.find(Store, {
-        where: {
-          id: In(req.stores),
-        },
-      });
+      let stores: Store[];
+      if (req.all_branches) {
+        stores = await context.find(Store, { where: { user_id: owner_user_id } });
+      } else {
+        stores = await context.find(Store, { where: { id: In(req.stores ?? []) } });
+      }
 
       offer.stores = stores;
       await context.save(offer);

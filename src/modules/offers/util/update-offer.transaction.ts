@@ -46,8 +46,9 @@ export class UpdateOfferTransaction extends BaseTransaction<
       const user = this.request.user;
       const roles: string[] = user?.roles || [];
       const isAdmin = roles.includes(Role.ADMIN) || roles.includes(Role.SUPERADMIN);
+      const owner_user_id = (user as any).owner_user_id ?? user?.id;
 
-      if (!isAdmin && existingOffer.user_id !== user?.id) {
+      if (!isAdmin && existingOffer.user_id !== owner_user_id) {
         throw new ForbiddenException(
           `You do not have permission to update this offer.`,
         );
@@ -62,10 +63,18 @@ export class UpdateOfferTransaction extends BaseTransaction<
         );
       }}
 
+      const originalPrice = req.original_price ?? existingOffer.original_price;
+      const offerPrice = req.offer_price ?? existingOffer.offer_price;
+      const offer_percentage =
+        originalPrice && offerPrice
+          ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100 * 100) / 100
+          : existingOffer.offer_percentage;
+
       // Update offer fields
       const updatedData = new Offer({
         offer_price: req.offer_price,
         original_price: req.original_price,
+        offer_percentage,
         title_ar: req.title_ar,
         title_en: req.title_en,
         description_ar: req.description_ar,
@@ -95,16 +104,14 @@ export class UpdateOfferTransaction extends BaseTransaction<
         });
       });
 
-      if (req?.stores?.length > 0) {
-        const storeWhereClause: any = {
-          id: In(req.stores),
-        };
-        if (!isAdmin) {
-          storeWhereClause.user_id = user?.id;
-        }
-        const stores = await context.find(Store, {
-          where: storeWhereClause,
+      if ((req as any).all_branches && !isAdmin) {
+        existingOffer.stores = await context.find(Store, {
+          where: { user_id: owner_user_id },
         });
+      } else if (req?.stores?.length > 0) {
+        const storeWhereClause: any = { id: In(req.stores) };
+        if (!isAdmin) storeWhereClause.user_id = owner_user_id;
+        const stores = await context.find(Store, { where: storeWhereClause });
         if (!isAdmin && stores.length !== req.stores.length) {
           throw new ForbiddenException(
             'You can only associate your own stores with this offer.',

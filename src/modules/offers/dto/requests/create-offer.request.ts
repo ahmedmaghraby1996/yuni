@@ -31,8 +31,16 @@ export class CreateOfferRequest {
   @ApiProperty({ required: false })
   @IsOptional()
   code: string;
-  @ApiProperty()
+  @ApiProperty({ required: false, description: 'Specific branch IDs to link. Ignored if all_branches is true.' })
+  @IsOptional()
   stores: string[];
+
+  @ApiProperty({ required: false, description: 'If true, offer is linked to all store branches automatically' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  all_branches: boolean;
+
   @ApiProperty({ required: false })
   @IsOptional()
   images: string[];

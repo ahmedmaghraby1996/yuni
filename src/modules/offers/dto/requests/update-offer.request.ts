@@ -154,5 +154,11 @@ export class UpdateAdminOfferRequest {
     is_active: boolean;
 }
 
-export class UpdateStoreOfferRequest extends UpdateAdminOfferRequest {}
+export class UpdateStoreOfferRequest extends UpdateAdminOfferRequest {
+  @ApiProperty({ required: false, description: 'If true, offer is linked to all store branches automatically' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  all_branches?: boolean;
+}
 
