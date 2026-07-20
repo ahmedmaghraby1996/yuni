@@ -35,6 +35,21 @@ import { StoreEmployeeService } from './store-employee.service';
 export class StoreEmployeeController {
   constructor(private readonly service: StoreEmployeeService) {}
 
+  // ─── Permission Groups ─────────────────────────────────────────────────────
+
+  @StoreEndpoint()
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get all permission modules and their available actions' })
+  @Get('permissions/groups')
+  getPermissionGroups() {
+    const actions = ['view', 'add', 'edit', 'delete'];
+    const groups = [
+      'dashboard', 'branches', 'offers', 'packages',
+      'customers', 'employees', 'reports', 'support', 'profile',
+    ].map((module) => ({ module, actions }));
+    return new ActionResponse(groups);
+  }
+
   // ─── Employee Roles ────────────────────────────────────────────────────────
 
   @StoreEndpoint()
