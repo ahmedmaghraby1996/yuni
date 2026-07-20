@@ -60,10 +60,22 @@ export class UserResponse {
 
   @Expose()
   @Transform((value) => {
-    if (value.obj?.subscriptions?.length > 0) return value.obj.subscriptions[0];
-    else return null;
+    const sub = value.obj?.subscriptions?.[0];
+    if (!sub) return null;
+    return {
+      id: sub.id,
+      name_ar: sub.name_ar,
+      name_en: sub.name_en,
+      description_ar: sub.description_ar,
+      description_en: sub.description_en,
+      price: sub.price,
+      expire_at: sub.expire_at,
+      is_active: sub.is_active,
+      package_id: sub.package_id,
+      created_at: sub.created_at,
+      package: sub.package ?? null,
+    };
   })
-  @Expose()
   subscription: Subscription;
 
   @Expose()

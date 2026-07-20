@@ -360,6 +360,7 @@ export class UserService extends BaseService<User> {
     const [subscription, store] = await Promise.all([
       this.subscriptionRepo.findOne({
         where: { user_id: this.storeOwnerId, expire_at: MoreThan(new Date()) },
+        relations: { package: true },
       }),
       this.storeRepo.findOne({
         where: { user_id: this.storeOwnerId, is_main_branch: true },
@@ -378,6 +379,7 @@ export class UserService extends BaseService<User> {
   async getCurrentSubscription() {
     return this.subscriptionRepo.findOne({
       where: { user_id: this.storeOwnerId, expire_at: MoreThan(new Date()) },
+      relations: { package: true },
     });
   }
 

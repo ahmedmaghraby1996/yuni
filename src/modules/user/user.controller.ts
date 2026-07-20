@@ -166,7 +166,7 @@ export class UserController {
       where: { id: this.request.user.id },
       relations: {
         city: true,
-        subscriptions: true,
+        subscriptions: { package: true },
         favorite_sections: true,
       },
       order: { subscriptions: { created_at: 'DESC' } },
@@ -294,7 +294,7 @@ export class UserController {
   async getUserById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
       where: { id: id },
-      relations: { city: true, subscriptions: true },
+      relations: { city: true, subscriptions: { package: true } },
     });
     return new ActionResponse(
       this._i18nResponse.entity(

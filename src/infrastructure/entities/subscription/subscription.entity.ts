@@ -1,6 +1,8 @@
 import { AuditableEntity } from 'src/infrastructure/base/auditable.entity';
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
+import { Package } from '../package/package.entity';
+
 @Entity()
 export class Subscription extends AuditableEntity {
   @Column()
@@ -23,4 +25,8 @@ export class Subscription extends AuditableEntity {
   is_active: boolean;
   @Column({ nullable: true })
   package_id: string;
+
+  @ManyToOne(() => Package, { nullable: true, eager: false })
+  @JoinColumn({ name: 'package_id' })
+  package: Package;
 }
