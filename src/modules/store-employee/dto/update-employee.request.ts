@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { EmployeePermissionsDto } from './create-employee.request';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateEmployeeRequest {
   @ApiProperty({ required: false }) @IsOptional() @IsString() name?: string;
@@ -10,17 +8,8 @@ export class UpdateEmployeeRequest {
   @ApiProperty({ required: false }) @IsOptional() @IsString() password?: string;
   @ApiProperty({ required: false }) @IsOptional() @IsBoolean() is_active?: boolean;
 
-  @ApiProperty({ required: false, description: 'Assign a role to auto-fill permissions' })
+  @ApiProperty({ required: false, description: 'Assign a role — permissions are taken from the role' })
   @IsOptional() @IsString() role_id?: string;
-
-  @ApiProperty({ required: false, type: EmployeePermissionsDto, description: 'Manual permissions as JSON string — ignored if role_id is provided' })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') { try { return JSON.parse(value); } catch { return value; } }
-    return value;
-  })
-  @ValidateNested() @Type(() => EmployeePermissionsDto)
-  permissions?: EmployeePermissionsDto;
 
   @ApiProperty({ required: false, type: 'string', format: 'binary' })
   @IsOptional()

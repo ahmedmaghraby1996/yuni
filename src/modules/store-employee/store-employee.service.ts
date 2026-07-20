@@ -54,7 +54,7 @@ export class StoreEmployeeService {
     const existing = await this.userRepo.findOneBy({ phone: req.phone });
     if (existing) throw new BadRequestException('Phone already in use');
 
-    let permissions = req.permissions ?? {};
+    let permissions = {};
     if (req.role_id) {
       const role = await this.roleRepo.findOneBy({ id: req.role_id, owner_user_id: this.ownerId });
       if (!role) throw new NotFoundException('Role not found');
@@ -127,9 +127,6 @@ export class StoreEmployeeService {
       if (!role) throw new NotFoundException('Role not found');
       employee.role_id = req.role_id;
       employee.permissions = role.permissions;
-    } else if (req.permissions) {
-      employee.permissions = req.permissions;
-      employee.role_id = null;
     }
 
     await this.userRepo.save(employee.user);
