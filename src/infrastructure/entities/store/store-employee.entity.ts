@@ -1,6 +1,7 @@
 import { AuditableEntity } from 'src/infrastructure/base/auditable.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
+import { StoreEmployeeRole } from './store-employee-role.entity';
 
 export interface ModulePermission {
   view?: boolean;
@@ -35,7 +36,14 @@ export class StoreEmployee extends AuditableEntity {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ nullable: true })
+  role_id: string;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => StoreEmployeeRole, { nullable: true })
+  @JoinColumn({ name: 'role_id' })
+  role: StoreEmployeeRole;
 }

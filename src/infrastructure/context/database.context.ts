@@ -30,6 +30,7 @@ import { OfferUsage } from '../entities/offer/offer-usage.entity';
 import { StoreFollow } from '../entities/store/store-follow.entity';
 import { SupportTicket } from '../entities/support-ticket/support-ticket.entity';
 import { StoreEmployee } from '../entities/store/store-employee.entity';
+import { StoreEmployeeRole } from '../entities/store/store-employee-role.entity';
 
 export const DB_ENTITIES = [
   User,
@@ -62,6 +63,7 @@ export const DB_ENTITIES = [
   StoreFollow,
   SupportTicket,
   StoreEmployee,
+  StoreEmployeeRole,
 ];
 
 export const DB_VIEWS = [];

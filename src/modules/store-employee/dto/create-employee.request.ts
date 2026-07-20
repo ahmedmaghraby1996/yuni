@@ -48,25 +48,25 @@ export class EmployeePermissionsDto {
 }
 
 export class CreateEmployeeRequest {
-  @ApiProperty()
-  @IsString()
-  name: string;
+  @ApiProperty() @IsString() name: string;
+  @ApiProperty() @IsString() phone: string;
+  @ApiProperty() @IsString() password: string;
 
-  @ApiProperty()
-  @IsString()
-  phone: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsString() email?: string;
 
-  @ApiProperty()
-  @IsString()
-  password: string;
+  @ApiProperty({ required: false, description: 'Assign a role to auto-fill permissions' })
+  @IsOptional() @IsString() role_id?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, type: EmployeePermissionsDto, description: 'Manual permissions as JSON string — ignored if role_id is provided' })
   @IsOptional()
-  @IsString()
-  email?: string;
+  @Transform(({ value }) => {
+    if (typeof value === 'string') { try { return JSON.parse(value); } catch { return value; } }
+    return value;
+  })
+  @ValidateNested() @Type(() => EmployeePermissionsDto)
+  permissions?: EmployeePermissionsDto;
 
-  @ApiProperty({ type: EmployeePermissionsDto })
-  @ValidateNested()
-  @Type(() => EmployeePermissionsDto)
-  permissions: EmployeePermissionsDto;
+  @ApiProperty({ required: false, type: 'string', format: 'binary' })
+  @IsOptional()
+  avatarFile?: Express.Multer.File;
 }
