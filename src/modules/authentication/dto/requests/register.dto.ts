@@ -25,15 +25,17 @@ export class RegisterRequest {
   // @IsStrongPassword()
   password: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   @Unique('User')
-  phone: string;
+  phone?: string;
 
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsEmail()
   @Unique('User')
-  email: string;
+  email?: string;
 
   @ApiProperty({ type: 'file', required: false })
   @IsOptional()

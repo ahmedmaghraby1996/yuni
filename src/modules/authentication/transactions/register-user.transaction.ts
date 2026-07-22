@@ -45,7 +45,10 @@ export class RegisterUserTransaction extends BaseTransaction<
     context: EntityManager,
   ): Promise<User> {
     try {
-      // upload avatar
+      if (!req.phone && !req.email) {
+        throw new BadRequestException('message.phone_or_email_required');
+      }
+
       const admin_id = this.request?.user?.id;
       const user = new User(req);
       // upload avatar
