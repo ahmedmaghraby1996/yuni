@@ -94,7 +94,7 @@ export class StoreEmployeeController {
 
   // ─── Employees ─────────────────────────────────────────────────────────────
 
-  @ApiBearerAuth()
+  @StoreEndpoint()
   @Roles(Role.EMPLOYEE)
   @ApiOperation({ summary: 'Get my permissions (employee only)' })
   @Get('me/permissions')
