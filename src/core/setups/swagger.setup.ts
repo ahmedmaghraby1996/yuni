@@ -103,11 +103,8 @@ export default (app: INestApplication, config: ConfigService) => {
   // Store: only store-marked endpoints
   const storeDocument = filterPaths(fullDocument, isStoreOperation);
 
-  SwaggerModule.setup('swagger', app, publicDocument);
-  SwaggerModule.setup('swagger/admin', app, adminDocument, {
-    swaggerOptions: { persistAuthorization: true },
-  });
-  SwaggerModule.setup('swagger/store', app, storeDocument, {
-    swaggerOptions: { persistAuthorization: true },
-  });
+  const swaggerOptions = { persistAuthorization: true, docExpansion: 'none' };
+  SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions });
+  SwaggerModule.setup('swagger/admin', app, adminDocument, { swaggerOptions });
+  SwaggerModule.setup('swagger/store', app, storeDocument, { swaggerOptions });
 };

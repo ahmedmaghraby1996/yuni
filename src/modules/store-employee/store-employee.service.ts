@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import * as sharp from 'sharp';
-import { StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
+import { EmployeePermissions, StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
 import { StoreEmployeeRole } from 'src/infrastructure/entities/store/store-employee-role.entity';
 import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
@@ -72,9 +72,10 @@ export class StoreEmployeeService {
       phone: req.phone,
       email: req.email,
       password: hashed,
-      username: req.phone,
+      username: req.phone ?? req.email,
       roles: [Role.EMPLOYEE],
       is_active: true,
+      email_verified_at: new Date(),
       ...(avatar && { avatar }),
     });
     const savedUser = await this.userRepo.save(user);
@@ -88,6 +89,16 @@ export class StoreEmployeeService {
     });
     const saved = await this.repo.save(employee);
     return this.repo.findOne({ where: { id: saved.id }, relations: { user: true, role: true } });
+  }
+
+  async getMyPermissions(): Promise<EmployeePermissions> {
+    const userId = this.request.user.id;
+    const employee = await this.repo.findOne({
+      where: { user_id: userId },
+      relations: { role: true },
+    });
+    if (!employee) return {};
+    return employee.permissions ?? {};
   }
 
   async getEmployees(): Promise<StoreEmployee[]> {

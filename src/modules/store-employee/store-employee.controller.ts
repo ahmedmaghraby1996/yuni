@@ -94,6 +94,14 @@ export class StoreEmployeeController {
 
   // ─── Employees ─────────────────────────────────────────────────────────────
 
+  @ApiBearerAuth()
+  @Roles(Role.EMPLOYEE)
+  @ApiOperation({ summary: 'Get my permissions (employee only)' })
+  @Get('me/permissions')
+  async getMyPermissions() {
+    return new ActionResponse(await this.service.getMyPermissions());
+  }
+
   @StoreEndpoint()
   @Roles(Role.STORE)
   @Permission('employees', 'add')
