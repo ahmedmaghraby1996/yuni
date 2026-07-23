@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
 import { StoreEmployeeRole } from 'src/infrastructure/entities/store/store-employee-role.entity';
@@ -7,7 +8,7 @@ import { StoreEmployeeController } from './store-employee.controller';
 import { StoreEmployeeService } from './store-employee.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StoreEmployee, StoreEmployeeRole, User])],
+  imports: [ConfigModule, TypeOrmModule.forFeature([StoreEmployee, StoreEmployeeRole, User])],
   controllers: [StoreEmployeeController],
   providers: [StoreEmployeeService],
   exports: [StoreEmployeeService],

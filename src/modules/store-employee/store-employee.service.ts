@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import * as sharp from 'sharp';
@@ -31,6 +32,7 @@ export class StoreEmployeeService {
     @Inject(REQUEST) private readonly request: Request,
     @Inject(ImageManager) private readonly imageManager: ImageManager,
     @Inject(StorageManager) private readonly storageManager: StorageManager,
+    private readonly config: ConfigService,
   ) {}
 
   private get ownerId(): string {
@@ -64,7 +66,7 @@ export class StoreEmployeeService {
     let avatar: string | undefined;
     if (req.avatarFile) avatar = await this.uploadAvatar(req.avatarFile);
 
-    const hashed = await bcrypt.hash(req.password, 10);
+    const hashed = await bcrypt.hash(req.password + this.config.get('app.key'), 10);
     const user = this.userRepo.create({
       name: req.name,
       phone: req.phone,
@@ -115,7 +117,7 @@ export class StoreEmployeeService {
     if (req.name) employee.user.name = req.name;
     if (req.phone) employee.user.phone = req.phone;
     if (req.email) employee.user.email = req.email;
-    if (req.password) employee.user.password = await bcrypt.hash(req.password, 10);
+    if (req.password) employee.user.password = await bcrypt.hash(req.password + this.config.get('app.key'), 10);
     if (req.is_active !== undefined) {
       employee.is_active = req.is_active;
       employee.user.is_active = req.is_active;
