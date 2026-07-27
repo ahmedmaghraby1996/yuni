@@ -11,7 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiProperty } from '@nestjs/swagger';
+import { IsEmail } from 'class-validator';
+
+class ConfirmOfferUseRequest {
+  @ApiProperty() @IsEmail() email: string;
+}
 import { OffersService } from './offers.service';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
@@ -315,9 +320,9 @@ export class OffersController {
   @Post('store/confirm-use/:id')
   async confirmOfferUse(
     @Param('id') id: string,
-    @Body('email') email: string,
+    @Body() body: ConfirmOfferUseRequest,
   ) {
-    return new ActionResponse(await this.offersService.confirmOfferUse(id, email));
+    return new ActionResponse(await this.offersService.confirmOfferUse(id, body.email));
   }
 
   @StoreEndpoint()
