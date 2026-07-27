@@ -311,6 +311,19 @@ export class OffersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'edit')
+  @ApiOperation({ summary: 'Confirm offer use for a customer by email' })
+  @Post('store/confirm-use/:id')
+  async confirmOfferUse(
+    @Param('id') id: string,
+    @Body('email') email: string,
+  ) {
+    return new ActionResponse(await this.offersService.confirmOfferUse(id, email));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('offers', 'edit')
   @Put('store/update/:offer_id')
   async updateStoreOffer(@Param('offer_id') offer_id: string, @Body() req: UpdateStoreOfferRequest) {
     req.id = offer_id;

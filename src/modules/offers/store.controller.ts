@@ -186,19 +186,6 @@ export class StoreController {
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
-  @Permission('offers', 'edit')
-  @ApiOperation({ summary: 'Confirm offer use for a customer by email' })
-  @Post('offers/:id/confirm-use')
-  async confirmOfferUse(
-    @Param('id') id: string,
-    @Body('email') email: string,
-  ) {
-    return new ActionResponse(await this.offersService.confirmOfferUse(id, email));
-  }
-
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
   @Permission('dashboard', 'view')
   @ApiOperation({ summary: 'Dashboard summary cards + monthly performance + daily usage charts' })
   @Get('dashboard')
