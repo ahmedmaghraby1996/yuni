@@ -16,6 +16,7 @@ import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
+import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Wallet } from 'src/infrastructure/entities/wallet/wallet.entity';
 import { Package } from 'src/infrastructure/entities/package/package.entity';
 
@@ -139,6 +140,28 @@ export class OffersService extends BaseService<Offer> {
       });
       await this.repo.increment({ id: offer_id }, 'views', 1);
     }
+    return true;
+  }
+
+  async confirmOfferUse(offer_id: string, email: string) {
+    const user = await this.storeRepo.manager.findOne(User, { where: { email } });
+    if (!user) throw new NotFoundException('message.user_not_found');
+
+    const offer = await this.repo.findOne({ where: { id: offer_id } });
+    if (!offer) throw new NotFoundException('message.offer_not_found');
+
+    const existing = await this.offerUsageRepo.findOne({
+      where: { offer_id, user_id: user.id },
+    });
+
+    if (existing) {
+      existing.is_active = true;
+      await this.offerUsageRepo.save(existing);
+    } else {
+      await this.offerUsageRepo.save({ offer_id, user_id: user.id, is_active: true });
+      await this.repo.increment({ id: offer_id }, 'uses', 1);
+    }
+
     return true;
   }
 
