@@ -56,6 +56,11 @@ export class StoreEmployeeService {
     const existing = await this.userRepo.findOneBy({ phone: req.phone });
     if (existing) throw new BadRequestException('Phone already in use');
 
+    if (req.email) {
+      const emailExists = await this.userRepo.findOneBy({ email: req.email });
+      if (emailExists) throw new BadRequestException('Email already in use');
+    }
+
     let permissions = {};
     if (req.role_id) {
       const role = await this.roleRepo.findOneBy({ id: req.role_id, owner_user_id: this.ownerId });

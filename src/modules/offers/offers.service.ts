@@ -151,16 +151,13 @@ export class OffersService extends BaseService<Offer> {
     if (!offer) throw new NotFoundException('message.offer_not_found');
 
     const existing = await this.offerUsageRepo.findOne({
-      where: { offer_id, user_id: user.id },
+      where: { offer_id, user_id: user.id, is_active: true },
     });
 
-    if (existing) {
-      existing.is_active = true;
-      await this.offerUsageRepo.save(existing);
-    } else {
-      await this.offerUsageRepo.save({ offer_id, user_id: user.id, is_active: true });
-      await this.repo.increment({ id: offer_id }, 'uses', 1);
-    }
+    if (existing) throw new BadRequestException('message.offer_already_used');
+
+    await this.offerUsageRepo.save({ offer_id, user_id: user.id, is_active: true });
+    await this.repo.increment({ id: offer_id }, 'uses', 1);
 
     return true;
   }
