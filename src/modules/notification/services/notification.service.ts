@@ -174,8 +174,9 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
 
   async sendToStoreCustomers(req: { title_ar: string; title_en: string; message_ar: string; message_en: string; user_ids?: string[] }) {
     let userIds: string[];
+    const isTargeted = !!req.user_ids?.length;
 
-    if (req.user_ids?.length) {
+    if (isTargeted) {
       userIds = req.user_ids;
     } else {
       // find all user_ids who used offers belonging to this store owner
@@ -206,7 +207,7 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
       title_en: req.title_en,
       text_ar: req.message_ar,
       text_en: req.message_en,
-      user_ids: userIds,
+      user_ids: isTargeted ? userIds : null,
     }));
 
     for (const user of users) {
