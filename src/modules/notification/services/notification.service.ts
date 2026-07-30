@@ -15,6 +15,8 @@ import {
 } from '../dto/requests/send-to-users-notification.request';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { FirebaseAdminService } from '../firebase-admin-service';
+import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
+import { Store } from 'src/infrastructure/entities/store/store.entity';
 
 @Injectable()
 export class NotificationService extends BaseUserService<NotificationEntity> {
@@ -27,6 +29,8 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
     private readonly _userService: UserService,
     private readonly _fcmIntegrationService: FirebaseAdminService,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(OfferUsage) private readonly offerUsageRepo: Repository<OfferUsage>,
+    @InjectRepository(Store) private readonly storeRepo: Repository<Store>,
   ) {
     super(_repo, request);
   }
@@ -164,5 +168,80 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
       );
     });
     return 'notification sent successfully';
+  }
+
+  private get storeOwnerId(): string {
+    return (this.currentUser as any).owner_user_id ?? this.currentUser.id;
+  }
+
+  async sendToStoreCustomers(req: { title_ar: string; title_en: string; message_ar: string; message_en: string }) {
+    // find all user_ids who used offers belonging to this store owner
+    const stores = await this.storeRepo.find({ where: { user_id: this.storeOwnerId } });
+    const storeIds = stores.map((s) => s.id);
+
+    const usages = await this.offerUsageRepo
+      .createQueryBuilder('usage')
+      .innerJoin('usage.offer', 'offer')
+      .innerJoin('offer.stores', 'store')
+      .where('store.id IN (:...storeIds)', { storeIds })
+      .andWhere('usage.deleted_at IS NULL')
+      .select('DISTINCT usage.user_id', 'user_id')
+      .getRawMany();
+
+    const userIds = usages.map((u) => u.user_id);
+    if (!userIds.length) return 'no customers found';
+
+    const users = await this.userRepository.find({ where: { id: In(userIds) } });
+
+    // save a summary notification for the store owner
+    await this.create(new NotificationEntity({
+      user_id: this.currentUser.id,
+      type: NotificationTypes.ADMIN,
+      title_ar: req.title_ar,
+      title_en: req.title_en,
+      text_ar: req.message_ar,
+      text_en: req.message_en,
+      user_ids: userIds,
+    }));
+
+    for (const user of users) {
+      await this.create(new NotificationEntity({
+        user_id: user.id,
+        type: NotificationTypes.USERS,
+        title_ar: req.title_ar,
+        title_en: req.title_en,
+        text_ar: req.message_ar,
+        text_en: req.message_en,
+      }));
+    }
+
+    return 'notification sent successfully';
+  }
+
+  async getStoreNotifications(query: any) {
+    const notifications = await this._repo.find({
+      where: { user_id: this.currentUser.id, type: NotificationTypes.ADMIN },
+      order: { created_at: 'DESC' },
+      skip: query.page && query.limit ? (query.page - 1) * query.limit : 0,
+      take: query.limit ?? 10,
+    });
+
+    return notifications.map((n) => ({
+      ...n,
+      sent_to_all: !!n.user_ids?.length,
+      users: undefined,
+    }));
+  }
+
+  async getStoreNotificationById(id: string) {
+    const n = await this._repo.findOneBy({ id, user_id: this.currentUser.id, type: NotificationTypes.ADMIN });
+    if (!n) throw new BadRequestException('message.not_found');
+    const users = n.user_ids?.length
+      ? await this.userRepository.find({
+          where: { id: In(n.user_ids) },
+          select: ['id', 'name', 'email', 'phone', 'avatar'],
+        })
+      : [];
+    return { ...n, users };
   }
 }

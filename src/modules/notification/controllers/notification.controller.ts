@@ -10,8 +10,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
+import { Permission } from 'src/modules/authentication/guards/permission.decorator';
 import { plainToInstance } from 'class-transformer';
 
 import { NotificationResponse } from '../dto/notification.response';
@@ -21,10 +24,16 @@ import { JwtAuthGuard } from 'src/modules/authentication/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/authentication/guards/roles.guard';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
-import { User } from 'src/infrastructure/entities/user/user.entity';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from 'src/modules/authentication/guards/roles.decorator';
+
+class StoreNotificationRequest {
+  @ApiProperty() @IsNotEmpty() @IsString() title_ar: string;
+  @ApiProperty() @IsNotEmpty() @IsString() title_en: string;
+  @ApiProperty() @IsNotEmpty() @IsString() message_ar: string;
+  @ApiProperty() @IsNotEmpty() @IsString() message_en: string;
+}
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { SendToAllUsersNotificationRequest, SendToUsersNotificationRequest } from '../dto/requests/send-to-users-notification.request';
 import { applyQueryFilters, applyQuerySort } from 'src/core/helpers/service-related.helper';
@@ -109,10 +118,38 @@ return new ActionResponse<NotificationResponse>(
   async sendToAll(
     @Body() sendToUsersNotificationRequest: SendToAllUsersNotificationRequest,
   ) {
-  return new ActionResponse(  await this.notificationService.sendToALl(sendToUsersNotificationRequest));
+    return new ActionResponse(await this.notificationService.sendToALl(sendToUsersNotificationRequest));
   }
 
+  // ─── Store Notifications ───────────────────────────────────────────────────
 
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('customers', 'view')
+  @Get('store')
+  async getStoreNotifications(@Query() query: PaginatedRequest) {
+    const data = await this.notificationService.getStoreNotifications(query);
+    const response = plainToInstance(NotificationResponse, data, { excludeExtraneousValues: true });
+    return new ActionResponse(response);
+  }
 
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('customers', 'view')
+  @Get('store/:id')
+  async getStoreNotificationById(@Param('id') id: string) {
+    const result = await this.notificationService.getStoreNotificationById(id);
+    return new ActionResponse(plainToInstance(NotificationResponse, result, { excludeExtraneousValues: true }));
+  }
 
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('customers', 'view')
+  @Post('store/send')
+  async sendToStoreCustomers(@Body() req: StoreNotificationRequest) {
+    return new ActionResponse(await this.notificationService.sendToStoreCustomers(req));
+  }
 }

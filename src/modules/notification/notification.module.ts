@@ -10,13 +10,17 @@ import { NotifyModule } from 'src/integration/notify/notify.module';
 import { NotificationEntity } from 'src/infrastructure/entities/notification/notification.entity';
 import { FirebaseAdminService } from './firebase-admin-service';
 import { TransactionService } from '../transaction/transaction.service';
+import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
+import { Store } from 'src/infrastructure/entities/store/store.entity';
 
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       NotificationEntity,
-      User
+      User,
+      OfferUsage,
+      Store,
     ]),
     NotifyModule,
   ],
