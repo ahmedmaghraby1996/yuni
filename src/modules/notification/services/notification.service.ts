@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
-import { FcmIntegrationService } from '../../../integration/notify/fcm-integration.service';
 import { UserService } from 'src/modules/user/user.service';
 import { User } from 'src/infrastructure/entities/user/user.entity';
 import { BaseUserService } from 'src/core/base/service/user-service.base';
@@ -13,7 +12,6 @@ import {
   SendToAllUsersNotificationRequest,
   SendToUsersNotificationRequest,
 } from '../dto/requests/send-to-users-notification.request';
-import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { FirebaseAdminService } from '../firebase-admin-service';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
@@ -235,8 +233,7 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
 
     return notifications.map((n) => ({
       ...n,
-      sent_to_all: !!n.user_ids?.length,
-      users: undefined,
+      sent_to_all: !n.user_ids?.length,
     }));
   }
 

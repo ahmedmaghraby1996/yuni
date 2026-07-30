@@ -145,10 +145,12 @@ export class StoreEmployeeService {
       if (!role) throw new NotFoundException('Role not found');
       employee.role_id = req.role_id;
       employee.permissions = role.permissions;
+      employee.role = role;
     }
 
     await this.userRepo.save(employee.user);
-    return this.repo.save(employee);
+    await this.repo.save(employee);
+    return this.repo.findOne({ where: { id: employee.id }, relations: { user: true, role: true } });
   }
 
   async deleteEmployee(id: string): Promise<void> {

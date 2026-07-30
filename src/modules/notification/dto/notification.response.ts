@@ -32,6 +32,8 @@ export class NotificationResponse {
 
   @Expose() role: string;
 
+  @Expose() sent_to_all: boolean;
+
   @Transform((value) => {
     
     value.obj.users= value.obj.users?.map((user)=>{ return {
