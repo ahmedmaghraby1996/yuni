@@ -20,6 +20,7 @@ export interface EmployeePermissions {
   reports?: Pick<ModulePermission, 'view'>;
   support?: ModulePermission;
   profile?: Pick<ModulePermission, 'view' | 'edit'>;
+  wallet?: ModulePermission;
 }
 
 @Entity()

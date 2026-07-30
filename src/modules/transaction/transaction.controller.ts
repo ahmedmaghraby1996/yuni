@@ -38,7 +38,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
-  @Permission('packages', 'view')
+  @Permission('wallet', 'view')
   @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
   @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter from date (YYYY-MM-DD)' })
   @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter to date (YYYY-MM-DD)' })
@@ -64,7 +64,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
-  @Permission('packages', 'view')
+  @Permission('wallet', 'view')
   @Get('wallet')
   async getWallet() {
     return new ActionResponse(await this.transactionService.getWallet());
@@ -72,7 +72,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
-  @Permission('packages', 'edit')
+  @Permission('wallet', 'add')
   @Post('charge')
   async chargeWallet(@Body() req: WalletChargeRequest) {
     return new ActionResponse(
@@ -82,7 +82,7 @@ export class TransactionController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
-  @Permission('packages', 'edit')
+  @Permission('wallet', 'edit')
   @Post('refund')
   async refundWallet(@Body() req: WalletRefundRequest) {
     return new ActionResponse(

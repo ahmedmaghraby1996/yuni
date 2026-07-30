@@ -9,7 +9,8 @@ export type PermissionModule =
   | 'employees'
   | 'reports'
   | 'support'
-  | 'profile';
+  | 'profile'
+  | 'wallet';
 
 export type PermissionAction = 'view' | 'add' | 'edit' | 'delete';
 

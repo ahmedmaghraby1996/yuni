@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseFilePipe,
   Post,
   Put,
   UploadedFile,
@@ -15,7 +16,6 @@ import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiOperation, ApiTags } from '@n
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
-import { UploadValidator } from 'src/core/validators/upload.validator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -45,7 +45,7 @@ export class StoreEmployeeController {
     const actions = ['view', 'add', 'edit', 'delete'];
     const groups = [
       'dashboard', 'branches', 'offers', 'packages',
-      'customers', 'employees', 'reports', 'support', 'profile',
+      'customers', 'employees', 'reports', 'support', 'profile', 'wallet',
     ].map((module) => ({ module, actions }));
     return new ActionResponse(groups);
   }
@@ -121,7 +121,7 @@ export class StoreEmployeeController {
   @Post()
   async create(
     @Body() req: CreateEmployeeRequest,
-    @UploadedFile(new UploadValidator().build()) avatarFile: Express.Multer.File,
+    @UploadedFile(new ParseFilePipe({ fileIsRequired: false })) avatarFile: Express.Multer.File,
   ) {
     if (avatarFile) req.avatarFile = avatarFile;
     const employee = await this.service.createEmployee(req);
@@ -164,7 +164,7 @@ export class StoreEmployeeController {
   async update(
     @Param('id') id: string,
     @Body() req: UpdateEmployeeRequest,
-    @UploadedFile(new UploadValidator().build()) avatarFile: Express.Multer.File,
+    @UploadedFile(new ParseFilePipe({ fileIsRequired: false })) avatarFile: Express.Multer.File,
   ) {
     if (avatarFile) req.avatarFile = avatarFile;
     const employee = await this.service.updateEmployee(id, req);
