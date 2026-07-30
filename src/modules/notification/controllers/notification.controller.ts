@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiProperty, ApiTags } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { Permission } from 'src/modules/authentication/guards/permission.decorator';
@@ -33,6 +33,8 @@ class StoreNotificationRequest {
   @ApiProperty() @IsNotEmpty() @IsString() title_en: string;
   @ApiProperty() @IsNotEmpty() @IsString() message_ar: string;
   @ApiProperty() @IsNotEmpty() @IsString() message_en: string;
+  @ApiProperty({ required: false, type: [String], description: 'Optional: specific user IDs to notify. If omitted, sends to all store customers.' })
+  @IsOptional() @IsArray() user_ids?: string[];
 }
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { SendToAllUsersNotificationRequest, SendToUsersNotificationRequest } from '../dto/requests/send-to-users-notification.request';

@@ -174,21 +174,28 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
     return (this.currentUser as any).owner_user_id ?? this.currentUser.id;
   }
 
-  async sendToStoreCustomers(req: { title_ar: string; title_en: string; message_ar: string; message_en: string }) {
-    // find all user_ids who used offers belonging to this store owner
-    const stores = await this.storeRepo.find({ where: { user_id: this.storeOwnerId } });
-    const storeIds = stores.map((s) => s.id);
+  async sendToStoreCustomers(req: { title_ar: string; title_en: string; message_ar: string; message_en: string; user_ids?: string[] }) {
+    let userIds: string[];
 
-    const usages = await this.offerUsageRepo
-      .createQueryBuilder('usage')
-      .innerJoin('usage.offer', 'offer')
-      .innerJoin('offer.stores', 'store')
-      .where('store.id IN (:...storeIds)', { storeIds })
-      .andWhere('usage.deleted_at IS NULL')
-      .select('DISTINCT usage.user_id', 'user_id')
-      .getRawMany();
+    if (req.user_ids?.length) {
+      userIds = req.user_ids;
+    } else {
+      // find all user_ids who used offers belonging to this store owner
+      const stores = await this.storeRepo.find({ where: { user_id: this.storeOwnerId } });
+      const storeIds = stores.map((s) => s.id);
 
-    const userIds = usages.map((u) => u.user_id);
+      const usages = await this.offerUsageRepo
+        .createQueryBuilder('usage')
+        .innerJoin('usage.offer', 'offer')
+        .innerJoin('offer.stores', 'store')
+        .where('store.id IN (:...storeIds)', { storeIds })
+        .andWhere('usage.deleted_at IS NULL')
+        .select('DISTINCT usage.user_id', 'user_id')
+        .getRawMany();
+
+      userIds = usages.map((u) => u.user_id);
+    }
+
     if (!userIds.length) return 'no customers found';
 
     const users = await this.userRepository.find({ where: { id: In(userIds) } });

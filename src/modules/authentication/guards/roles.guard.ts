@@ -28,6 +28,11 @@ export class RolesGuard implements CanActivate {
     if (user.is_active == false)
       throw new UnauthorizedException('message.user_inactive');
 
+    // Normalize roles — MySQL SET type may return a comma-separated string
+    if (typeof user.roles === 'string') {
+      user.roles = (user.roles as string).split(',').map((r) => r.trim());
+    }
+
     // Employees inherit STORE access but are then checked against their permissions
     if (user.roles?.includes(Role.EMPLOYEE) && requiredRoles.includes(Role.STORE)) {
       const required = this.reflector.getAllAndOverride<{ module: string; action: string }>(
