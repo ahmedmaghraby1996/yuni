@@ -27,6 +27,7 @@ import { In, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Wallet } from 'src/infrastructure/entities/wallet/wallet.entity';
+import { StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
 import { FirebaseAdminService } from '../notification/firebase-admin-service';
 import { User } from 'src/infrastructure/entities/user/user.entity';
 import * as jose from 'jose';
@@ -53,6 +54,7 @@ export class AuthenticationService {
     @Inject(JwtService) private readonly jwtService: JwtService,
 
     @InjectRepository(Wallet) private readonly walletRepo: Repository<Wallet>,
+    @InjectRepository(StoreEmployee) private readonly employeeRepo: Repository<StoreEmployee>,
     private readonly _firebase_admin_service: FirebaseAdminService,
     @Inject(REQUEST) private readonly request: Request,
     @Inject(SendEmailService)
@@ -93,6 +95,11 @@ export class AuthenticationService {
       // Check if email is verified
       if (user.email && !user.email_verified_at) {
         throw new BadRequestException('message.email_not_verified');
+      }
+      // Check if employee is active
+      if (user.roles?.includes(Role.EMPLOYEE)) {
+        const employee = await this.employeeRepo.findOneBy({ user_id: user.id, is_active: true });
+        if (!employee) throw new BadRequestException('message.user_inactive');
       }
       return user;
     }
