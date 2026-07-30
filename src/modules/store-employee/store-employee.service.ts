@@ -192,7 +192,11 @@ export class StoreEmployeeService {
     if (!role) throw new NotFoundException('Role not found');
     if (req.name_ar) role.name_ar = req.name_ar;
     if (req.name_en) role.name_en = req.name_en;
-    if (req.permissions) role.permissions = req.permissions;
+    if (req.permissions) {
+      role.permissions = req.permissions;
+      // sync permissions to all employees assigned this role
+      await this.repo.update({ role_id: id, owner_user_id: this.ownerId }, { permissions: req.permissions });
+    }
     return this.roleRepo.save(role);
   }
 
