@@ -23,7 +23,7 @@ export class ImageManager {
           format = 'png';
           break;
         default:
-          format = meta.imageOptions.type;
+          format = meta.imageOptions?.type ?? 'jpeg';
           break;
       }
 
