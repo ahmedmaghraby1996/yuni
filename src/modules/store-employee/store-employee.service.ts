@@ -179,6 +179,12 @@ export class StoreEmployeeService {
     });
   }
 
+  async getRoleById(id: string): Promise<StoreEmployeeRole> {
+    const role = await this.roleRepo.findOneBy({ id, owner_user_id: this.ownerId });
+    if (!role) throw new NotFoundException('Role not found');
+    return role;
+  }
+
   async updateRole(id: string, req: { name_ar?: string; name_en?: string; permissions?: any }): Promise<StoreEmployeeRole> {
     const role = await this.roleRepo.findOneBy({ id, owner_user_id: this.ownerId });
     if (!role) throw new NotFoundException('Role not found');

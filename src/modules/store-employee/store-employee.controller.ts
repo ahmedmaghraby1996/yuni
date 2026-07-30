@@ -74,6 +74,16 @@ export class StoreEmployeeController {
 
   @StoreEndpoint()
   @Roles(Role.STORE)
+  @Permission('employees', 'view')
+  @ApiOperation({ summary: 'Get employee role by ID' })
+  @Get('roles/:id')
+  async getRoleById(@Param('id') id: string) {
+    const role = await this.service.getRoleById(id);
+    return new ActionResponse(plainToInstance(EmployeeRoleDto, role, { excludeExtraneousValues: true }));
+  }
+
+  @StoreEndpoint()
+  @Roles(Role.STORE)
   @Permission('employees', 'edit')
   @ApiOperation({ summary: 'Update an employee role' })
   @Put('roles/:id')
