@@ -85,7 +85,7 @@ export class OffersController {
   async getFollowingStores(@Query() query: PaginatedRequest, @Query('lat') lat?: string, @Query('lng') lng?: string) {
     const { stores, total } = await this.storeService.getFollowingStores(query, lat, lng);
     const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
-    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, ...query } });
+    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @ApiBearerAuth()
@@ -113,7 +113,7 @@ export class OffersController {
     const subcategories = await this.subCategoryService.findAll(query);
     const total = await this.subCategoryService.count(query);
     const result = this._i18nResponse.entity(plainToInstance(SubCategory, subcategories, { excludeExtraneousValues: true }));
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @Get('categories')
@@ -123,7 +123,7 @@ export class OffersController {
     const categories = await this.categoryService.findAll(query);
     const total = await this.categoryService.count(query);
     const result = this._i18nResponse.entity(plainToInstance(Category, categories, { excludeExtraneousValues: true }));
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   // ─── Client ────────────────────────────────────────────────────────────────
@@ -221,7 +221,7 @@ export class OffersController {
     const total = await this.offersService.countForClient(query);
     const offers = await this.offersService.findAllForClient(query);
     const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @ApiBearerAuth()
@@ -347,7 +347,7 @@ export class OffersController {
     const total = await this.storeService.count(query);
     const stores = await this.storeService.findAll(query);
     const result = plainToInstance(BranchResponse, stores, { excludeExtraneousValues: true });
-    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, ...query } });
+    return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @AdminEndpoint()
@@ -404,7 +404,7 @@ export class OffersController {
     const total = await this.offersService.count(query);
     const offers = await this.offersService.findAll(query);
     offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
-    return new PaginatedResponse(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }), { meta: { total, ...query } });
+    return new PaginatedResponse(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }), { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @AdminEndpoint()

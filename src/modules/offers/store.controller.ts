@@ -72,7 +72,7 @@ export class StoreController {
       this.subCategoryService.count(query),
     ]);
     const result = this._i18nResponse.entity(plainToInstance(SubCategory, data, { excludeExtraneousValues: true }));
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @StoreEndpoint()

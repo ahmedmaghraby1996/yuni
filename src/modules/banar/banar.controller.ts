@@ -66,7 +66,8 @@ export class BanarController {
             return new PaginatedResponse<BannerResponse[]>(result, {
                 meta: {
                     total: count,
-                    ...query
+                    page: query.page,
+                    limit: query.limit
                 }
             });
         }
@@ -84,7 +85,8 @@ export class BanarController {
             return new PaginatedResponse<BannerResponse[]>(result, {
                 meta: {
                     total: count,
-                    ...query
+                    page: query.page,
+                    limit: query.limit
                 }
             });
         }
@@ -104,7 +106,8 @@ export class BanarController {
             return new PaginatedResponse<BannerResponse[]>(result, {
                 meta: {
                     total: count,
-                    ...query
+                    page: query.page,
+                    limit: query.limit
                 }
             });
         }

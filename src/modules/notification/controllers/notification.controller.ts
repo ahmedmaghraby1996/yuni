@@ -64,7 +64,7 @@ export class NotificationController {
     const response = plainToInstance(NotificationResponse, result, { excludeExtraneousValues: true });
     if (query.page && query.limit) {
       const total = await this.notificationService.count(query);
-      return new PaginatedResponse<NotificationResponse[]>(response, { meta: { total, ...query } });
+      return new PaginatedResponse<NotificationResponse[]>(response, { meta: { total, page: query.page, limit: query.limit } });
     } else {
       return new ActionResponse<NotificationResponse[]>(response);
     }

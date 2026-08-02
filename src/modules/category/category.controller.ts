@@ -37,7 +37,7 @@ export class CategoryController {
     const categories = await this.categoryService.findAll(query);
     const total = await this.categoryService.count(query);
     const result=plainToInstance(Category,categories,{excludeExtraneousValues: true})
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @Get('/subcategory')
@@ -46,7 +46,7 @@ export class CategoryController {
     const subcategories = await this.subcategoryService.findAll(query);
     const total = await this.subcategoryService.count(query);
     const result=plainToInstance(SubCategory,subcategories,{excludeExtraneousValues: true})
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
 @UseGuards(JwtAuthGuard, RolesGuard)

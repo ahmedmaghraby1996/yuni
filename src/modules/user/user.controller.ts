@@ -100,7 +100,7 @@ export class UserController {
       }),
     );
     const total = await this.userService.count(query);
-    return new PaginatedResponse(usersResponse, { meta: { total, ...query } });
+    return new PaginatedResponse(usersResponse, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @Get('/agents')
@@ -122,7 +122,7 @@ export class UserController {
       excludeExtraneousValues: true,
     });
     return new PaginatedResponse(usersResponse, {
-      meta: { total: count, ...query },
+      meta: { total: count, page: query.page, limit: query.limit },
     });
   }
 

@@ -63,7 +63,7 @@ export class TransactionController {
     const total = await this.transactionService.count(query);
     const transactions = await this.transactionService.findAll(query);
     const result = plainToInstance(TransactionResponse, transactions, { excludeExtraneousValues: true });
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @StoreEndpoint()

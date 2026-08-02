@@ -50,7 +50,7 @@ export class SuggestionsComplaintsController {
       plainToInstance(SuggestionsComplaintResponse, result, {
         excludeExtraneousValues: true,
       }),
-      { meta: { ...query, total: count } },
+      { meta: { total: count, page: query.page, limit: query.limit } },
     );
   }
 
