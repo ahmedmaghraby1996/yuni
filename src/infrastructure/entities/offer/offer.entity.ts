@@ -36,10 +36,10 @@ export class Offer extends AuditableEntity {
   @Column()
   title_en: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
   description_ar: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
   description_en: string;
 
   @OneToMany(() => OfferImages, (offerImages) => offerImages.offer)
