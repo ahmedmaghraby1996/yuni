@@ -323,8 +323,18 @@ export class UserService extends BaseService<User> {
     try {
       return await this.storeRepo.save(branch);
     } catch (e) {
-      if (e?.code === 'ER_DUP_ENTRY') {
-        throw new BadRequestException('message.branch_number_duplicate');
+      const isDuplicate =
+        e?.code === 'ER_DUP_ENTRY' ||
+        e?.driverError?.code === 'ER_DUP_ENTRY' ||
+        e?.message?.includes('Duplicate entry');
+      if (isDuplicate) {
+        // number column race: retry with current max + 1
+        const retry = await this.storeRepo
+          .createQueryBuilder('store')
+          .select('MAX(store.number)', 'max')
+          .getRawOne();
+        branch.number = (retry?.max ?? 0) + 1;
+        return await this.storeRepo.save(branch);
       }
       throw e;
     }
