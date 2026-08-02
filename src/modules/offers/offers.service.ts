@@ -192,12 +192,12 @@ export class OffersService extends BaseService<Offer> {
     }
   }
 
-  async getStoreOfferUsers(page = 1, limit = 10) {
+  async getStoreOfferUsers(page = 1, limit = 10, name?: string) {
     const skip = (page - 1) * limit;
     const userId = this.storeOwnerId;
 
-    const baseQb = () =>
-      this.offerUsageRepo
+    const baseQb = () => {
+      const qb = this.offerUsageRepo
         .createQueryBuilder('usage')
         .innerJoin('usage.offer', 'offer')
         .innerJoin('offer.stores', 'store')
@@ -205,6 +205,9 @@ export class OffersService extends BaseService<Offer> {
         .where('store.user_id = :userId', { userId })
         .andWhere('usage.is_active = true')
         .andWhere('usage.deleted_at IS NULL');
+      if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+      return qb;
+    };
 
     const totalRaw = await baseQb()
       .select('COUNT(DISTINCT usage.user_id)', 'cnt')

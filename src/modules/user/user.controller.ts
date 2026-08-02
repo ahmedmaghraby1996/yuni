@@ -61,9 +61,16 @@ export class UserController {
   @Roles(Role.STORE)
   @Permission('customers', 'view')
   @ApiOperation({ summary: 'Get users who used store codes with usage count per user' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
   @Get('code-users')
-  async getCodeUsers(@Query('page') page = 1, @Query('limit') limit = 10) {
-    const { results, total } = await this.userService.getStoreOfferUsers(Number(page), Number(limit));
+  async getCodeUsers(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('name') name?: string,
+  ) {
+    const { results, total } = await this.userService.getStoreOfferUsers(Number(page), Number(limit), name);
     const data = plainToInstance(StoreOfferUserResponse, results, { excludeExtraneousValues: true });
     return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
   }

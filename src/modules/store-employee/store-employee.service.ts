@@ -106,12 +106,18 @@ export class StoreEmployeeService {
     return employee.permissions ?? {};
   }
 
-  async getEmployees(): Promise<StoreEmployee[]> {
-    return this.repo.find({
-      where: { owner_user_id: this.ownerId },
-      relations: { user: true, role: true },
-      order: { created_at: 'DESC' },
-    });
+  async getEmployees(page = 1, limit = 10, name?: string): Promise<{ data: StoreEmployee[]; total: number }> {
+    const qb = this.repo.createQueryBuilder('employee')
+      .leftJoinAndSelect('employee.user', 'user')
+      .leftJoinAndSelect('employee.role', 'role')
+      .where('employee.owner_user_id = :ownerId', { ownerId: this.ownerId })
+      .orderBy('employee.created_at', 'DESC');
+
+    if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+
+    const total = await qb.getCount();
+    const data = await qb.skip((page - 1) * limit).take(limit).getMany();
+    return { data, total };
   }
 
   async getEmployeeById(id: string): Promise<StoreEmployee> {

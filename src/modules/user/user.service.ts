@@ -83,12 +83,12 @@ export class UserService extends BaseService<User> {
     return (this.request.user as any).owner_user_id ?? this.request.user.id;
   }
 
-  async getStoreOfferUsers(page = 1, limit = 10) {
+  async getStoreOfferUsers(page = 1, limit = 10, name?: string) {
     const skip = (page - 1) * limit;
     const userId = this.storeOwnerId;
 
-    const baseQb = () =>
-      this.offerUsageRepo
+    const baseQb = () => {
+      const qb = this.offerUsageRepo
         .createQueryBuilder('usage')
         .innerJoin('usage.offer', 'offer')
         .innerJoin('offer.stores', 'store')
@@ -96,6 +96,9 @@ export class UserService extends BaseService<User> {
         .where('store.user_id = :userId', { userId })
         .andWhere('usage.is_active = true')
         .andWhere('usage.deleted_at IS NULL');
+      if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+      return qb;
+    };
 
     const totalRaw = await baseQb()
       .select('COUNT(DISTINCT usage.user_id)', 'cnt')
@@ -173,6 +176,13 @@ export class UserService extends BaseService<User> {
       where: { id: user.id },
     });
   }
+  async getMainStore() {
+    return this.storeRepo.findOne({
+      where: { user_id: this.storeOwnerId, is_main_branch: true },
+      relations: { city: true, subcategory: true },
+    });
+  }
+
   async updateMainStoreInfo(req: UpdateStoreInfoRequest) {
     const store = await this.storeRepo.findOne(
       this.request.user.roles.includes(Role.ADMIN)

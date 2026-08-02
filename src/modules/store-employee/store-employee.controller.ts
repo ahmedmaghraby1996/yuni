@@ -7,12 +7,14 @@ import {
   ParseFilePipe,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
@@ -134,11 +136,19 @@ export class StoreEmployeeController {
   @Roles(Role.STORE)
   @Permission('employees', 'view')
   @ApiOperation({ summary: 'Get all employees of the store' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String })
   @Get()
-  async getAll() {
-    const employees = await this.service.getEmployees();
-    return new ActionResponse(
-      plainToInstance(EmployeeResponse, employees, { excludeExtraneousValues: true }),
+  async getAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('name') name?: string,
+  ) {
+    const { data, total } = await this.service.getEmployees(+page, +limit, name);
+    return new PaginatedResponse(
+      plainToInstance(EmployeeResponse, data, { excludeExtraneousValues: true }),
+      { meta: { total, page: +page, limit: +limit } },
     );
   }
 
