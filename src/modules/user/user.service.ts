@@ -307,6 +307,7 @@ export class UserService extends BaseService<User> {
     const maxResult = await this.storeRepo
       .createQueryBuilder('store')
       .select('MAX(store.number)', 'max')
+      .where('store.user_id = :userId', { userId: main_branch.user_id })
       .getRawOne();
     const nextNumber = (maxResult?.max ?? 0) + 1;
 
@@ -320,24 +321,7 @@ export class UserService extends BaseService<User> {
       number: nextNumber,
     });
 
-    try {
-      return await this.storeRepo.save(branch);
-    } catch (e) {
-      const isDuplicate =
-        e?.code === 'ER_DUP_ENTRY' ||
-        e?.driverError?.code === 'ER_DUP_ENTRY' ||
-        e?.message?.includes('Duplicate entry');
-      if (isDuplicate) {
-        // number column race: retry with current max + 1
-        const retry = await this.storeRepo
-          .createQueryBuilder('store')
-          .select('MAX(store.number)', 'max')
-          .getRawOne();
-        branch.number = (retry?.max ?? 0) + 1;
-        return await this.storeRepo.save(branch);
-      }
-      throw e;
-    }
+    return await this.storeRepo.save(branch);
   }
 
   async getCities() {
