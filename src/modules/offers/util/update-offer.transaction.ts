@@ -70,22 +70,19 @@ export class UpdateOfferTransaction extends BaseTransaction<
           ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100 * 100) / 100
           : existingOffer.offer_percentage;
 
-      // Update offer fields
-      const updatedData = new Offer({
-        offer_price: req.offer_price,
-        original_price: req.original_price,
-        offer_percentage,
-        title_ar: req.title_ar,
-        title_en: req.title_en,
-        description_ar: req.description_ar,
-        description_en: req.description_en,
-        start_date: req.start_date,
-        is_active: req.is_active,
-        subcategory_id: req.subcategory_id,
-        end_date: req.end_date,
-        code: req.code,
-      });
-      Object.assign(existingOffer, updatedData);
+      // Update offer fields directly — never use Object.assign with a new Offer() as it wipes the id
+      if (req.offer_price !== undefined) existingOffer.offer_price = req.offer_price;
+      if (req.original_price !== undefined) existingOffer.original_price = req.original_price;
+      existingOffer.offer_percentage = offer_percentage;
+      if (req.title_ar !== undefined) existingOffer.title_ar = req.title_ar;
+      if (req.title_en !== undefined) existingOffer.title_en = req.title_en;
+      if (req.description_ar !== undefined) existingOffer.description_ar = req.description_ar;
+      if (req.description_en !== undefined) existingOffer.description_en = req.description_en;
+      if (req.start_date !== undefined) existingOffer.start_date = req.start_date;
+      if (req.is_active !== undefined) existingOffer.is_active = req.is_active;
+      if (req.subcategory_id !== undefined) existingOffer.subcategory_id = req.subcategory_id;
+      if (req.end_date !== undefined) existingOffer.end_date = req.end_date;
+      if (req.code !== undefined) existingOffer.code = req.code;
 
       // Update offer images
       const newImages = req?.images?.map((image, index) => {
