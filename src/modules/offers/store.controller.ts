@@ -10,7 +10,6 @@ import {
   Put,
   Query,
   UploadedFile,
-  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,8 +17,6 @@ import {
 import { ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { UpdateStoreInfoRequest } from '../user/dto/request/update-store-info.request';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
@@ -227,33 +224,4 @@ export class StoreController {
     return new ActionResponse(report);
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Permission('profile', 'view')
-  @ApiOperation({ summary: 'Get store profile (main branch info)' })
-  @Get('profile')
-  async getProfile() {
-    const store = await this.userService.getMainStore();
-    return new ActionResponse(plainToInstance(BranchResponse, store, { excludeExtraneousValues: true }));
-  }
-
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Permission('profile', 'edit')
-  @ApiOperation({ summary: 'Update store profile' })
-  @UseInterceptors(FileFieldsInterceptor([{ name: 'logo', maxCount: 1 }, { name: 'catalogue', maxCount: 1 }, { name: 'cover_image', maxCount: 1 }]))
-  @ApiConsumes('multipart/form-data')
-  @Put('profile')
-  async updateProfile(
-    @Body() req: UpdateStoreInfoRequest,
-    @UploadedFiles() files: { logo?: Express.Multer.File[]; catalogue?: Express.Multer.File[]; cover_image?: Express.Multer.File[] },
-  ) {
-    if (files?.logo?.[0]) req.logo = files.logo[0];
-    if (files?.catalogue?.[0]) req.catalogue = files.catalogue[0];
-    if (files?.cover_image?.[0]) req.cover_image = files.cover_image[0];
-    const store = await this.userService.updateMainStoreInfo(req);
-    return new ActionResponse(plainToInstance(BranchResponse, store, { excludeExtraneousValues: true }));
-  }
 }

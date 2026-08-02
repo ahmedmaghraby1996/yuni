@@ -18,6 +18,7 @@ import { PackagesModule } from './packages/packages.module';
 import { CategoryModule } from './category/category.module';
 import { SupportTicketModule } from './support-ticket/support-ticket.module';
 import { StoreEmployeeModule } from './store-employee/store-employee.module';
+import { StoreProfileModule } from './store-profile/store-profile.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { StoreEmployeeModule } from './store-employee/store-employee.module';
     CategoryModule,
     SupportTicketModule,
     StoreEmployeeModule,
+    StoreProfileModule,
   ],
   exports: [],
 })
