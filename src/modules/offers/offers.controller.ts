@@ -145,7 +145,7 @@ export class OffersController {
     const offers = await this.offersService.findAllForClient(query);
     offers.forEach(o => { o.is_favorite = o.favorites?.some(f => String(f.user_id) === String(this.request.user.id)) ?? false; });
     const result = this._i18nResponse.entity(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }));
-    return new PaginatedResponse(result, { meta: { total, ...query } });
+    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
   }
 
   @ApiBearerAuth()
