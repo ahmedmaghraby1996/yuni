@@ -56,39 +56,43 @@ export class OffersService extends BaseService<Offer> {
       .createQueryBuilder('offer')
       .andWhere('(offer.end_date IS NULL OR offer.end_date >= NOW())');
 
-    if (options?.relations?.stores !== undefined) {
-      qb.leftJoinAndSelect('offer.stores', 'stores');
-    }
-    if (options?.relations?.subcategory !== undefined) {
-      qb.leftJoinAndSelect('offer.subcategory', 'subcategory');
-    }
-    if (options?.relations?.images !== undefined) {
-      qb.leftJoinAndSelect('offer.images', 'images');
-    }
-    if (options?.relations?.favorites !== undefined) {
-      qb.leftJoinAndSelect('offer.favorites', 'favorites');
-    }
+    const relations = options?.relations;
+    if (relations?.stores !== undefined) qb.leftJoinAndSelect('offer.stores', 'stores');
+    if (relations?.subcategory !== undefined) qb.leftJoinAndSelect('offer.subcategory', 'subcategory');
+    if (relations?.images !== undefined) qb.leftJoinAndSelect('offer.images', 'images');
+    if (relations?.favorites !== undefined) qb.leftJoinAndSelect('offer.favorites', 'favorites');
 
-    if (options?.where?.length) {
-      options.where.forEach((condition: any, idx: number) => {
-        Object.entries(condition).forEach(([key, value]: [string, any]) => {
-          if (key === 'stores' && value && typeof value === 'object') {
-            Object.entries(value).forEach(([sk, sv]: [string, any]) => {
-              qb.andWhere(`stores.${sk} = :stores_${sk}_${idx}`, { [`stores_${sk}_${idx}`]: sv === true ? 1 : sv });
-            });
-          } else if (key === 'favorites' && value && typeof value === 'object') {
-            Object.entries(value).forEach(([fk, fv]: [string, any]) => {
-              qb.andWhere(`favorites.${fk} = :favorites_${fk}_${idx}`, { [`favorites_${fk}_${idx}`]: fv });
-            });
-          } else if (value !== null && value !== undefined && typeof value !== 'object') {
-            qb.andWhere(`offer.${key} = :offer_${key}_${idx}`, { [`offer_${key}_${idx}`]: value });
+    // parse raw filter strings directly — never use the `where` getter (returns TypeORM FindOperators with Symbols)
+    const filters: string[] = Array.isArray(options?.filters)
+      ? options.filters
+      : options?.filters
+        ? [options.filters]
+        : [];
+
+    filters.forEach((filterGroup: string, idx: number) => {
+      filterGroup.split(',').forEach((part: string) => {
+        const eqIdx = part.indexOf('=');
+        if (eqIdx === -1) return;
+        const rawKey = part.substring(0, eqIdx);
+        const value = part.substring(eqIdx + 1);
+        if (rawKey.includes('.')) {
+          const [table, col] = rawKey.split('.');
+          const paramName = `${table}_${col}_${idx}`;
+          if (table === 'stores') {
+            qb.andWhere(`stores.${col} = :${paramName}`, { [paramName]: value });
+          } else if (table === 'favorites') {
+            qb.andWhere(`favorites.${col} = :${paramName}`, { [paramName]: value });
           }
-        });
+        } else {
+          const paramName = `offer_${rawKey}_${idx}`;
+          qb.andWhere(`offer.${rawKey} = :${paramName}`, { [paramName]: value });
+        }
       });
-    }
+    });
 
-    if (options?.order) {
-      Object.entries(options.order).forEach(([key, dir]: [string, any]) => {
+    const order = options?.order;
+    if (order) {
+      Object.entries(order).forEach(([key, dir]: [string, any]) => {
         qb.addOrderBy(`offer.${key}`, dir);
       });
     }
