@@ -106,7 +106,7 @@ export class StoreEmployeeService {
     return employee.permissions ?? {};
   }
 
-  async getEmployees(page = 1, limit = 10, name?: string): Promise<{ data: StoreEmployee[]; total: number }> {
+  async getEmployees(page = 1, limit = 10, name?: string, is_active?: boolean): Promise<{ data: StoreEmployee[]; total: number }> {
     const qb = this.repo.createQueryBuilder('employee')
       .leftJoinAndSelect('employee.user', 'user')
       .leftJoinAndSelect('employee.role', 'role')
@@ -114,6 +114,7 @@ export class StoreEmployeeService {
       .orderBy('employee.created_at', 'DESC');
 
     if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+    if (is_active !== undefined) qb.andWhere('employee.is_active = :is_active', { is_active });
 
     const total = await qb.getCount();
     const data = await qb.skip((page - 1) * limit).take(limit).getMany();

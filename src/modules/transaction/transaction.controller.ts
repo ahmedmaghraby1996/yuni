@@ -23,6 +23,7 @@ import {
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Permission } from '../authentication/guards/permission.decorator';
+import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
 
 @ApiTags('Transaction')
 @ApiHeader({
@@ -40,12 +41,14 @@ export class TransactionController {
   @Roles(Role.STORE, Role.ADMIN, Role.CLIENT)
   @Permission('wallet', 'view')
   @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
+  @ApiQuery({ name: 'type', required: false, enum: TransactionTypes, description: 'Filter by transaction type' })
   @ApiQuery({ name: 'date_from', required: false, type: String, description: 'Filter from date (YYYY-MM-DD)' })
   @ApiQuery({ name: 'date_to', required: false, type: String, description: 'Filter to date (YYYY-MM-DD)' })
   @Get()
   async getTransactions(
     @Query() query: PaginatedRequest,
     @Query('number') number?: string,
+    @Query('type') type?: TransactionTypes,
     @Query('date_from') date_from?: string,
     @Query('date_to') date_to?: string,
   ) {
@@ -53,6 +56,7 @@ export class TransactionController {
     if (!this.transactionService.currentUser.roles.includes(Role.ADMIN))
       applyQueryFilters(query, `user_id=${this.transactionService.currentUser.id}`);
     if (number) applyQueryFilters(query, `number=${number}`);
+    if (type) applyQueryFilters(query, `type=${type}`);
     if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
     if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
 

@@ -52,13 +52,15 @@ export class SupportTicketController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
   @Get()
   async getMyTickets(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('status') status?: TicketStatus,
+    @Query('name') name?: string,
   ) {
-    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status);
+    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status, name);
     const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
@@ -83,13 +85,15 @@ export class SupportTicketController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
   @Get('admin/all')
   async getAllTickets(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('status') status?: TicketStatus,
+    @Query('name') name?: string,
   ) {
-    const { data, total } = await this.supportTicketService.getAllTickets(Number(page), Number(limit), status);
+    const { data, total } = await this.supportTicketService.getAllTickets(Number(page), Number(limit), status, name);
     const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }

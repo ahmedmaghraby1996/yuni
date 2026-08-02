@@ -252,6 +252,7 @@ export class UserController {
     FileFieldsInterceptor([
       { name: 'logo', maxCount: 1 },
       { name: 'catalogue', maxCount: 1 },
+      { name: 'cover_image', maxCount: 1 },
     ]),
   )
   @AdminEndpoint()
@@ -266,6 +267,7 @@ export class UserController {
     files: {
       logo?: Express.Multer.File[];
       catalogue?: Express.Multer.File[];
+      cover_image?: Express.Multer.File[];
     },
   ) {
     if (files?.logo && files?.logo?.length > 0) {
@@ -273,6 +275,9 @@ export class UserController {
     }
     if (files?.catalogue && files.catalogue?.length > 0) {
       req.catalogue = files.catalogue[0];
+    }
+    if (files?.cover_image && files.cover_image?.length > 0) {
+      req.cover_image = files.cover_image[0];
     }
     req.id = id;
     const storeInfo = await this.userService.updateMainStoreInfo(req);

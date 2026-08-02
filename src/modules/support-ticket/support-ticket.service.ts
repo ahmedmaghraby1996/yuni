@@ -30,15 +30,17 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     });
   }
 
-  async getMyTickets(page = 1, limit = 10, status?: TicketStatus): Promise<{ data: SupportTicket[]; total: number }> {
-    const where: any = { user_id: this.request.user.id };
-    if (status) where.status = status;
-    const [data, total] = await this.repo.findAndCount({
-      where,
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+  async getMyTickets(page = 1, limit = 10, status?: TicketStatus, name?: string): Promise<{ data: SupportTicket[]; total: number }> {
+    const qb = this.repo.createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.user', 'user')
+      .where('ticket.user_id = :userId', { userId: this.request.user.id })
+      .orderBy('ticket.created_at', 'DESC');
+
+    if (status) qb.andWhere('ticket.status = :status', { status });
+    if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+
+    const total = await qb.getCount();
+    const data = await qb.skip((page - 1) * limit).take(limit).getMany();
     return { data, total };
   }
 
@@ -51,16 +53,16 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     return ticket;
   }
 
-  async getAllTickets(page = 1, limit = 10, status?: TicketStatus): Promise<{ data: SupportTicket[]; total: number }> {
-    const where: any = {};
-    if (status) where.status = status;
-    const [data, total] = await this.repo.findAndCount({
-      where,
-      relations: { user: true },
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+  async getAllTickets(page = 1, limit = 10, status?: TicketStatus, name?: string): Promise<{ data: SupportTicket[]; total: number }> {
+    const qb = this.repo.createQueryBuilder('ticket')
+      .leftJoinAndSelect('ticket.user', 'user')
+      .orderBy('ticket.created_at', 'DESC');
+
+    if (status) qb.andWhere('ticket.status = :status', { status });
+    if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
+
+    const total = await qb.getCount();
+    const data = await qb.skip((page - 1) * limit).take(limit).getMany();
     return { data, total };
   }
 

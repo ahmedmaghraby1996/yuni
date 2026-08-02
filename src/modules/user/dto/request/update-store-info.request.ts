@@ -65,13 +65,23 @@ export class UpdateStoreInfoRequest {
   @IsOptional()
   logo: Express.Multer.File;
 
-  @ApiProperty({
-    required: false,
-    description: 'Store catalogue',
-    type: 'file',
-  })
+  @ApiProperty({ required: false, description: 'Store catalogue', type: 'file' })
   @IsOptional()
   catalogue: Express.Multer.File;
+
+  @ApiProperty({ required: false, description: 'Store cover image', type: 'file' })
+  @IsOptional()
+  cover_image: Express.Multer.File;
+
+  @ApiProperty({ required: false, description: 'Store description' })
+  @IsOptional()
+  @IsString()
+  description: string;
+
+  @ApiProperty({ required: false, description: 'Store website link' })
+  @IsOptional()
+  @IsString()
+  website_link: string;
 
   // first_phone
   @ApiProperty({

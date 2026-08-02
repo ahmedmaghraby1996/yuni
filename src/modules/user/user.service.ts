@@ -210,6 +210,8 @@ export class UserService extends BaseService<User> {
     store.first_phone = req.first_phone;
     store.second_phone = req.second_phone;
     if (req.email) store.email = req.email;
+    if (req.description) store.description = req.description;
+    if (req.website_link) store.website_link = req.website_link;
 
     if (req?.logo) {
       const resizedImage = await this.imageManager.resize(req.logo, {
@@ -227,13 +229,20 @@ export class UserService extends BaseService<User> {
     }
     if (req?.catalogue) {
       const file = await this.storageManager.store(
-        {
-          buffer: req.catalogue.buffer,
-          originalname: req.catalogue.originalname,
-        },
+        { buffer: req.catalogue.buffer, originalname: req.catalogue.originalname },
         { path: 'stores' },
       );
       store.catalogue = file;
+    }
+    if (req?.cover_image) {
+      const resized = await this.imageManager.resize(req.cover_image, {
+        size: { width: 1200, height: 400 },
+        options: { fit: sharp.fit.cover, position: sharp.strategy.entropy },
+      });
+      store.cover_image = await this.storageManager.store(
+        { buffer: resized, originalname: req.cover_image.originalname },
+        { path: 'stores' },
+      );
     }
     console.log('store', store);
 

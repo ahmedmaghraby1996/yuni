@@ -149,13 +149,16 @@ export class StoreEmployeeController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'is_active', required: false, type: Number, enum: [0, 1] })
   @Get()
   async getAll(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('name') name?: string,
+    @Query('is_active') is_active?: string,
   ) {
-    const { data, total } = await this.service.getEmployees(+page, +limit, name);
+    const isActiveBool = is_active !== undefined && is_active !== '' ? is_active === '1' || is_active === 'true' : undefined;
+    const { data, total } = await this.service.getEmployees(+page, +limit, name, isActiveBool);
     return new PaginatedResponse(
       plainToInstance(EmployeeResponse, data, { excludeExtraneousValues: true }),
       { meta: { total, page: +page, limit: +limit } },
