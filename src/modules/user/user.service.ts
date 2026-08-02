@@ -315,12 +315,25 @@ export class UserService extends BaseService<User> {
     const existing = await this.storeRepo.findOneBy({ number: req.number });
     if (existing) throw new BadRequestException('message.branch_number_duplicate');
 
+    let coverImagePath: string | undefined;
+    if (req?.cover_image) {
+      const resized = await this.imageManager.resize(req.cover_image, {
+        size: { width: 1200, height: 400 },
+        options: { fit: sharp.fit.cover, position: sharp.strategy.entropy },
+      });
+      coverImagePath = await this.storageManager.store(
+        { buffer: resized, originalname: req.cover_image.originalname },
+        { path: 'stores' },
+      );
+    }
+
     const branch = new Store({
       ...req,
       is_main_branch: false,
       user_id: main_branch.user_id,
       subcategory_id: main_branch.subcategory_id,
       logo: logoPath,
+      ...(coverImagePath && { cover_image: coverImagePath }),
       is_active: req.is_active ?? false,
       status: StoreStatus.APPROVED,
     });

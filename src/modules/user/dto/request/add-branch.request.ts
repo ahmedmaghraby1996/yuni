@@ -81,6 +81,15 @@ export class AddBranchRequest {
   @IsOptional()
   logo: Express.Multer.File;
 
+  @ApiProperty({ required: false, description: 'Branch cover image', type: 'file' })
+  @IsOptional()
+  cover_image: Express.Multer.File;
+
+  @ApiProperty({ required: false, description: 'Branch description' })
+  @IsOptional()
+  @IsString()
+  description: string;
+
   @ApiProperty({ required: false, type: Boolean })
   @IsOptional()
   @Transform(({ value }) => {
