@@ -5,6 +5,7 @@ import {
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -69,6 +70,12 @@ export class AddBranchRequest {
   @IsNotEmpty()
   @IsString()
   city_id: string;
+
+  @ApiProperty({ required: true, description: 'Branch number', example: 1 })
+  @IsNotEmpty()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  number: number;
 
   @ApiProperty({ required: false, description: 'Store logo', type: 'file' })
   @IsOptional()
