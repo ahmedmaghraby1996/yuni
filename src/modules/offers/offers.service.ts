@@ -80,7 +80,7 @@ export class OffersService extends BaseService<Offer> {
             Object.entries(value).forEach(([fk, fv]: [string, any]) => {
               qb.andWhere(`favorites.${fk} = :favorites_${fk}_${idx}`, { [`favorites_${fk}_${idx}`]: fv });
             });
-          } else {
+          } else if (value !== null && value !== undefined && typeof value !== 'object') {
             qb.andWhere(`offer.${key} = :offer_${key}_${idx}`, { [`offer_${key}_${idx}`]: value });
           }
         });
