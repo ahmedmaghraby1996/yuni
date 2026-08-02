@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
@@ -100,11 +100,16 @@ export class NotificationController {
   @StoreEndpoint()
   @Roles(Role.STORE)
   @Permission('customers', 'view')
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('store')
-  async getStoreNotifications(@Query() query: PaginatedRequest) {
-    const data = await this.notificationService.getStoreNotifications(query);
+  async getStoreNotifications(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    const { data, total } = await this.notificationService.getStoreNotifications(+page, +limit);
     const response = plainToInstance(NotificationResponse, data, { excludeExtraneousValues: true });
-    return new ActionResponse(response);
+    return new PaginatedResponse(response, { meta: { total, page: +page, limit: +limit } });
   }
 
   @StoreEndpoint()

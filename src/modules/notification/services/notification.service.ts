@@ -224,18 +224,18 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
     return 'notification sent successfully';
   }
 
-  async getStoreNotifications(query: any) {
-    const notifications = await this._repo.find({
+  async getStoreNotifications(page = 1, limit = 10): Promise<{ data: any[]; total: number }> {
+    const [notifications, total] = await this._repo.findAndCount({
       where: { user_id: this.currentUser.id, type: NotificationTypes.ADMIN },
       order: { created_at: 'DESC' },
-      skip: query.page && query.limit ? (query.page - 1) * query.limit : 0,
-      take: query.limit ?? 10,
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
-    return notifications.map((n) => ({
-      ...n,
-      sent_to_all: !n.user_ids?.length,
-    }));
+    return {
+      data: notifications.map((n) => ({ ...n, sent_to_all: !n.user_ids?.length })),
+      total,
+    };
   }
 
   async getStoreNotificationById(id: string) {

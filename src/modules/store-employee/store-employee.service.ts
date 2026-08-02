@@ -180,11 +180,16 @@ export class StoreEmployeeService {
     return this.roleRepo.save(role);
   }
 
-  async getRoles(): Promise<StoreEmployeeRole[]> {
-    return this.roleRepo.find({
-      where: { owner_user_id: this.ownerId },
-      order: { created_at: 'DESC' },
-    });
+  async getRoles(page = 1, limit = 10, name?: string): Promise<{ data: StoreEmployeeRole[]; total: number }> {
+    const qb = this.roleRepo.createQueryBuilder('role')
+      .where('role.owner_user_id = :ownerId', { ownerId: this.ownerId })
+      .orderBy('role.created_at', 'DESC');
+
+    if (name) qb.andWhere('(role.name_ar LIKE :name OR role.name_en LIKE :name)', { name: `%${name}%` });
+
+    const total = await qb.getCount();
+    const data = await qb.skip((page - 1) * limit).take(limit).getMany();
+    return { data, total };
   }
 
   async getRoleById(id: string): Promise<StoreEmployeeRole> {

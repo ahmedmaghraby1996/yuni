@@ -68,10 +68,20 @@ export class StoreEmployeeController {
   @Roles(Role.STORE)
   @Permission('employees', 'view')
   @ApiOperation({ summary: 'Get all employee roles for this store' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by role name (ar or en)' })
   @Get('roles')
-  async getRoles() {
-    const roles = await this.service.getRoles();
-    return new ActionResponse(plainToInstance(EmployeeRoleDto, roles, { excludeExtraneousValues: true }));
+  async getRoles(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('name') name?: string,
+  ) {
+    const { data, total } = await this.service.getRoles(+page, +limit, name);
+    return new PaginatedResponse(
+      plainToInstance(EmployeeRoleDto, data, { excludeExtraneousValues: true }),
+      { meta: { total, page: +page, limit: +limit } },
+    );
   }
 
   @StoreEndpoint()
