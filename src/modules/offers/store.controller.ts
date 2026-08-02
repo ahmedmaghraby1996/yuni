@@ -10,12 +10,13 @@ import {
   Put,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 
 import { ApiConsumes, ApiHeader, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
 import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
@@ -99,19 +100,17 @@ export class StoreController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('branches', 'edit')
-  @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
+  @UseInterceptors(ClassSerializerInterceptor, FileFieldsInterceptor([{ name: 'logo', maxCount: 1 }, { name: 'cover_image', maxCount: 1 }]))
   @ApiConsumes('multipart/form-data')
   @Put('branches/:id')
   async updateBranchInfo(
     @Param('id') id: string,
     @Body() req: UpdateBranchInfoRequest,
-    @UploadedFile(new UploadValidator().build())
-    logo: Express.Multer.File,
+    @UploadedFiles() files: { logo?: Express.Multer.File[]; cover_image?: Express.Multer.File[] },
   ) {
     req.branch_id = id;
-    if (logo) {
-      req.logo = logo;
-    }
+    if (files?.logo?.[0]) req.logo = files.logo[0];
+    if (files?.cover_image?.[0]) req.cover_image = files.cover_image[0];
     return new ActionResponse(await this.userService.updateBranchInfo(req));
   }
 

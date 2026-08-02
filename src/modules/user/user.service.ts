@@ -263,20 +263,28 @@ export class UserService extends BaseService<User> {
     if (req.longitude) store.longitude = req.longitude;
     if (req.city_id) store.city_id = req.city_id;
     if (req.email) store.email = req.email;
+    if (req.description) store.description = req.description;
 
     if (req?.logo) {
       const resizedImage = await this.imageManager.resize(req.logo, {
         size: { width: 300, height: 300 },
-        options: {
-          fit: sharp.fit.cover,
-          position: sharp.strategy.entropy,
-        },
+        options: { fit: sharp.fit.cover, position: sharp.strategy.entropy },
       });
-      const path = await this.storageManager.store(
+      store.logo = await this.storageManager.store(
         { buffer: resizedImage, originalname: req.logo.originalname },
         { path: 'stores' },
       );
-      store.logo = path;
+    }
+
+    if (req?.cover_image) {
+      const resized = await this.imageManager.resize(req.cover_image, {
+        size: { width: 1200, height: 400 },
+        options: { fit: sharp.fit.cover, position: sharp.strategy.entropy },
+      });
+      store.cover_image = await this.storageManager.store(
+        { buffer: resized, originalname: req.cover_image.originalname },
+        { path: 'stores' },
+      );
     }
 
     return await this.storeRepo.save(store);
@@ -314,6 +322,7 @@ export class UserService extends BaseService<User> {
       subcategory_id: main_branch.subcategory_id,
       logo: logoPath,
       is_active: req.is_active ?? false,
+      status: StoreStatus.APPROVED,
     });
 
     return await this.storeRepo.save(branch);
