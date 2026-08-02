@@ -320,7 +320,14 @@ export class UserService extends BaseService<User> {
       number: nextNumber,
     });
 
-    return await this.storeRepo.save(branch);
+    try {
+      return await this.storeRepo.save(branch);
+    } catch (e) {
+      if (e?.code === 'ER_DUP_ENTRY') {
+        throw new BadRequestException('message.branch_number_duplicate');
+      }
+      throw e;
+    }
   }
 
   async getCities() {

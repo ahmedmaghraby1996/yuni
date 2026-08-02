@@ -16,5 +16,6 @@
     "not_within_working_hours": "Not within working hours",
     "email_not_verified": "Email is not verified. Please verify your email before signing in",
     "offer_already_used": "This offer has already been used by this customer",
-    "permission_denied": "You do not have permission to perform this action"
+    "permission_denied": "You do not have permission to perform this action",
+    "branch_number_duplicate": "Failed to create branch, please try again"
 }
