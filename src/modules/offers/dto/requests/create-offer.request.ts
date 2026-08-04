@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsDate, IsOptional } from 'class-validator';
+import { IsBoolean, IsDate, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateOfferRequest {
 
@@ -24,10 +24,23 @@ export class CreateOfferRequest {
   @Transform(({ value }) => (value ? new Date(value) : undefined))
   @IsDate()
   end_date?: Date;
-  @ApiProperty()
-  original_price: number;
-  @ApiProperty()
-  offer_price: number;
+  @ApiProperty({ required: false, description: 'Required if offer_price is provided' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  original_price?: number;
+
+  @ApiProperty({ required: false, description: 'Required if original_price is provided' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  offer_price?: number;
+
+  @ApiProperty({ required: false, description: 'Use instead of original_price + offer_price to set discount percentage directly' })
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => (value !== undefined && value !== '' ? Number(value) : undefined))
+  offer_percentage?: number;
   @ApiProperty({ required: false, description: 'If true, store provides a fixed code manually. If false, backend auto-generates a one-time code on each response.' })
   @IsOptional()
   @IsBoolean()

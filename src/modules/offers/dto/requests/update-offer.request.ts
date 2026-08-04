@@ -55,6 +55,11 @@ export class UpdateOfferRequest {
   @IsNumber()
   offer_price?: number;
 
+  @ApiProperty({ required: false, description: 'Set discount percentage directly instead of original_price + offer_price' })
+  @IsOptional()
+  @IsNumber()
+  offer_percentage?: number;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsBoolean()
@@ -131,6 +136,11 @@ export class UpdateAdminOfferRequest {
   @IsOptional()
   @IsNumber()
   offer_price?: number;
+
+  @ApiProperty({ required: false, description: 'Set discount percentage directly instead of original_price + offer_price' })
+  @IsOptional()
+  @IsNumber()
+  offer_percentage?: number;
 
   @ApiProperty({ required: false })
   @IsOptional()

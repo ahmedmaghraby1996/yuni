@@ -33,7 +33,7 @@ export class CreateOfferTransaction extends BaseTransaction<
       const offer_percentage =
         req.original_price && req.offer_price
           ? Math.round(((req.original_price - req.offer_price) / req.original_price) * 100 * 100) / 100
-          : null;
+          : req.offer_percentage ?? null;
 
       const is_fixed_code = req.is_fixed_code !== false; // default true
       const code = is_fixed_code

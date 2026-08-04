@@ -67,7 +67,9 @@ export class UpdateOfferTransaction extends BaseTransaction<
       const originalPrice = req.original_price ?? existingOffer.original_price;
       const offerPrice = req.offer_price ?? existingOffer.offer_price;
       const offer_percentage =
-        originalPrice && offerPrice
+        req.offer_percentage !== undefined
+          ? req.offer_percentage
+          : originalPrice && offerPrice
           ? Math.round(((originalPrice - offerPrice) / originalPrice) * 100 * 100) / 100
           : existingOffer.offer_percentage;
 
