@@ -11,6 +11,7 @@ import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 
 import { StoreFollow } from 'src/infrastructure/entities/store/store-follow.entity';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
+import { Promotion, PromotionType } from 'src/infrastructure/entities/promotion/promotion.entity';
 
 @Injectable()
 export class StoreService extends BaseService<Store> {
@@ -22,6 +23,8 @@ export class StoreService extends BaseService<Store> {
     private readonly storeFollowRepo: Repository<StoreFollow>,
     @InjectRepository(Offer)
     private readonly offerRepo: Repository<Offer>,
+    @InjectRepository(Promotion)
+    private readonly promotionRepo: Repository<Promotion>,
   ) {
     super(repo);
   }
@@ -256,6 +259,29 @@ export class StoreService extends BaseService<Store> {
 
     await this.enrichWithHighestDiscountOffer(stores as unknown as Store[]);
     await this.enrichWithIsFollowed(stores as unknown as Store[]);
+
+    // Boost: promoted branches first, then followed stores, then rest
+    const now = new Date();
+    const userId = this._request.user?.id;
+
+    const [promotions, followedStoreIds] = await Promise.all([
+      this.promotionRepo.find({ where: { type: PromotionType.BRANCH } }),
+      userId
+        ? this.storeFollowRepo.find({ where: { user_id: userId }, select: ['store_id'] })
+            .then((follows) => new Set(follows.map((f) => f.store_id)))
+        : Promise.resolve(new Set<string>()),
+    ]);
+
+    const promotedIds = new Set(
+      promotions
+        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .map((p) => p.target_id),
+    );
+
+    stores.sort((a: any, b: any) => {
+      const rank = (s: any) => (promotedIds.has(s.id) ? 0 : followedStoreIds.has(s.id) ? 1 : 2);
+      return rank(a) - rank(b);
+    });
 
     return { stores, total };
   }

@@ -19,5 +19,6 @@
     "permission_denied": "You do not have permission to perform this action",
     "branch_number_duplicate": "Failed to create branch, please try again",
     "user_not_found": "User not found",
-    "offer_not_found": "Offer not found"
+    "offer_not_found": "Offer not found",
+    "store_not_found": "Store not found"
 }

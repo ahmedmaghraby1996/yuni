@@ -57,6 +57,12 @@ export class UpdateOfferRequest {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  is_fixed_code?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   code?: string;
 
@@ -79,7 +85,7 @@ export class UpdateOfferRequest {
     @IsOptional()
     @IsBoolean()
     @Transform(({ value }) => value === 'true' || value === true)
-    
+
     is_active: boolean;
 }
 export class UpdateAdminOfferRequest {
@@ -128,6 +134,12 @@ export class UpdateAdminOfferRequest {
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  is_fixed_code?: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   code?: string;
 
@@ -150,7 +162,7 @@ export class UpdateAdminOfferRequest {
     @IsOptional()
     @IsBoolean()
     @Transform(({ value }) => value === 'true' || value === true)
-    
+
     is_active: boolean;
 }
 

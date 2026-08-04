@@ -66,6 +66,9 @@ export class Offer extends AuditableEntity {
   @Column({ nullable: true })
   code: string;
 
+  @Column({ default: true })
+  is_fixed_code: boolean;
+
   @Column({ nullable: true })
   distance: number;
 

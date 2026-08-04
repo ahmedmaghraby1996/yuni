@@ -28,7 +28,13 @@ export class CreateOfferRequest {
   original_price: number;
   @ApiProperty()
   offer_price: number;
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: 'If true, store provides a fixed code manually. If false, backend auto-generates a one-time code on each response.' })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  is_fixed_code: boolean;
+
+  @ApiProperty({ required: false, description: 'Required only if is_fixed_code is true' })
   @IsOptional()
   code: string;
   @ApiProperty({ required: false, description: 'Specific branch IDs to link. Ignored if all_branches is true.' })

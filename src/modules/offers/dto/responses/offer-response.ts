@@ -25,6 +25,10 @@ export class OfferResponse {
   @Expose()
   offer_percentage: number;
   @Expose()
+  is_fixed_code: boolean;
+
+  @Expose()
+  @Transform(({ obj }) => (obj.is_fixed_code === false ? null : obj.code))
   code: string;
 
   @Expose()

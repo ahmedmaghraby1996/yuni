@@ -20,5 +20,6 @@
     "permission_denied": "ليس لديك صلاحية للقيام بهذا الإجراء",
     "branch_number_duplicate": "فشل إنشاء الفرع، يرجى المحاولة مرة أخرى",
     "user_not_found": "المستخدم غير موجود",
-    "offer_not_found": "العرض غير موجود"
+    "offer_not_found": "العرض غير موجود",
+    "store_not_found": "المتجر غير موجود"
 }

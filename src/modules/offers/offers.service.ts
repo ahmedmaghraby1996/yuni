@@ -13,12 +13,15 @@ import { REQUEST } from '@nestjs/core';
 import { FavoriteOffer } from 'src/infrastructure/entities/offer/favorite-offer.entity';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
+import { OfferClaim } from 'src/infrastructure/entities/offer/offer-claim.entity';
+import { Promotion, PromotionType } from 'src/infrastructure/entities/promotion/promotion.entity';
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Wallet } from 'src/infrastructure/entities/wallet/wallet.entity';
 import { Package } from 'src/infrastructure/entities/package/package.entity';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class OffersService extends BaseService<Offer> {
@@ -32,6 +35,8 @@ export class OffersService extends BaseService<Offer> {
     private readonly favoriteOfferRepo: Repository<FavoriteOffer>,
     @InjectRepository(OfferUsage)
     private readonly offerUsageRepo: Repository<OfferUsage>,
+    @InjectRepository(OfferClaim)
+    private readonly offerClaimRepo: Repository<OfferClaim>,
     private readonly updateOfferTransaction: UpdateOfferTransaction,
     @InjectRepository(Transaction)
     private readonly transactionRepo: Repository<Transaction>,
@@ -43,6 +48,8 @@ export class OffersService extends BaseService<Offer> {
     private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(Package)
     private readonly packageRepo: Repository<Package>,
+    @InjectRepository(Promotion)
+    private readonly promotionRepo: Repository<Promotion>,
   ) {
     super(repo);
   }
@@ -120,6 +127,52 @@ export class OffersService extends BaseService<Offer> {
     return offer;
   }
 
+  async promoteOffer(offer_id: string, start_date: Date, end_date: Date) {
+    const offer = await this.repo.findOne({ where: { id: offer_id, user_id: this.storeOwnerId } });
+    if (!offer) throw new NotFoundException('message.offer_not_found');
+
+    const existing = await this.promotionRepo.findOne({
+      where: { target_id: offer_id, type: PromotionType.OFFER },
+    });
+    if (existing) {
+      existing.start_date = start_date;
+      existing.end_date = end_date;
+      await this.promotionRepo.save(existing);
+    } else {
+      await this.promotionRepo.save({
+        user_id: this.storeOwnerId,
+        target_id: offer_id,
+        type: PromotionType.OFFER,
+        start_date,
+        end_date,
+      });
+    }
+    return true;
+  }
+
+  async promoteBranch(branch_id: string, start_date: Date, end_date: Date) {
+    const branch = await this.storeRepo.findOne({ where: { id: branch_id, user_id: this.storeOwnerId } });
+    if (!branch) throw new NotFoundException('message.store_not_found');
+
+    const existing = await this.promotionRepo.findOne({
+      where: { target_id: branch_id, type: PromotionType.BRANCH },
+    });
+    if (existing) {
+      existing.start_date = start_date;
+      existing.end_date = end_date;
+      await this.promotionRepo.save(existing);
+    } else {
+      await this.promotionRepo.save({
+        user_id: this.storeOwnerId,
+        target_id: branch_id,
+        type: PromotionType.BRANCH,
+        start_date,
+        end_date,
+      });
+    }
+    return true;
+  }
+
   async makeSepcial(offer_id: string) {
     // make all offers not special
     await this.repo.update(
@@ -147,7 +200,7 @@ export class OffersService extends BaseService<Offer> {
     return true;
   }
 
-  async confirmOfferUse(offer_id: string, email: string) {
+  async confirmOfferUse(offer_id: string, email: string, code?: string) {
     const user = await this.storeRepo.manager.findOne(User, { where: { email } });
     if (!user) throw new NotFoundException('message.user_not_found');
 
@@ -157,8 +210,19 @@ export class OffersService extends BaseService<Offer> {
     const existing = await this.offerUsageRepo.findOne({
       where: { offer_id, user_id: user.id, is_active: true },
     });
-
     if (existing) throw new BadRequestException('message.offer_already_used');
+
+    // Auto-code offers require a valid claim code
+    if (!offer.is_fixed_code) {
+      if (!code) throw new BadRequestException('message.code_required');
+      const claim = await this.offerClaimRepo.findOne({
+        where: { code, offer_id, user_id: user.id, is_used: false },
+      });
+      if (!claim) throw new NotFoundException('Invalid code');
+      if (new Date(claim.expires_at) < new Date()) throw new BadRequestException('Code has expired');
+      claim.is_used = true;
+      await this.offerClaimRepo.save(claim);
+    }
 
     await this.offerUsageRepo.save({ offer_id, user_id: user.id, is_active: true });
     await this.repo.increment({ id: offer_id }, 'uses', 1);
@@ -200,40 +264,51 @@ export class OffersService extends BaseService<Offer> {
     const skip = (page - 1) * limit;
     const userId = this.storeOwnerId;
 
-    const baseQb = () => {
-      const qb = this.offerUsageRepo
-        .createQueryBuilder('usage')
-        .innerJoin('usage.offer', 'offer')
-        .innerJoin('offer.stores', 'store')
-        .innerJoin('usage.user', 'user')
-        .where('store.user_id = :userId', { userId })
-        .andWhere('usage.is_active = true')
-        .andWhere('usage.deleted_at IS NULL');
-      if (name) qb.andWhere('user.name LIKE :name', { name: `%${name}%` });
-      return qb;
-    };
+    const nameFilter = name ? `AND u.name LIKE ?` : '';
+    const nameParam = name ? [`%${name}%`] : [];
 
-    const totalRaw = await baseQb()
-      .select('COUNT(DISTINCT usage.user_id)', 'cnt')
-      .getRawOne();
-    const total = parseInt(totalRaw?.cnt ?? '0', 10);
+    // UNION: code-users (with activated_count) + followers (activated_count = 0)
+    // Deduplicate by user_id, keep MAX activated_count
+    const unionSql = `
+      SELECT u.id AS user_id, u.name AS name, u.phone AS phone, u.avatar AS avatar,
+             COUNT(DISTINCT ou.id) AS activated_count
+      FROM offer_usage ou
+      INNER JOIN offer_stores_store oos ON oos.offer_id = ou.offer_id
+      INNER JOIN store s ON s.id = oos.store_id AND s.user_id = ? AND s.deleted_at IS NULL
+      INNER JOIN user u ON u.id = ou.user_id AND u.deleted_at IS NULL
+      WHERE ou.is_active = 1 AND ou.deleted_at IS NULL ${nameFilter}
+      GROUP BY u.id, u.name, u.phone, u.avatar
 
-    const results = await baseQb()
-      .select([
-        'usage.user_id AS userId',
-        'user.name AS name',
-        'user.phone AS phone',
-        'user.avatar AS avatar',
-        'COUNT(DISTINCT usage.id) AS activated_count', // mapped to codes_count in DTO
-      ])
-      .groupBy('usage.user_id')
-      .addGroupBy('user.name')
-      .addGroupBy('user.phone')
-      .addGroupBy('user.avatar')
-      .orderBy('activated_count', 'DESC')
-      .offset(skip)
-      .limit(limit)
-      .getRawMany();
+      UNION ALL
+
+      SELECT u.id AS user_id, u.name AS name, u.phone AS phone, u.avatar AS avatar, 0 AS activated_count
+      FROM store_follow sf
+      INNER JOIN store s ON s.id = sf.store_id AND s.user_id = ? AND s.deleted_at IS NULL
+      INNER JOIN user u ON u.id = sf.user_id AND u.deleted_at IS NULL
+      WHERE sf.deleted_at IS NULL ${nameFilter}
+    `;
+
+    const baseParams = [userId, ...nameParam, userId, ...nameParam];
+
+    const raw: { user_id: string; name: string; phone: string; avatar: string; activated_count: string }[] =
+      await this.storeRepo.manager.query(
+        `SELECT user_id, name, phone, avatar, MAX(activated_count) AS activated_count
+         FROM (${unionSql}) AS combined
+         GROUP BY user_id, name, phone, avatar
+         ORDER BY activated_count DESC
+         LIMIT ? OFFSET ?`,
+        [...baseParams, limit, skip],
+      );
+
+    const countRaw: { cnt: string }[] = await this.storeRepo.manager.query(
+      `SELECT COUNT(*) AS cnt FROM (
+         SELECT user_id FROM (${unionSql}) AS combined GROUP BY user_id
+       ) AS deduped`,
+      baseParams,
+    );
+
+    const total = parseInt(countRaw[0]?.cnt ?? '0', 10);
+    const results = raw.map((r) => ({ ...r, activated_count: Number(r.activated_count) }));
 
     return { results, total };
   }
@@ -413,9 +488,7 @@ export class OffersService extends BaseService<Offer> {
 
     const offers = await this._repo
       .createQueryBuilder('offer')
-
       .leftJoinAndSelect('offer.images', 'images')
-
       .leftJoinAndSelect('offer.subcategory', 'subcategory')
       .leftJoinAndSelect('offer.favorites', 'favorites')
       .whereInIds(offerIds)
@@ -440,12 +513,25 @@ export class OffersService extends BaseService<Offer> {
       return offer;
     });
 
-    // Step 4: sort حسب views DESC + distance ASC
+    // Step 4: fetch active promotions and sort promoted offers first
+    const now = new Date();
+    const promotions = await this.promotionRepo.find({
+      where: { type: PromotionType.OFFER },
+    });
+    const promotedIds = new Set(
+      promotions
+        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .map((p) => p.target_id),
+    );
+
     const orderMap = new Map(results.map((r, i) => [r.offer_id, i]));
 
-    offersWithDistance.sort(
-      (a, b) => orderMap.get(a.id)! - orderMap.get(b.id)!,
-    );
+    offersWithDistance.sort((a, b) => {
+      const aPromoted = promotedIds.has(a.id) ? 0 : 1;
+      const bPromoted = promotedIds.has(b.id) ? 0 : 1;
+      if (aPromoted !== bPromoted) return aPromoted - bPromoted;
+      return orderMap.get(a.id)! - orderMap.get(b.id)!;
+    });
 
     return offersWithDistance;
   }
@@ -541,23 +627,57 @@ export class OffersService extends BaseService<Offer> {
     return offer;
   }
 
-  async getOfferByCode(code: string) {
-    const offer = await this.repo.findOne({
-      where: { code },
-      relations: {
-        subcategory: true,
-        images: true,
-        stores: true,
-      },
-    });
+  async claimOffer(offer_id: string) {
+    const userId = this.request.user.id;
 
-    if (!offer) throw new NotFoundException('Invalid code');
+    const offer = await this.repo.findOne({ where: { id: offer_id } });
+    if (!offer) throw new NotFoundException('message.offer_not_found');
+    if (offer.is_fixed_code) throw new BadRequestException('message.fixed_code_offer');
     if (!offer.is_active) throw new BadRequestException('Offer is not active');
     if (offer.end_date && new Date(offer.end_date) < new Date()) {
       throw new BadRequestException('Offer has expired');
     }
 
-    return offer;
+    // Invalidate any previous unused claim for this user+offer
+    await this.offerClaimRepo.update(
+      { user_id: userId, offer_id, is_used: false },
+      { is_used: true },
+    );
+
+    const code = randomBytes(4).toString('hex').toUpperCase();
+    const expires_at = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    const claim = this.offerClaimRepo.create({ user_id: userId, offer_id, code, expires_at });
+    await this.offerClaimRepo.save(claim);
+
+    return { code, expires_in: 300 };
+  }
+
+  async getOfferByCode(code: string) {
+    // Try fixed-code offer first
+    const fixedOffer = await this.repo.findOne({
+      where: { code, is_fixed_code: true },
+      relations: { subcategory: true, images: true, stores: true },
+    });
+
+    if (fixedOffer) {
+      if (!fixedOffer.is_active) throw new BadRequestException('Offer is not active');
+      if (fixedOffer.end_date && new Date(fixedOffer.end_date) < new Date()) {
+        throw new BadRequestException('Offer has expired');
+      }
+      return fixedOffer;
+    }
+
+    // Try auto-code claim
+    const claim = await this.offerClaimRepo.findOne({
+      where: { code, is_used: false },
+      relations: { offer: { subcategory: true, images: true, stores: true } },
+    });
+
+    if (!claim) throw new NotFoundException('Invalid code');
+    if (new Date(claim.expires_at) < new Date()) throw new BadRequestException('Code has expired');
+
+    return claim.offer;
   }
 
   async getStoreDashboard() {

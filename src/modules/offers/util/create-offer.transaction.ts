@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { BaseTransaction } from 'src/core/base/database/base.transaction';
 import { DataSource, EntityManager, In } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { CreateOfferRequest } from '../dto/requests/create-offer.request';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
 import { plainToInstance } from 'class-transformer';
@@ -34,9 +35,14 @@ export class CreateOfferTransaction extends BaseTransaction<
           ? Math.round(((req.original_price - req.offer_price) / req.original_price) * 100 * 100) / 100
           : null;
 
+      const is_fixed_code = req.is_fixed_code !== false; // default true
+      const code = is_fixed_code
+        ? (req.code ?? null)
+        : randomBytes(4).toString('hex').toUpperCase(); // initial stored code, replaced on each response
+
       const offer = context.create(
         Offer,
-        plainToInstance(Offer, { ...req, user_id: owner_user_id, offer_percentage }),
+        plainToInstance(Offer, { ...req, user_id: owner_user_id, offer_percentage, is_fixed_code, code }),
       );
 
       let stores: Store[];

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { BaseTransaction } from 'src/core/base/database/base.transaction';
 import { DataSource, EntityManager, In } from 'typeorm';
+import { randomBytes } from 'crypto';
 import { UpdateOfferRequest } from '../dto/requests/update-offer.request';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
 import { REQUEST } from '@nestjs/core';
@@ -82,7 +83,13 @@ export class UpdateOfferTransaction extends BaseTransaction<
       if (req.is_active !== undefined) existingOffer.is_active = req.is_active;
       if (req.subcategory_id !== undefined) existingOffer.subcategory_id = req.subcategory_id;
       if (req.end_date !== undefined) existingOffer.end_date = req.end_date;
-      if (req.code !== undefined) existingOffer.code = req.code;
+      if (req.is_fixed_code !== undefined) {
+        existingOffer.is_fixed_code = req.is_fixed_code;
+        if (!req.is_fixed_code) {
+          existingOffer.code = randomBytes(4).toString('hex').toUpperCase();
+        }
+      }
+      if (req.code !== undefined && existingOffer.is_fixed_code) existingOffer.code = req.code;
 
       // Update offer images
       const newImages = req?.images?.map((image, index) => {

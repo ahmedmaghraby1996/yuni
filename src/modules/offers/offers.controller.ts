@@ -12,10 +12,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiProperty } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
+import { IsDate, IsEmail, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 class ConfirmOfferUseRequest {
   @ApiProperty() @IsEmail() email: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsString() code?: string;
+}
+
+class PromoteRequest {
+  @ApiProperty() @Transform(({ value }) => new Date(value)) @IsDate() start_date: Date;
+  @ApiProperty() @Transform(({ value }) => new Date(value)) @IsDate() end_date: Date;
 }
 import { OffersService } from './offers.service';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
@@ -210,6 +217,15 @@ export class OffersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.CLIENT)
+  @ApiOperation({ summary: 'Claim a one-time code for an auto-code offer (expires in 5 min)' })
+  @Post('claim/:id')
+  async claimOffer(@Param('id') id: string) {
+    return new ActionResponse(await this.offersService.claimOffer(id));
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.CLIENT)
   @Get('favorite-offers')
   async getFavoriteOffers(@Query() query: PaginatedRequest) {
     applyQueryIncludes(query, 'stores');
@@ -316,13 +332,33 @@ export class OffersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'edit')
+  @ApiOperation({ summary: 'Promote an offer — appears in best offers during the promotion period' })
+  @Post('promote/offer/:id')
+  async promoteOffer(@Param('id') id: string, @Body() body: PromoteRequest) {
+    return new ActionResponse(await this.offersService.promoteOffer(id, body.start_date, body.end_date));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('offers', 'edit')
+  @ApiOperation({ summary: 'Promote a branch — appears in recommended stores during the promotion period' })
+  @Post('promote/branch/:id')
+  async promoteBranch(@Param('id') id: string, @Body() body: PromoteRequest) {
+    return new ActionResponse(await this.offersService.promoteBranch(id, body.start_date, body.end_date));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('offers', 'edit')
   @ApiOperation({ summary: 'Confirm offer use for a customer by email' })
   @Post('store/confirm-use/:id')
   async confirmOfferUse(
     @Param('id') id: string,
     @Body() body: ConfirmOfferUseRequest,
   ) {
-    return new ActionResponse(await this.offersService.confirmOfferUse(id, body.email));
+    return new ActionResponse(await this.offersService.confirmOfferUse(id, body.email, body.code));
   }
 
   @StoreEndpoint()
