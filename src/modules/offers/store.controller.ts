@@ -35,6 +35,14 @@ import { OffersService } from './offers.service';
 import { SubCategoryService } from './sub_category.service';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
+import { IsDate } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+
+class PromoteBranchRequest {
+  @ApiProperty() @Transform(({ value }) => new Date(value)) @IsDate() start_date: Date;
+  @ApiProperty() @Transform(({ value }) => new Date(value)) @IsDate() end_date: Date;
+}
 
 @ApiTags('Store')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
@@ -176,6 +184,16 @@ export class StoreController {
     const branch = await this.userService.getBranchById(id);
     const result = plainToInstance(BranchResponse, branch, { excludeExtraneousValues: true });
     return new ActionResponse(this._i18nResponse.entity(result));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('branches', 'edit')
+  @ApiOperation({ summary: 'Promote a branch — appears in recommended stores during the promotion period' })
+  @Post('branches/:id/promote')
+  async promoteBranch(@Param('id') id: string, @Body() body: PromoteBranchRequest) {
+    return new ActionResponse(await this.offersService.promoteBranch(id, body.start_date, body.end_date));
   }
 
   @StoreEndpoint()

@@ -5,7 +5,7 @@ import { Category } from 'src/infrastructure/entities/category/category.entity';
 import { City } from 'src/infrastructure/entities/city/city.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { UserResponse } from './response/user-response';
-import { OfferResponse } from 'src/modules/offers/dto/responses/offer-response';
+import { OfferResponse, PromotionResponse } from 'src/modules/offers/dto/responses/offer-response';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 
 export class BranchResponse {
@@ -123,4 +123,8 @@ export class BranchResponse {
 
   @Expose()
   email: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.promotion ?? null)
+  promotion: PromotionResponse | null;
 }

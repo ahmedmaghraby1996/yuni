@@ -338,17 +338,7 @@ export class OffersController {
     return new ActionResponse(await this.offersService.promoteOffer(id, body.start_date, body.end_date));
   }
 
-  @StoreEndpoint()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Permission('offers', 'edit')
-  @ApiOperation({ summary: 'Promote a branch — appears in recommended stores during the promotion period' })
-  @Post('promote/branch/:id')
-  async promoteBranch(@Param('id') id: string, @Body() body: PromoteRequest) {
-    return new ActionResponse(await this.offersService.promoteBranch(id, body.start_date, body.end_date));
-  }
-
-  @StoreEndpoint()
+@StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STORE)
   @Permission('offers', 'edit')

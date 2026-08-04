@@ -3,6 +3,12 @@ import { toUrl } from 'src/core/helpers/file.helper';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { BranchResponse } from 'src/modules/user/dto/branch.response';
 
+export class PromotionResponse {
+  @Expose() id: string;
+  @Expose() start_date: Date;
+  @Expose() end_date: Date;
+}
+
 export class OfferResponse {
   @Expose()
   id: string;
@@ -55,4 +61,8 @@ export class OfferResponse {
 
   @Expose()
   distance: number;
+
+  @Expose()
+  @Transform(({ obj }) => obj.promotion ?? null)
+  promotion: PromotionResponse | null;
 }

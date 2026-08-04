@@ -283,6 +283,16 @@ export class StoreService extends BaseService<Store> {
       return rank(a) - rank(b);
     });
 
+    // stamp promotion data (already fetched above — reuse activeMap)
+    const activePromotionMap = new Map(
+      promotions
+        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .map((p) => [p.target_id, p]),
+    );
+    for (const store of stores) {
+      (store as any).promotion = activePromotionMap.get((store as any).id) ?? null;
+    }
+
     return { stores, total };
   }
 
@@ -327,8 +337,23 @@ export class StoreService extends BaseService<Store> {
 
     await this.enrichWithHighestDiscountOffer(stores);
     await this.enrichWithIsFollowed(stores);
+    await this.enrichWithPromotion(stores);
 
     return { stores, total };
+  }
+
+  private async enrichWithPromotion(stores: Store[]): Promise<void> {
+    if (!stores.length) return;
+    const now = new Date();
+    const promotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
+    const activeMap = new Map(
+      promotions
+        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .map((p) => [p.target_id, p]),
+    );
+    for (const store of stores) {
+      (store as any).promotion = activeMap.get(store.id) ?? null;
+    }
   }
 
   private async enrichWithHighestDiscountOffer(stores: Store[]) {

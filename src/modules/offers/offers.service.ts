@@ -58,6 +58,20 @@ export class OffersService extends BaseService<Offer> {
     return (this.request.user as any).owner_user_id ?? this.request.user.id;
   }
 
+  private async enrichOffersWithPromotion(offers: Offer[]): Promise<void> {
+    if (!offers.length) return;
+    const now = new Date();
+    const promotions = await this.promotionRepo.find({ where: { type: PromotionType.OFFER } });
+    const activeMap = new Map(
+      promotions
+        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .map((p) => [p.target_id, p]),
+    );
+    for (const offer of offers) {
+      (offer as any).promotion = activeMap.get(offer.id) ?? null;
+    }
+  }
+
   private buildClientOffersQb(options: any) {
     const qb = this.repo
       .createQueryBuilder('offer')
@@ -111,7 +125,9 @@ export class OffersService extends BaseService<Offer> {
     const qb = this.buildClientOffersQb(options);
     if (!isNaN(options?.skip)) qb.skip(options.skip);
     if (!isNaN(options?.take)) qb.take(options.take);
-    return qb.getMany();
+    const offers = await qb.getMany();
+    await this.enrichOffersWithPromotion(offers);
+    return offers;
   }
 
   async countForClient(options: any): Promise<number> {
@@ -423,6 +439,7 @@ export class OffersService extends BaseService<Offer> {
       return offer;
     });
 
+    await this.enrichOffersWithPromotion(offers);
     return { offers, total };
   }
 
@@ -533,6 +550,7 @@ export class OffersService extends BaseService<Offer> {
       return orderMap.get(a.id)! - orderMap.get(b.id)!;
     });
 
+    await this.enrichOffersWithPromotion(offersWithDistance);
     return offersWithDistance;
   }
 
@@ -599,6 +617,7 @@ export class OffersService extends BaseService<Offer> {
       .take(limit)
       .getMany();
 
+    await this.enrichOffersWithPromotion(offers);
     return { offers, total };
   }
 
@@ -616,6 +635,7 @@ export class OffersService extends BaseService<Offer> {
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
+    await this.enrichOffersWithPromotion([offer]);
     return offer;
   }
 
