@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -15,8 +16,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsOptional, IsString, IsEmail } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { ActionResponse } from 'src/core/base/responses/action.response';
@@ -49,6 +50,12 @@ export class ChangeUserStatusRequest {
   @ApiProperty({ enum: ['active', 'deactivated', 'pending'] })
   @IsEnum(['active', 'deactivated', 'pending'])
   status: 'active' | 'deactivated' | 'pending';
+}
+
+export class AdminUpdateUserRequest {
+  @ApiPropertyOptional() @IsOptional() @IsString() name?: string;
+  @ApiPropertyOptional() @IsOptional() @IsEmail() email?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
 }
 
 @ApiHeader({
@@ -87,28 +94,43 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'role', required: false, enum: ['store', 'customer'], description: 'Filter by role: store owner or customer' })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'phone', required: false, type: String })
   @Get('')
-  async getAll(@Query() query: PaginatedRequest) {
+  async getAll(
+    @Query() query: PaginatedRequest,
+    @Query('role') role?: 'store' | 'customer',
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+  ) {
     applyQueryIncludes(query, 'city');
-    const users = await this.userService.findAll(query);
-    const usersResponse = await Promise.all(
-      users.map(async (user) => {
-        return this._i18nResponse.entity(
-          plainToInstance(UserResponse, {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            gender: user.gender,
-            phone: user.phone,
-            avatar: user.avatar,
-            status: user.status,
-            role: user.roles[0],
-            created_at: user.created_at,
-          }),
-        );
-      }),
+    if (role === 'store') applyQueryFilters(query, `roles=${Role.STORE}`);
+    else if (role === 'customer') applyQueryFilters(query, `roles=${Role.CLIENT}`);
+    if (name) applyQueryFilters(query, `name=${name}`);
+    if (phone) applyQueryFilters(query, `phone=${phone}`);
+    const [users, total] = await Promise.all([
+      this.userService.findAll(query),
+      this.userService.count(query),
+    ]);
+    const usersResponse = users.map((user) =>
+      this._i18nResponse.entity(
+        plainToInstance(UserResponse, {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          gender: user.gender,
+          phone: user.phone,
+          avatar: user.avatar,
+          status: user.status,
+          role: user.roles[0],
+          created_at: user.created_at,
+          city: user.city,
+        }),
+      ),
     );
-    const total = await this.userService.count(query);
     return new PaginatedResponse(usersResponse, { meta: { total, page: query.page, limit: query.limit } });
   }
 
@@ -344,6 +366,28 @@ export class UserController {
         ),
       ),
     );
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Put(':id')
+  async adminUpdateUser(@Param('id') id: string, @Body() body: AdminUpdateUserRequest) {
+    const user = await this.userService._repo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
+    if (body.name !== undefined) user.name = body.name;
+    if (body.email !== undefined) user.email = body.email;
+    if (body.phone !== undefined) user.phone = body.phone;
+    await this.userService.update(user);
+    return new ActionResponse(plainToInstance(UserResponse, user, { excludeExtraneousValues: true }));
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  async adminDeleteUser(@Param('id') id: string) {
+    return new ActionResponse(await this.userService.deleteUser(id));
   }
 
   @AdminEndpoint()

@@ -382,7 +382,7 @@ export class UserService extends BaseService<User> {
     const now = new Date();
     const promotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
     const active = promotions.find(
-      (p) => p.target_id === id && new Date(p.start_date) <= now && new Date(p.end_date) >= now,
+      (p) => p.target_id === id && new Date(p.end_date) >= now,
     );
     (branch as any).promotion = active ?? null;
 

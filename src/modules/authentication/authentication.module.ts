@@ -1,5 +1,6 @@
 import { AuthenticationService } from './authentication.service';
 import { AuthenticationController } from './authentication.controller';
+import { AdminAuthController } from './admin-auth.controller';
 import { Module, Global } from '@nestjs/common';
 import { RegisterUserTransaction } from './transactions/register-user.transaction';
 import { SendOtpTransaction } from './transactions/send-otp.transaction';
@@ -24,7 +25,7 @@ import { HttpModule } from '@nestjs/axios';
 @Global()
 @Module({
   imports: [JWTSetup(),HttpModule],
-  controllers: [AuthenticationController],
+  controllers: [AuthenticationController, AdminAuthController],
   providers: [
     AuthenticationService,
     RegisterUserTransaction,

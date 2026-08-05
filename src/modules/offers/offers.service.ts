@@ -64,7 +64,7 @@ export class OffersService extends BaseService<Offer> {
     const promotions = await this.promotionRepo.find({ where: { type: PromotionType.OFFER } });
     const activeMap = new Map(
       promotions
-        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .filter((p) => new Date(p.end_date) >= now)
         .map((p) => [p.target_id, p]),
     );
     for (const offer of offers) {

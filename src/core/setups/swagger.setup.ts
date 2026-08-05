@@ -23,7 +23,13 @@ import { StoreProfileModule } from 'src/modules/store-profile/store-profile.modu
 import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
 
 function isAdminOperation(op: any): boolean {
-  return op && typeof op === 'object' && op['x-admin'] === true;
+  if (!op || typeof op !== 'object') return false;
+  const tags: string[] = op.tags ?? [];
+  // Admin-tagged controller (sign-in, cities) always included in admin swagger
+  if (tags.some((t) => t === 'Admin')) return true;
+  // x-admin endpoints, except offers
+  if (op['x-admin'] === true && !tags.some((t) => t === 'Offers')) return true;
+  return false;
 }
 
 function isStoreOperation(op: any): boolean {

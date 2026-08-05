@@ -73,7 +73,7 @@ export class StoreService extends BaseService<Store> {
         const offerPromotions = await this.promotionRepo.find({ where: { type: PromotionType.OFFER } });
         const offerPromoMap = new Map(
           offerPromotions
-            .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+            .filter((p) => new Date(p.end_date) >= now)
             .map((p) => [p.target_id, p]),
         );
         for (const offer of store.offers) {
@@ -299,7 +299,7 @@ export class StoreService extends BaseService<Store> {
     // stamp promotion data (already fetched above — reuse activeMap)
     const activePromotionMap = new Map(
       promotions
-        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .filter((p) => new Date(p.end_date) >= now)
         .map((p) => [p.target_id, p]),
     );
     for (const store of stores) {
@@ -361,7 +361,7 @@ export class StoreService extends BaseService<Store> {
     const promotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
     const activeMap = new Map(
       promotions
-        .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+        .filter((p) => new Date(p.end_date) >= now)
         .map((p) => [p.target_id, p]),
     );
     for (const store of stores) {
