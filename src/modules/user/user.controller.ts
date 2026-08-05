@@ -288,7 +288,6 @@ export class UserController {
       { name: 'cover_image', maxCount: 1 },
     ]),
   )
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiConsumes('multipart/form-data')
   @Roles(Role.ADMIN)
@@ -395,7 +394,6 @@ export class UserController {
     return new ActionResponse(await this.userService.changeUserStatus(id, body.status));
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('test/payment')

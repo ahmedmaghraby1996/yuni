@@ -21,7 +21,7 @@ export class AdminStoreController {
 
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @Get('user/:user_id')
+  @Get(':user_id')
   async getStoresByUserId(
     @Param('user_id') user_id: string,
     @Query('page') page = 1,
@@ -38,7 +38,7 @@ export class AdminStoreController {
 
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @Get('user/:user_id/subscriptions')
+  @Get(':user_id/subscriptions')
   async getSubscriptionsByUserId(
     @Param('user_id') user_id: string,
     @Query('page') page = 1,

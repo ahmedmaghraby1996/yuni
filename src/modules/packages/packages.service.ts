@@ -1,21 +1,36 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Package } from 'src/infrastructure/entities/package/package.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import {
   CreatePackageRequest,
   UpdatePackageRequest,
 } from './dto/request/create-package.request';
 import { plainToInstance } from 'class-transformer';
+import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 
 @Injectable()
 export class PackagesService {
   constructor(
     @InjectRepository(Package)
     private readonly packageRepo: Repository<Package>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepo: Repository<Subscription>,
   ) {}
+
   async getPackages() {
-     return await this.packageRepo.find({ order: { order_by: 'ASC' } });
+    const packages = await this.packageRepo.find({ order: { order_by: 'ASC' } });
+    const now = new Date();
+    const result = await Promise.all(
+      packages.map(async (pkg) => {
+        const [total_subscribers, current_subscribers] = await Promise.all([
+          this.subscriptionRepo.count({ where: { package_id: pkg.id } }),
+          this.subscriptionRepo.count({ where: { package_id: pkg.id, expire_at: MoreThan(now) } }),
+        ]);
+        return { ...pkg, total_subscribers, current_subscribers };
+      }),
+    );
+    return result;
   }
 
   async createPackage(data: CreatePackageRequest) {

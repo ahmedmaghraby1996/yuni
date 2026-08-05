@@ -42,6 +42,10 @@ export class Package extends AuditableEntity {
   @Column({ nullable: true, type: 'int' })
   branches_count: number | null;
 
+  /** null = unlimited */
+  @Column({ nullable: true, type: 'int' })
+  offer_promotion_count: number | null;
+
   @Column({ type: 'simple-json', nullable: true })
   features_ar: string[];
 

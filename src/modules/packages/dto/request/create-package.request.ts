@@ -49,6 +49,11 @@ export class CreatePackageRequest {
   @IsNumber()
   branches_count?: number | null;
 
+  @ApiPropertyOptional({ description: 'Offer promotion limit — omit or null for unlimited' })
+  @IsOptional()
+  @IsNumber()
+  offer_promotion_count?: number | null;
+
   @ApiPropertyOptional({ type: [String], description: 'Feature list in Arabic' })
   @IsOptional()
   @IsArray()
@@ -122,6 +127,11 @@ export class UpdatePackageRequest {
   @IsOptional()
   @IsNumber()
   branches_count?: number | null;
+
+  @ApiPropertyOptional({ description: 'null = unlimited' })
+  @IsOptional()
+  @IsNumber()
+  offer_promotion_count?: number | null;
 
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()

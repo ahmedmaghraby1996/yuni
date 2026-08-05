@@ -27,7 +27,7 @@ function isAdminOperation(op: any): boolean {
   if (!op || typeof op !== 'object') return false;
   const tags: string[] = op.tags ?? [];
   // Admin-tagged controllers always included in admin swagger
-  if (tags.some((t) => ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores'].includes(t))) return true;
+  if (tags.some((t) => ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories'].includes(t))) return true;
   // x-admin endpoints, except offers
   if (op['x-admin'] === true && !tags.some((t) => t === 'Offers')) return true;
   return false;
