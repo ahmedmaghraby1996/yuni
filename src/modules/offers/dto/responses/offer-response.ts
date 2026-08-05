@@ -1,4 +1,4 @@
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer';
 import { toUrl } from 'src/core/helpers/file.helper';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { BranchResponse } from 'src/modules/user/dto/branch.response';
@@ -63,6 +63,8 @@ export class OfferResponse {
   distance: number;
 
   @Expose()
-  @Transform(({ obj }) => obj.promotion ?? null)
+  @Transform(({ obj }) =>
+    obj.promotion ? plainToInstance(PromotionResponse, obj.promotion, { excludeExtraneousValues: true }) : null,
+  )
   promotion: PromotionResponse | null;
 }

@@ -1,4 +1,4 @@
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer';
 import { toUrl } from 'src/core/helpers/file.helper';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { Category } from 'src/infrastructure/entities/category/category.entity';
@@ -133,6 +133,8 @@ export class BranchResponse {
   email: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.promotion ?? null)
+  @Transform(({ obj }) =>
+    obj.promotion ? plainToInstance(PromotionResponse, obj.promotion, { excludeExtraneousValues: true }) : null,
+  )
   promotion: PromotionResponse | null;
 }
