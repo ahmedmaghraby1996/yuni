@@ -35,6 +35,14 @@ export class BranchResponse {
   @Expose()
   @Transform((value) => toUrl(value.obj.catalogue))
   catalogue: string;
+
+  @Expose()
+  @Transform((value) => toUrl(value.obj.commercial_registration))
+  commercial_registration: string;
+
+  @Expose()
+  @Transform((value) => toUrl(value.obj.vat_certificate))
+  vat_certificate: string;
   @Expose()
   @Transform((value) => toUrl(value.obj.cover_image))
   cover_image: string;

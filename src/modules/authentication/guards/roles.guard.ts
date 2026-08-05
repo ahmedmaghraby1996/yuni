@@ -25,7 +25,7 @@ export class RolesGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
     const { user } = request;
-    if (user.is_active == false)
+    if (user.status === 'deactivated' || user.status === 'pending')
       throw new UnauthorizedException('message.user_inactive');
 
     // Normalize roles — MySQL SET type may return a comma-separated string

@@ -6,6 +6,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -14,6 +15,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { IsEnum } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { ActionResponse } from 'src/core/base/responses/action.response';
@@ -41,6 +44,12 @@ import { UpdateProfileRequest } from './dto/update-profile-request';
 import { PaymentResponseInterface } from './dto/response/payment.response';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
 import { UpdateStoreInfoRequest } from './dto/request/update-store-info.request';
+
+export class ChangeUserStatusRequest {
+  @ApiProperty({ enum: ['active', 'deactivated', 'pending'] })
+  @IsEnum(['active', 'deactivated', 'pending'])
+  status: 'active' | 'deactivated' | 'pending';
+}
 
 @ApiHeader({
   name: 'Accept-Language',
@@ -92,7 +101,7 @@ export class UserController {
             gender: user.gender,
             phone: user.phone,
             avatar: user.avatar,
-            is_active: user.is_active,
+            status: user.status,
             role: user.roles[0],
             created_at: user.created_at,
           }),
@@ -328,6 +337,17 @@ export class UserController {
         ),
       ),
     );
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id/status')
+  async changeUserStatus(
+    @Param('id') id: string,
+    @Body() body: ChangeUserStatusRequest,
+  ) {
+    return new ActionResponse(await this.userService.changeUserStatus(id, body.status));
   }
 
   @ApiBearerAuth()

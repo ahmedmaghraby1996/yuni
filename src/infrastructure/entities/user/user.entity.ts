@@ -123,9 +123,9 @@ export class User extends AuditableEntity {
   @Expose()
   language: Language;
 
-  @Column({ default: true })
+  @Column({ type: 'enum', enum: ['active', 'deactivated', 'pending'], default: 'active' })
   @Expose()
-  is_active: boolean;
+  status: string;
 
   @OneToOne(() => Wallet, (wallet) => wallet.user)
   @Expose()

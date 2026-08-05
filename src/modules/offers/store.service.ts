@@ -67,6 +67,19 @@ export class StoreService extends BaseService<Store> {
 
     if (store) {
       store.is_followed = userId && store.followers?.length > 0 ? true : false;
+      await this.enrichWithPromotion([store]);
+      if (store.offers?.length) {
+        const now = new Date();
+        const offerPromotions = await this.promotionRepo.find({ where: { type: PromotionType.OFFER } });
+        const offerPromoMap = new Map(
+          offerPromotions
+            .filter((p) => new Date(p.start_date) <= now && new Date(p.end_date) >= now)
+            .map((p) => [p.target_id, p]),
+        );
+        for (const offer of store.offers) {
+          (offer as any).promotion = offerPromoMap.get(offer.id) ?? null;
+        }
+      }
     }
     return store;
   }

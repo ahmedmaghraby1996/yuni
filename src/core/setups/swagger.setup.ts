@@ -20,6 +20,7 @@ import { UserModule } from 'src/modules/user/user.module';
 import { SupportTicketModule } from 'src/modules/support-ticket/support-ticket.module';
 import { StoreEmployeeModule } from 'src/modules/store-employee/store-employee.module';
 import { StoreProfileModule } from 'src/modules/store-profile/store-profile.module';
+import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
 
 function isAdminOperation(op: any): boolean {
   return op && typeof op === 'object' && op['x-admin'] === true;
@@ -89,6 +90,7 @@ export default (app: INestApplication, config: ConfigService) => {
       SupportTicketModule,
       StoreEmployeeModule,
       StoreProfileModule,
+      StoreSuggestionModule,
     ],
     operationIdFactory,
   });

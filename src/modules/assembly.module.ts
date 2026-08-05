@@ -19,6 +19,7 @@ import { CategoryModule } from './category/category.module';
 import { SupportTicketModule } from './support-ticket/support-ticket.module';
 import { StoreEmployeeModule } from './store-employee/store-employee.module';
 import { StoreProfileModule } from './store-profile/store-profile.module';
+import { StoreSuggestionModule } from './store-suggestion/store-suggestion.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { StoreProfileModule } from './store-profile/store-profile.module';
     SupportTicketModule,
     StoreEmployeeModule,
     StoreProfileModule,
+    StoreSuggestionModule,
   ],
   exports: [],
 })

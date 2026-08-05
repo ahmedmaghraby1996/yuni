@@ -33,7 +33,7 @@ export class UserResponse {
   phone: string;
 
   @Expose()
-  is_active: boolean;
+  status: string;
   @Expose()
   gender: string;
   @Expose()

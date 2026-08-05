@@ -29,6 +29,7 @@ import { SystemVariable } from '../entities/system-variables/system-variable.ent
 import { OfferUsage } from '../entities/offer/offer-usage.entity';
 import { OfferClaim } from '../entities/offer/offer-claim.entity';
 import { Promotion } from '../entities/promotion/promotion.entity';
+import { StoreSuggestion } from '../entities/store-suggestion/store-suggestion.entity';
 import { StoreFollow } from '../entities/store/store-follow.entity';
 import { SupportTicket } from '../entities/support-ticket/support-ticket.entity';
 import { StoreEmployee } from '../entities/store/store-employee.entity';
@@ -64,6 +65,7 @@ export const DB_ENTITIES = [
   OfferUsage,
   OfferClaim,
   Promotion,
+  StoreSuggestion,
   StoreFollow,
   SupportTicket,
   StoreEmployee,

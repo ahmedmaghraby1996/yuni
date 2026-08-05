@@ -47,16 +47,26 @@ export class StoreProfileController {
     { name: 'logo', maxCount: 1 },
     { name: 'catalogue', maxCount: 1 },
     { name: 'cover_image', maxCount: 1 },
+    { name: 'commercial_registration', maxCount: 1 },
+    { name: 'vat_certificate', maxCount: 1 },
   ]))
   @ApiConsumes('multipart/form-data')
   @Put()
   async updateProfile(
     @Body() req: UpdateStoreInfoRequest,
-    @UploadedFiles() files: { logo?: Express.Multer.File[]; catalogue?: Express.Multer.File[]; cover_image?: Express.Multer.File[] },
+    @UploadedFiles() files: {
+      logo?: Express.Multer.File[];
+      catalogue?: Express.Multer.File[];
+      cover_image?: Express.Multer.File[];
+      commercial_registration?: Express.Multer.File[];
+      vat_certificate?: Express.Multer.File[];
+    },
   ) {
     if (files?.logo?.[0]) req.logo = files.logo[0];
     if (files?.catalogue?.[0]) req.catalogue = files.catalogue[0];
     if (files?.cover_image?.[0]) req.cover_image = files.cover_image[0];
+    if (files?.commercial_registration?.[0]) req.commercial_registration = files.commercial_registration[0];
+    if (files?.vat_certificate?.[0]) req.vat_certificate = files.vat_certificate[0];
     const store = await this.userService.updateMainStoreInfo(req);
     return new ActionResponse(plainToInstance(BranchResponse, store, { excludeExtraneousValues: true }));
   }

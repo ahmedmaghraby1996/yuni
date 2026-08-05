@@ -73,6 +73,14 @@ export class UpdateStoreInfoRequest {
   @IsOptional()
   cover_image: Express.Multer.File;
 
+  @ApiProperty({ required: false, description: 'Commercial registration file', type: 'file' })
+  @IsOptional()
+  commercial_registration: Express.Multer.File;
+
+  @ApiProperty({ required: false, description: 'VAT certificate file', type: 'file' })
+  @IsOptional()
+  vat_certificate: Express.Multer.File;
+
   @ApiProperty({ required: false, description: 'Store description' })
   @IsOptional()
   @IsString()

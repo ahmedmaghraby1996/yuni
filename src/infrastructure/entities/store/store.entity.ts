@@ -36,6 +36,12 @@ export class Store extends OwnedEntity {
   catalogue: string;
 
   @Column({ nullable: true })
+  commercial_registration: string;
+
+  @Column({ nullable: true })
+  vat_certificate: string;
+
+  @Column({ nullable: true })
   first_phone: string;
 
   @Column({ nullable: true })

@@ -42,6 +42,7 @@ import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-type
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
 import { City } from 'src/infrastructure/entities/city/city.entity';
+import { Promotion, PromotionType } from 'src/infrastructure/entities/promotion/promotion.entity';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService extends BaseService<User> {
@@ -75,6 +76,8 @@ export class UserService extends BaseService<User> {
     private readonly offerUsageRepo: Repository<OfferUsage>,
     @InjectRepository(City)
     private readonly cityRepo: Repository<City>,
+    @InjectRepository(Promotion)
+    private readonly promotionRepo: Repository<Promotion>,
   ) {
     super(userRepo);
   }
@@ -244,7 +247,18 @@ export class UserService extends BaseService<User> {
         { path: 'stores' },
       );
     }
-    console.log('store', store);
+    if (req?.commercial_registration) {
+      store.commercial_registration = await this.storageManager.store(
+        { buffer: req.commercial_registration.buffer, originalname: req.commercial_registration.originalname },
+        { path: 'stores/documents' },
+      );
+    }
+    if (req?.vat_certificate) {
+      store.vat_certificate = await this.storageManager.store(
+        { buffer: req.vat_certificate.buffer, originalname: req.vat_certificate.originalname },
+        { path: 'stores/documents' },
+      );
+    }
 
     return await this.storeRepo.save(store);
   }
@@ -364,6 +378,14 @@ export class UserService extends BaseService<User> {
       relations: { subcategory: true, offers: true, city: true },
     });
     if (!branch) throw new NotFoundException('branch not found');
+
+    const now = new Date();
+    const promotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
+    const active = promotions.find(
+      (p) => p.target_id === id && new Date(p.start_date) <= now && new Date(p.end_date) >= now,
+    );
+    (branch as any).promotion = active ?? null;
+
     return branch;
   }
   async deleteBranch(id: string) {
@@ -381,7 +403,7 @@ export class UserService extends BaseService<User> {
   async activateAgent(id: string, code: string) {
     const user = await this._repo.findOne({ where: { id: id } });
     if (!user) throw new NotFoundException('agent not found');
-    user.is_active = true;
+    user.status = 'active';
     user.code = code;
     return await this._repo.save(user);
   }
@@ -471,6 +493,13 @@ export class UserService extends BaseService<User> {
     });
 
     return { subscription, package: pkg };
+  }
+
+  async changeUserStatus(id: string, status: 'active' | 'deactivated' | 'pending') {
+    const user = await this._repo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('message.user_not_found');
+    user.status = status;
+    return await this._repo.save(user);
   }
 
   async rejectAgent(id: string) {
