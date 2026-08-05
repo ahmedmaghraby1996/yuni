@@ -83,6 +83,24 @@ export class NotificationController {
 
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @Get('admin/all')
+  async getAllNotifications(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    const [data, total] = await this.notificationService._repo.findAndCount({
+      order: { created_at: 'DESC' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit),
+    });
+    const response = plainToInstance(NotificationResponse, data, { excludeExtraneousValues: true });
+    return new PaginatedResponse(response, { meta: { total, page: Number(page), limit: Number(limit) } });
+  }
+
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
   @Post('send-to-users')
   async sendToUsers(@Body() req: SendToUsersNotificationRequest) {
     await this.notificationService.sendToUsers(req);
