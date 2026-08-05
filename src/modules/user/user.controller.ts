@@ -134,7 +134,6 @@ export class UserController {
     return new PaginatedResponse(usersResponse, { meta: { total, page: query.page, limit: query.limit } });
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('/agents')
@@ -160,7 +159,6 @@ export class UserController {
     });
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('/agent/:id')
@@ -174,7 +172,6 @@ export class UserController {
     );
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('activate-agent/:id')
@@ -186,7 +183,6 @@ export class UserController {
     return new ActionResponse(agent);
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('reject-agent/:id')
@@ -321,7 +317,6 @@ export class UserController {
     return new ActionResponse(storeInfo);
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('approve-store/:id')
@@ -329,7 +324,6 @@ export class UserController {
     return this.userService.adminAcceptStore(id);
   }
 
-  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Post('reject-store/:id')

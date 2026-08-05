@@ -21,12 +21,13 @@ import { SupportTicketModule } from 'src/modules/support-ticket/support-ticket.m
 import { StoreEmployeeModule } from 'src/modules/store-employee/store-employee.module';
 import { StoreProfileModule } from 'src/modules/store-profile/store-profile.module';
 import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
+import { AdminStoreModule } from 'src/modules/admin-store/admin-store.module';
 
 function isAdminOperation(op: any): boolean {
   if (!op || typeof op !== 'object') return false;
   const tags: string[] = op.tags ?? [];
-  // Admin-tagged controller (sign-in, cities) always included in admin swagger
-  if (tags.some((t) => t === 'Admin')) return true;
+  // Admin-tagged controllers always included in admin swagger
+  if (tags.some((t) => ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores'].includes(t))) return true;
   // x-admin endpoints, except offers
   if (op['x-admin'] === true && !tags.some((t) => t === 'Offers')) return true;
   return false;
@@ -97,6 +98,7 @@ export default (app: INestApplication, config: ConfigService) => {
       StoreEmployeeModule,
       StoreProfileModule,
       StoreSuggestionModule,
+      AdminStoreModule,
     ],
     operationIdFactory,
   });

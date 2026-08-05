@@ -636,6 +636,21 @@ export class OffersService extends BaseService<Offer> {
       throw new NotFoundException('Offer not found');
     }
     await this.enrichOffersWithPromotion([offer]);
+
+    // enrich nested stores with branch promotion
+    if (offer.stores?.length) {
+      const now = new Date();
+      const branchPromotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
+      const branchPromoMap = new Map(
+        branchPromotions
+          .filter((p) => new Date(p.end_date) >= now)
+          .map((p) => [p.target_id, p]),
+      );
+      for (const store of offer.stores) {
+        (store as any).promotion = branchPromoMap.get(store.id) ?? null;
+      }
+    }
+
     return offer;
   }
 

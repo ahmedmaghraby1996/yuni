@@ -88,12 +88,12 @@ export class NotificationController {
     await this.notificationService.sendToUsers(req);
   }
 
-  @AdminEndpoint()
-  @Roles(Role.ADMIN)
-  @Post('send-to-all')
-  async sendToAll(@Body() req: SendToAllUsersNotificationRequest) {
-    return new ActionResponse(await this.notificationService.sendToALl(req));
-  }
+  // @AdminEndpoint()
+  // @Roles(Role.ADMIN)
+  // @Post('send-to-all')
+  // async sendToAll(@Body() req: SendToAllUsersNotificationRequest) {
+  //   return new ActionResponse(await this.notificationService.sendToALl(req));
+  // }
 
   // ─── Store Notifications ───────────────────────────────────────────────────
 

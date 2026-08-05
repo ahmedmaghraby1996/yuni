@@ -380,11 +380,26 @@ export class UserService extends BaseService<User> {
     if (!branch) throw new NotFoundException('branch not found');
 
     const now = new Date();
-    const promotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
-    const active = promotions.find(
+    const [branchPromotions, offerPromotions] = await Promise.all([
+      this.promotionRepo.find({ where: { type: PromotionType.BRANCH } }),
+      this.promotionRepo.find({ where: { type: PromotionType.OFFER } }),
+    ]);
+
+    const active = branchPromotions.find(
       (p) => p.target_id === id && new Date(p.end_date) >= now,
     );
     (branch as any).promotion = active ?? null;
+
+    if (branch.offers?.length) {
+      const offerPromoMap = new Map(
+        offerPromotions
+          .filter((p) => new Date(p.end_date) >= now)
+          .map((p) => [p.target_id, p]),
+      );
+      for (const offer of branch.offers) {
+        (offer as any).promotion = offerPromoMap.get(offer.id) ?? null;
+      }
+    }
 
     return branch;
   }

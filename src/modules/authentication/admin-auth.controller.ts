@@ -28,7 +28,6 @@ import { CreateCityRequest, UpdateCityRequest } from './dto/requests/create-city
 import { City } from 'src/infrastructure/entities/city/city.entity';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
 
-@ApiTags('Admin')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
 @Controller('admin')
 export class AdminAuthController {
@@ -38,6 +37,7 @@ export class AdminAuthController {
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
 
+  @ApiTags('Admin Auth')
   @AdminEndpoint()
   @Post('auth/signin')
   async adminSignin(@Body() req: LoginRequest): Promise<ActionResponse<AuthResponse>> {
@@ -57,6 +57,7 @@ export class AdminAuthController {
 
   // ─── Cities ────────────────────────────────────────────────────────────────
 
+  @ApiTags('Admin Cities')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -75,6 +76,7 @@ export class AdminAuthController {
     );
   }
 
+  @ApiTags('Admin Cities')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -85,6 +87,7 @@ export class AdminAuthController {
     return new ActionResponse(city);
   }
 
+  @ApiTags('Admin Cities')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -96,6 +99,7 @@ export class AdminAuthController {
     return new ActionResponse(await this.cityRepository.findOneBy({ id }));
   }
 
+  @ApiTags('Admin Cities')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

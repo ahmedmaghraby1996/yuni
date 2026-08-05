@@ -20,6 +20,7 @@ import { SupportTicketModule } from './support-ticket/support-ticket.module';
 import { StoreEmployeeModule } from './store-employee/store-employee.module';
 import { StoreProfileModule } from './store-profile/store-profile.module';
 import { StoreSuggestionModule } from './store-suggestion/store-suggestion.module';
+import { AdminStoreModule } from './admin-store/admin-store.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { StoreSuggestionModule } from './store-suggestion/store-suggestion.modul
     StoreEmployeeModule,
     StoreProfileModule,
     StoreSuggestionModule,
+    AdminStoreModule,
   ],
   exports: [],
 })
