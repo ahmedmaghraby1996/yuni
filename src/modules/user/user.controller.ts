@@ -112,6 +112,9 @@ export class UserController {
     return new PaginatedResponse(usersResponse, { meta: { total, page: query.page, limit: query.limit } });
   }
 
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get('/agents')
   async getAllAgents(
     @Query() query: PaginatedRequest,
@@ -135,6 +138,9 @@ export class UserController {
     });
   }
 
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get('/agent/:id')
   async getAgentById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
@@ -309,8 +315,9 @@ export class UserController {
     return this.userService.adminRejectStore(id);
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Get('/:id')
   async getUserById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
@@ -350,8 +357,9 @@ export class UserController {
     return new ActionResponse(await this.userService.changeUserStatus(id, body.status));
   }
 
-  @ApiBearerAuth()
+  @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Post('test/payment')
   async testPayment() {
     const amount = '10.00';

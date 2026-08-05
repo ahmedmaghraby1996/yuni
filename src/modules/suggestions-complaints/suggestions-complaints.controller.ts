@@ -14,6 +14,7 @@ import { SuggestionsComplaintsRequest } from './dto/suggestions-complaints.reque
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
@@ -40,6 +41,8 @@ export class SuggestionsComplaintsController {
     private readonly suggestionsComplaintsService: SuggestionsComplaintsService,
   ) {}
 
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
   @Get()
   async getAllSuggestionsComplaints(@Query() query: PaginatedRequest) {
     applyQueryIncludes(query, 'user');
@@ -54,6 +57,8 @@ export class SuggestionsComplaintsController {
     );
   }
 
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
   @Get('/:id')
   async getSingleSuggestionsComplaints(@Param('id') id: string) {
     const result =

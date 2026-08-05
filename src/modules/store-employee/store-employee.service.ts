@@ -79,7 +79,7 @@ export class StoreEmployeeService {
       password: hashed,
       username: req.phone ?? req.email,
       roles: [Role.EMPLOYEE],
-      is_active: true,
+      status: 'active',
       email_verified_at: new Date(),
       ...(avatar && { avatar }),
     });
@@ -143,7 +143,7 @@ export class StoreEmployeeService {
     if (req.password) employee.user.password = await bcrypt.hash(req.password + this.config.get('app.key'), 10);
     if (req.is_active !== undefined) {
       employee.is_active = req.is_active;
-      employee.user.is_active = req.is_active;
+      employee.user.status = req.is_active ? 'active' : 'deactivated';
     }
     if (req.avatarFile) employee.user.avatar = await this.uploadAvatar(req.avatarFile);
 
