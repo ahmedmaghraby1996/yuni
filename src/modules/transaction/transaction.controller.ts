@@ -5,6 +5,7 @@ import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import {
   applyQueryFilters,
+  applyQueryIncludes,
   applyQuerySort,
 } from 'src/core/helpers/service-related.helper';
 import { ApiQuery, ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
@@ -116,6 +117,7 @@ export class TransactionController {
     @Query('date_to') date_to?: string,
   ) {
     applyQuerySort(query, 'created_at=desc');
+    applyQueryIncludes(query, 'user');
     if (user_id) applyQueryFilters(query, `user_id=${user_id}`);
     if (number) applyQueryFilters(query, `number=${number}`);
     if (type) applyQueryFilters(query, `type=${type}`);
@@ -138,7 +140,6 @@ export class TransactionController {
     );
   }
 
-  @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Post('set-agent-percentage')
@@ -148,7 +149,6 @@ export class TransactionController {
     );
   }
 
-  @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Get('earnings')

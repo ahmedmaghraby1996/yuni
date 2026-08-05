@@ -1,4 +1,4 @@
-import { Expose } from "class-transformer"
+import { Expose, Transform } from "class-transformer"
 import { TransactionTypes } from "src/infrastructure/data/enums/transaction-types"
 
 export class TransactionResponse {
@@ -19,4 +19,11 @@ export class TransactionResponse {
 
     @Expose()
     meta_data: string
+
+    @Expose()
+    user_id: string
+
+    @Transform(({ obj }) => obj.user ? { id: obj.user.id, name: obj.user.name, email: obj.user.email, phone: obj.user.phone } : null)
+    @Expose()
+    user: any
 }
