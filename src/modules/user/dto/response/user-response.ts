@@ -96,6 +96,10 @@ export class UserResponse {
 
   @Expose()
   profile_completion_percentage: number;
+
+  @Expose()
+  @Transform(({ obj }) => obj.store ?? null)
+  store: any;
 }
 
 export class AgentResponse extends UserResponse {

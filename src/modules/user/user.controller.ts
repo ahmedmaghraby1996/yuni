@@ -336,9 +336,19 @@ export class UserController {
   @Get('/:id')
   async getUserById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
-      where: { id: id },
+      where: { id },
       relations: { city: true, subscriptions: { package: true } },
     });
+    if (!user) throw new NotFoundException('User not found');
+
+    let store = null;
+    if (user.roles?.includes(Role.STORE)) {
+      store = await this.userService.storeRepo.findOne({
+        where: { user_id: id, is_main_branch: true },
+        relations: { city: true, subcategory: true },
+      });
+    }
+
     return new ActionResponse(
       this._i18nResponse.entity(
         plainToInstance(
@@ -350,10 +360,12 @@ export class UserController {
             gender: user.gender,
             phone: user.phone,
             avatar: user.avatar,
+            status: user.status,
             role: user.roles[0],
             created_at: user.created_at,
             subscriptions: user.subscriptions,
             city: user.city,
+            store,
           },
           { excludeExtraneousValues: true },
         ),

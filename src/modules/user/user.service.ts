@@ -61,7 +61,7 @@ export class UserService extends BaseService<User> {
     @Inject(ImageManager) private readonly imageManager: ImageManager,
     @Inject(StorageManager) private readonly storageManager: StorageManager,
     @Inject(ConfigService) private readonly _config: ConfigService,
-    @InjectRepository(Store) private readonly storeRepo: Repository<Store>,
+    @InjectRepository(Store) public readonly storeRepo: Repository<Store>,
     @InjectRepository(Package)
     private readonly packageRepo: Repository<Package>,
     @InjectRepository(Subscription)

@@ -29,6 +29,7 @@ import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from 'src/modules/authentication/guards/roles.decorator';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { SendToAllUsersNotificationRequest, SendToUsersNotificationRequest } from '../dto/requests/send-to-users-notification.request';
+import { NotificationTypes } from 'src/infrastructure/data/enums/notification-types.enum';
 import { applyQueryFilters, applyQuerySort } from 'src/core/helpers/service-related.helper';
 
 class StoreNotificationRequest {
@@ -91,6 +92,7 @@ export class NotificationController {
     @Query('limit') limit = 10,
   ) {
     const [data, total] = await this.notificationService._repo.findAndCount({
+      where: { type: NotificationTypes.ADMIN },
       order: { created_at: 'DESC' },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
