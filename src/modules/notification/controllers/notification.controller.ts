@@ -82,6 +82,7 @@ export class NotificationController {
 
   // ─── Admin ─────────────────────────────────────────────────────────────────
 
+  @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
   @ApiQuery({ name: 'page', required: false, type: Number })
@@ -101,6 +102,7 @@ export class NotificationController {
     return new PaginatedResponse(response, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
+  @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Post('send-to-users')
@@ -151,6 +153,7 @@ export class NotificationController {
 
   // ─── Must be last — catches /:id ──────────────────────────────────────────
 
+  @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
   @Get(':id')

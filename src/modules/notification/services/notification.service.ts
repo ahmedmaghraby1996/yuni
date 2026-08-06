@@ -121,12 +121,23 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
         }
       });
 
-      // Wait for all notifications in the batch to be processed
       await Promise.all(notificationPromises).catch((error) => {
-        // Log the error or handle it as needed
         console.error('Error sending notifications:', error);
       });
     }
+
+    // Save an ADMIN-type summary record so it appears in admin/all
+    await this.create(
+      new NotificationEntity({
+        user_id: this.currentUser.id,
+        type: NotificationTypes.ADMIN,
+        title_ar: title_ar,
+        title_en: title_en,
+        text_ar: message_ar,
+        text_en: message_en,
+        user_ids: sendToUsersNotificationRequest.users_id?.length ? sendToUsersNotificationRequest.users_id : null,
+      }),
+    );
   }
   async sendToALl(
     sendToUsersNotificationRequest: SendToAllUsersNotificationRequest,
