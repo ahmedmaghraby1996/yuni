@@ -92,8 +92,8 @@ export class RegisterUserTransaction extends BaseTransaction<
         const nextNumber = (maxResult?.max ?? 0) + 1;
 
         const store = new Store({
-          status: StoreStatus.APPROVED,
-          is_active: true,
+          status: StoreStatus.PENDING,
+          is_active: false,
           number: nextNumber,
         });
         store.user_id = savedUser.id;

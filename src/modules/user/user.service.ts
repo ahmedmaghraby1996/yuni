@@ -421,8 +421,14 @@ export class UserService extends BaseService<User> {
     return await this.storeRepo.softRemove(branch);
   }
 
-  adminAcceptStore(id: string) {
-    return this.storeRepo.update({ id: id }, { status: StoreStatus.APPROVED });
+  async adminAcceptStore(id: string) {
+    await this.storeRepo.update({ id }, { status: StoreStatus.APPROVED, is_active: true });
+    // verify the store owner's email so they can log in
+    const store = await this.storeRepo.findOne({ where: { id }, select: ['user_id'] });
+    if (store?.user_id) {
+      await this._repo.update({ id: store.user_id }, { email_verified_at: new Date() });
+    }
+    return true;
   }
 
   async activateAgent(id: string, code: string) {
