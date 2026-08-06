@@ -89,9 +89,15 @@ export class NotificationService extends BaseUserService<NotificationEntity> {
   async sendToUsers(
     sendToUsersNotificationRequest: SendToUsersNotificationRequest,
   ) {
-    const { users_id, message_ar, message_en, title_ar, title_en } =
-      sendToUsersNotificationRequest;
-    const BATCH_SIZE = 10; // Adjust batch size based on your server's capacity
+    const { message_ar, message_en, title_ar, title_en } = sendToUsersNotificationRequest;
+
+    let users_id = sendToUsersNotificationRequest.users_id;
+    if (!users_id?.length) {
+      const allUsers = await this.userRepository.find({ select: ['id'] });
+      users_id = allUsers.map((u) => u.id);
+    }
+
+    const BATCH_SIZE = 10;
 
     for (let i = 0; i < users_id.length; i += BATCH_SIZE) {
       const userBatch = users_id.slice(i, i + BATCH_SIZE);

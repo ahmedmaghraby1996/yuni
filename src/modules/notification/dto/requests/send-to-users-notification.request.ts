@@ -3,10 +3,10 @@ import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validat
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 
 export class SendToUsersNotificationRequest {
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsArray()
-  users_id: string[];
+  users_id?: string[];
 
   @ApiProperty()
   @IsNotEmpty()
