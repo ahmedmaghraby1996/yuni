@@ -146,6 +146,7 @@ export class OffersService extends BaseService<Offer> {
   async promoteOffer(offer_id: string, start_date: Date, end_date: Date) {
     const offer = await this.repo.findOne({ where: { id: offer_id, user_id: this.storeOwnerId } });
     if (!offer) throw new NotFoundException('message.offer_not_found');
+    if (new Date(start_date) <= new Date()) throw new BadRequestException('message.start_date_must_be_future');
 
     const existing = await this.promotionRepo.findOne({
       where: { target_id: offer_id, type: PromotionType.OFFER },
@@ -169,6 +170,7 @@ export class OffersService extends BaseService<Offer> {
   async promoteBranch(branch_id: string, start_date: Date, end_date: Date) {
     const branch = await this.storeRepo.findOne({ where: { id: branch_id, user_id: this.storeOwnerId } });
     if (!branch) throw new NotFoundException('message.store_not_found');
+    if (new Date(start_date) <= new Date()) throw new BadRequestException('message.start_date_must_be_future');
 
     const existing = await this.promotionRepo.findOne({
       where: { target_id: branch_id, type: PromotionType.BRANCH },
