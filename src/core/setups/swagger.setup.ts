@@ -23,13 +23,17 @@ import { StoreProfileModule } from 'src/modules/store-profile/store-profile.modu
 import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
 import { AdminStoreModule } from 'src/modules/admin-store/admin-store.module';
 
+const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions'];
+// Tags that are x-admin but should NOT appear in admin swagger (use tag-based inclusion instead)
+const TAG_CONTROLLED = ['Transaction', 'Offers'];
+
 function isAdminOperation(op: any): boolean {
   if (!op || typeof op !== 'object') return false;
   const tags: string[] = op.tags ?? [];
-  // Admin-tagged controllers always included in admin swagger
-  if (tags.some((t) => ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions'].includes(t))) return true;
-  // x-admin endpoints, except offers
-  if (op['x-admin'] === true && !tags.some((t) => t === 'Offers')) return true;
+  // Explicit admin-tagged endpoints always included
+  if (tags.some((t) => ADMIN_TAGS.includes(t))) return true;
+  // x-admin endpoints, unless their tag is controlled via tag-based inclusion only
+  if (op['x-admin'] === true && !tags.some((t) => TAG_CONTROLLED.includes(t))) return true;
   return false;
 }
 

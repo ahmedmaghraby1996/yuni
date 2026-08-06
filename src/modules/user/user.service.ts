@@ -369,6 +369,16 @@ export class UserService extends BaseService<User> {
       relations: { subcategory: true, offers: true, city: true },
       order: { created_at: 'DESC' },
     });
+
+    const now = new Date();
+    const branchPromotions = await this.promotionRepo.find({ where: { type: PromotionType.BRANCH } });
+    const branchPromoMap = new Map(
+      branchPromotions.filter((p) => new Date(p.end_date) >= now).map((p) => [p.target_id, p]),
+    );
+    for (const branch of branches) {
+      (branch as any).promotion = branchPromoMap.get(branch.id) ?? null;
+    }
+
     return branches;
   }
 
