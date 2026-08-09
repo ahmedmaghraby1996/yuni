@@ -217,6 +217,39 @@ export class AdminHomeService {
     return { sent: userIds.length };
   }
 
+  async getTopMerchants(limit = 10) {
+    const rows: { user_id: string; total: string }[] = await this.transactionRepo
+      .createQueryBuilder('t')
+      .select('t.user_id', 'user_id')
+      .addSelect('SUM(ABS(t.amount))', 'total')
+      .where('t.type = :type', { type: TransactionTypes.STORE_PAYMENT })
+      .andWhere('t.deleted_at IS NULL')
+      .groupBy('t.user_id')
+      .orderBy('total', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    const userIds = rows.map((r) => r.user_id);
+    if (!userIds.length) return [];
+
+    const stores = await this.storeRepo.find({
+      where: userIds.map((uid) => ({ user_id: uid, is_main_branch: true })),
+      select: ['id', 'name', 'logo', 'user_id'],
+    });
+
+    const storeMap = new Map(stores.map((s) => [s.user_id, s]));
+
+    return rows.map((r) => {
+      const store = storeMap.get(r.user_id);
+      return {
+        user_id: r.user_id,
+        store_name: store?.name ?? null,
+        logo: store?.logo ?? null,
+        total: Number(r.total),
+      };
+    });
+  }
+
   async getTopStores(limit = 10) {
     const now = new Date();
 
