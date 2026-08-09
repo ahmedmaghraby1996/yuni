@@ -1,6 +1,7 @@
 import { AuditableEntity } from 'src/infrastructure/base/auditable.entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { User } from '../user/user.entity';
+import { AdminEmployeeRole } from './admin-employee-role.entity';
 
 export type AdminPermissionAction = 'view' | 'add' | 'edit' | 'delete';
 
@@ -33,7 +34,14 @@ export class AdminEmployee extends AuditableEntity {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ nullable: true })
+  role_id: string;
+
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => AdminEmployeeRole, { nullable: true })
+  @JoinColumn({ name: 'role_id' })
+  role: AdminEmployeeRole;
 }

@@ -7,6 +7,7 @@ import {
   ParseFilePipe,
   Patch,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseGuards,
@@ -26,6 +27,7 @@ import { AdminEmployeeService } from './admin-employee.service';
 import { AdminCreateEmployeeRequest } from './dto/admin-create-employee.request';
 import { AdminUpdateEmployeeRequest } from './dto/admin-update-employee.request';
 import { AdminEmployeeResponse } from './dto/admin-employee.response';
+import { CreateAdminRoleRequest, UpdateAdminRoleRequest, AdminEmployeeRoleResponse } from './dto/admin-employee-role.dto';
 
 @ApiTags('Admin Employees')
 @AdminEndpoint()
@@ -35,6 +37,45 @@ import { AdminEmployeeResponse } from './dto/admin-employee.response';
 @Controller('admin/employees')
 export class AdminEmployeeController {
   constructor(private readonly service: AdminEmployeeService) {}
+
+  // ─── Roles ────────────────────────────────────────────────────────────────
+
+  @Post('roles')
+  async createRole(@Body() req: CreateAdminRoleRequest) {
+    const role = await this.service.createRole(req);
+    return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
+  }
+
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @Get('roles')
+  async getRoles(@Query('page') page = 1, @Query('limit') limit = 10, @Query('name') name?: string) {
+    const { data, total } = await this.service.getRoles(+page, +limit, name);
+    return new PaginatedResponse(
+      plainToInstance(AdminEmployeeRoleResponse, data, { excludeExtraneousValues: true }),
+      { meta: { total, page: +page, limit: +limit } },
+    );
+  }
+
+  @Get('roles/:id')
+  async getRoleById(@Param('id') id: string) {
+    const role = await this.service.getRoleById(id);
+    return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
+  }
+
+  @Put('roles/:id')
+  async updateRole(@Param('id') id: string, @Body() req: UpdateAdminRoleRequest) {
+    const role = await this.service.updateRole(id, req);
+    return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
+  }
+
+  @Delete('roles/:id')
+  async deleteRole(@Param('id') id: string) {
+    return new ActionResponse(await this.service.deleteRole(id));
+  }
+
+  // ─── Employees ────────────────────────────────────────────────────────────
 
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
