@@ -50,6 +50,26 @@ export class BanarService extends BaseService<Banar> {
         return await this.banarRepository.save(createdBanar);
     }
 
+    async getAdminBanars(page = 1, limit = 10, filters: {
+        description?: string;
+        start_date?: string;
+        end_date?: string;
+        is_active?: boolean;
+    } = {}) {
+        const qb = this.banarRepository.createQueryBuilder('b').orderBy('b.created_at', 'DESC');
+
+        if (filters.description) {
+            qb.andWhere('(b.description_ar LIKE :d OR b.description_en LIKE :d)', { d: `%${filters.description}%` });
+        }
+        if (filters.start_date) qb.andWhere('b.started_at >= :start', { start: filters.start_date });
+        if (filters.end_date) qb.andWhere('b.ended_at <= :end', { end: filters.end_date });
+        if (filters.is_active !== undefined) qb.andWhere('b.is_active = :is_active', { is_active: filters.is_active });
+
+        const total = await qb.getCount();
+        const data = await qb.skip((page - 1) * limit).take(limit).getMany();
+        return { data, total };
+    }
+
     async getGuestBanars(query: PaginatedRequest) {
         return await this.banarRepository.find({
             where: {
