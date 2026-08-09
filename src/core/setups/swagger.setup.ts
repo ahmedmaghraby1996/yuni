@@ -116,7 +116,7 @@ export default (app: INestApplication, config: ConfigService) => {
 
   const swaggerOptions = { persistAuthorization: true, docExpansion: 'none' };
 
-  SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions, explorer: true });
-  SwaggerModule.setup('swagger/admin', app, adminDocument, { swaggerOptions, explorer: true });
-  SwaggerModule.setup('swagger/store', app, storeDocument, { swaggerOptions, explorer: true });
+  SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions });
+  SwaggerModule.setup('swagger/admin', app, adminDocument, { swaggerOptions });
+  SwaggerModule.setup('swagger/store', app, storeDocument, { swaggerOptions });
 };
