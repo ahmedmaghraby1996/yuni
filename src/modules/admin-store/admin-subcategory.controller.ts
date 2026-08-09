@@ -47,11 +47,13 @@ export class AdminSubcategoryController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'category_id', required: false, type: String })
+  @ApiQuery({ name: 'name', required: false, type: String })
   @Get()
   async getAll(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('category_id') category_id?: string,
+    @Query('name') name?: string,
   ) {
     const qb = this.subCategoryRepo
       .createQueryBuilder('sub')
@@ -59,6 +61,7 @@ export class AdminSubcategoryController {
       .orderBy('sub.order_by', 'ASC');
 
     if (category_id) qb.where('sub.category_id = :category_id', { category_id });
+    if (name) qb.andWhere('(sub.name_ar LIKE :name OR sub.name_en LIKE :name)', { name: `%${name}%` });
 
     const total = await qb.getCount();
     const data = await qb
