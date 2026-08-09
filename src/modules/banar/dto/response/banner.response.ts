@@ -9,4 +9,6 @@ export class BannerResponse{
     @Expose() is_active: boolean;
     @Expose() is_popup: boolean;
     @Expose() order_by: number;
+    @Expose() description_ar: string;
+    @Expose() description_en: string;
 }

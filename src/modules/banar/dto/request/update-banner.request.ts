@@ -1,4 +1,4 @@
-import { IsBoolean, IsDateString, IsNumber, IsOptional } from "class-validator";
+import { IsBoolean, IsDateString, IsNumber, IsOptional, IsString } from "class-validator";
 import { CreateBanarRequest } from "./create-banar.request";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
@@ -31,4 +31,13 @@ export class UpdateBannerRequest {
     @IsBoolean()
     is_active: boolean;
 
+    @ApiProperty({ nullable: true, required: false })
+    @IsOptional()
+    @IsString()
+    description_ar: string;
+
+    @ApiProperty({ nullable: true, required: false })
+    @IsOptional()
+    @IsString()
+    description_en: string;
 }

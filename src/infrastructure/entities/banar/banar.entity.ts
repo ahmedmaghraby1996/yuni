@@ -24,4 +24,10 @@ export class Banar extends AuditableEntity {
 
     @Column({default:false})
     is_general: boolean
+
+    @Column({ nullable: true })
+    description_ar: string;
+
+    @Column({ nullable: true })
+    description_en: string;
 }
