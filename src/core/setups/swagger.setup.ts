@@ -117,11 +117,6 @@ export default (app: INestApplication, config: ConfigService) => {
   const swaggerOptions = {
     persistAuthorization: true,
     docExpansion: 'none',
-    urls: [
-      { url: 'swagger-json', name: 'Public' },
-      { url: 'swagger/admin-json', name: 'Admin' },
-      { url: 'swagger/store-json', name: 'Store' },
-    ],
   };
 
   SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions });
