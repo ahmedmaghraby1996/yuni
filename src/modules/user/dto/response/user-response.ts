@@ -91,7 +91,14 @@ export class UserResponse {
   language: string;
 
   @Expose()
-  @Type(() => SubCategory)
+  @Transform(({ obj }) =>
+    obj.favorite_sections?.map((s: SubCategory) => ({
+      id: s.id,
+      name_ar: s.name_ar,
+      name_en: s.name_en,
+      category: s.category ? { id: s.category.id, name_ar: s.category.name_ar, name_en: s.category.name_en } : null,
+    })) ?? [],
+  )
   favorite_sections: SubCategory[];
 
   @Expose()

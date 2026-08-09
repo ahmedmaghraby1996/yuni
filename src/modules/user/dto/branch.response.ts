@@ -65,7 +65,7 @@ export class BranchResponse {
   x_link: string;
 
   @Expose()
-  @Transform((value) => value.obj?.offers?.length)
+  @Transform(({ obj }) => obj.offers_count ?? obj.offers?.length)
   offers_count: number;
 
   @Expose()
@@ -137,4 +137,10 @@ export class BranchResponse {
     obj.promotion ? plainToInstance(PromotionResponse, obj.promotion, { excludeExtraneousValues: true }) : null,
   )
   promotion: PromotionResponse | null;
+
+  @Expose()
+  branches_count: number;
+
+  @Expose()
+  promotional_offers_count: number;
 }

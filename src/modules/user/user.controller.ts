@@ -207,7 +207,7 @@ export class UserController {
       relations: {
         city: true,
         subscriptions: { package: true },
-        favorite_sections: true,
+        favorite_sections: { category: true },
       },
       order: { subscriptions: { created_at: 'DESC' } },
     });

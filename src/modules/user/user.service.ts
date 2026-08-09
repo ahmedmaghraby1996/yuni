@@ -180,10 +180,38 @@ export class UserService extends BaseService<User> {
     });
   }
   async getMainStore() {
-    return this.storeRepo.findOne({
-      where: { user_id: this.storeOwnerId, is_main_branch: true },
+    const userId = this.storeOwnerId;
+
+    const store = await this.storeRepo.findOne({
+      where: { user_id: userId, is_main_branch: true },
       relations: { city: true, subcategory: true },
     });
+
+    if (!store) return store;
+
+    const [branches_count, offers_count, promotional_offers_count] = await Promise.all([
+      this.storeRepo.count({ where: { user_id: userId } }),
+      this.storeRepo.manager
+        .createQueryBuilder()
+        .select('COUNT(DISTINCT o.id)', 'cnt')
+        .from('offer_stores_store', 'os')
+        .innerJoin('offer', 'o', 'o.id = os.offerId AND o.deleted_at IS NULL')
+        .innerJoin('store', 's', 's.id = os.storeId AND s.user_id = :userId', { userId })
+        .getRawOne()
+        .then((r) => Number(r?.cnt ?? 0)),
+      this.promotionRepo
+        .createQueryBuilder('p')
+        .innerJoin('store', 's', 's.id = p.target_id AND s.user_id = :userId', { userId })
+        .where('p.type = :type', { type: PromotionType.BRANCH })
+        .andWhere('p.end_date >= :now', { now: new Date() })
+        .getCount(),
+    ]);
+
+    (store as any).branches_count = branches_count;
+    (store as any).offers_count = offers_count;
+    (store as any).promotional_offers_count = promotional_offers_count;
+
+    return store;
   }
 
   async updateMainStoreInfo(req: UpdateStoreInfoRequest) {
