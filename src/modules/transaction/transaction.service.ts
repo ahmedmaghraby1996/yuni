@@ -11,6 +11,8 @@ import { REQUEST } from '@nestjs/core';
 import { SystemVariable } from 'src/infrastructure/entities/system-variables/system-variable.entity';
 import { SystemVariableEnum } from 'src/infrastructure/data/enums/sysytem-variable.enum';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
+import { TransactionStatus } from 'src/infrastructure/data/enums/transaction-status.enum';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class TransactionService extends BaseUserService<Transaction> {
@@ -114,16 +116,44 @@ if (req.date || req.iban || req.bank) {
   }
 
   async refundWallet(req: WalletRefundRequest) {
-    const transaction = await this.makeTransaction(
-      new MakeTransactionRequest({
-        user_id: this.currentUser.id,
-        amount: -Math.abs(Number(req.amount)),
-        type: TransactionTypes.WALLET_REFUND,
-      }),
-    );
-    transaction.meta_data = JSON.stringify({ reason: req.reason });
-    await this.transactionRepository.save(transaction);
-    return transaction;
+    const transaction = new Transaction({
+      user_id: this.currentUser.id,
+      amount: -Math.abs(Number(req.amount)),
+      type: TransactionTypes.WALLET_REFUND,
+      status: TransactionStatus.PENDING,
+      meta_data: JSON.stringify({ reason: req.reason }),
+    });
+    return this.transactionRepository.save(transaction);
+  }
+
+  async acceptRefund(id: string) {
+    const transaction = await this.transactionRepository.findOneBy({ id });
+    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (transaction.type !== TransactionTypes.WALLET_REFUND)
+      throw new BadRequestException('Not a refund transaction');
+    if (transaction.status !== TransactionStatus.PENDING)
+      throw new BadRequestException('Transaction is not pending');
+
+    let wallet = await this.walletRepository.findOneBy({ user_id: transaction.user_id });
+    if (!wallet) wallet = await this.walletRepository.save(new Wallet({ user_id: transaction.user_id, balance: 0 }));
+
+    wallet.balance = Number(wallet.balance) + Number(transaction.amount);
+    await this.walletRepository.save(wallet);
+
+    transaction.status = TransactionStatus.COMPLETED;
+    return this.transactionRepository.save(transaction);
+  }
+
+  async rejectRefund(id: string) {
+    const transaction = await this.transactionRepository.findOneBy({ id });
+    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (transaction.type !== TransactionTypes.WALLET_REFUND)
+      throw new BadRequestException('Not a refund transaction');
+    if (transaction.status !== TransactionStatus.PENDING)
+      throw new BadRequestException('Transaction is not pending');
+
+    transaction.status = TransactionStatus.FAILED;
+    return this.transactionRepository.save(transaction);
   }
 
 

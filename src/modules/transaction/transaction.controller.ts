@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
@@ -25,6 +25,7 @@ import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Permission } from '../authentication/guards/permission.decorator';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
+import { TransactionStatus } from 'src/infrastructure/data/enums/transaction-status.enum';
 
 @ApiTags('Transaction')
 @ApiHeader({
@@ -105,6 +106,7 @@ export class TransactionController {
   @ApiQuery({ name: 'user_id', required: false, type: String, description: 'Filter by user ID' })
   @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
   @ApiQuery({ name: 'type', required: false, enum: TransactionTypes, description: 'Filter by type' })
+  @ApiQuery({ name: 'status', required: false, enum: TransactionStatus, description: 'Filter by status' })
   @ApiQuery({ name: 'date_from', required: false, type: String, description: 'From date (YYYY-MM-DD)' })
   @ApiQuery({ name: 'date_to', required: false, type: String, description: 'To date (YYYY-MM-DD)' })
   @Get('admin/all')
@@ -113,6 +115,7 @@ export class TransactionController {
     @Query('user_id') user_id?: string,
     @Query('number') number?: string,
     @Query('type') type?: TransactionTypes,
+    @Query('status') status?: TransactionStatus,
     @Query('date_from') date_from?: string,
     @Query('date_to') date_to?: string,
   ) {
@@ -121,6 +124,7 @@ export class TransactionController {
     if (user_id) applyQueryFilters(query, `user_id=${user_id}`);
     if (number) applyQueryFilters(query, `number=${number}`);
     if (type) applyQueryFilters(query, `type=${type}`);
+    if (status) applyQueryFilters(query, `status=${status}`);
     if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
     if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
 
@@ -153,6 +157,26 @@ export class TransactionController {
   async makeTransaction(@Body() request: MakeTransactionRequest) {
     return new ActionResponse(
       await this.transactionService.makeTransaction(request),
+    );
+  }
+
+  @ApiTags('Admin Transactions')
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
+  @Patch('admin/:id/accept-refund')
+  async acceptRefund(@Param('id') id: string) {
+    return new ActionResponse(
+      plainToInstance(TransactionResponse, await this.transactionService.acceptRefund(id), { excludeExtraneousValues: true }),
+    );
+  }
+
+  @ApiTags('Admin Transactions')
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
+  @Patch('admin/:id/reject-refund')
+  async rejectRefund(@Param('id') id: string) {
+    return new ActionResponse(
+      plainToInstance(TransactionResponse, await this.transactionService.rejectRefund(id), { excludeExtraneousValues: true }),
     );
   }
 

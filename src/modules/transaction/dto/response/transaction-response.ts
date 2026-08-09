@@ -1,5 +1,6 @@
 import { Expose, Transform } from "class-transformer"
 import { TransactionTypes } from "src/infrastructure/data/enums/transaction-types"
+import { TransactionStatus } from "src/infrastructure/data/enums/transaction-status.enum"
 
 export class TransactionResponse {
     @Expose()
@@ -13,6 +14,9 @@ export class TransactionResponse {
 
     @Expose()
     type: TransactionTypes
+
+    @Expose()
+    status: TransactionStatus
 
     @Expose()
     created_at: Date

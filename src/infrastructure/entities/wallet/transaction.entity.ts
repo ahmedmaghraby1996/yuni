@@ -1,5 +1,6 @@
 import { AuditableEntity } from 'src/infrastructure/base/auditable.entity';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
+import { TransactionStatus } from 'src/infrastructure/data/enums/transaction-status.enum';
 import { Entity, Column, ManyToOne, JoinColumn, BeforeInsert } from 'typeorm';
 import { User } from '../user/user.entity';
 import { Wallet } from './wallet.entity';
@@ -15,6 +16,9 @@ export class Transaction extends AuditableEntity {
 
   @Column({ default: TransactionTypes.OTHER })
   type: TransactionTypes;
+
+  @Column({ default: TransactionStatus.COMPLETED })
+  status: TransactionStatus;
 
 
   @ManyToOne(() => User, (user) => user.transactions)
