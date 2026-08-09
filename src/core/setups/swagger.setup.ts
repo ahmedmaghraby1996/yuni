@@ -25,16 +25,19 @@ import { AdminStoreModule } from 'src/modules/admin-store/admin-store.module';
 import { AdminHomeModule } from 'src/modules/admin-home/admin-home.module';
 import { AdminEmployeeModule } from 'src/modules/admin-employee/admin-employee.module';
 
-const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions', 'Admin Notifications', 'Admin Offers', 'Admin Static Pages', 'Admin Home', 'Admin Employees'];
+const ADMIN_TAGS = [
+  'Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories',
+  'Admin Transactions', 'Admin Notifications', 'Admin Offers', 'Admin Static Pages',
+  'Admin Home', 'Admin Employees', 'Packages',
+];
+
 // Tags that are x-admin but should NOT appear in admin swagger (use tag-based inclusion instead)
 const TAG_CONTROLLED = ['Transaction', 'Offers', 'Notifications', 'Satic Page'];
 
 function isAdminOperation(op: any): boolean {
   if (!op || typeof op !== 'object') return false;
   const tags: string[] = op.tags ?? [];
-  // Explicit admin-tagged endpoints always included
   if (tags.some((t) => ADMIN_TAGS.includes(t))) return true;
-  // x-admin endpoints, unless their tag is controlled via tag-based inclusion only
   if (op['x-admin'] === true && !tags.some((t) => TAG_CONTROLLED.includes(t))) return true;
   return false;
 }
@@ -67,23 +70,15 @@ function filterPaths(
 }
 
 export default (app: INestApplication, config: ConfigService) => {
-  const operationIdFactory = (_controllerKey: string, methodKey: string) =>
-    methodKey;
+  const operationIdFactory = (_controllerKey: string, methodKey: string) => methodKey;
 
   const baseConfig = new DocumentBuilder()
     .addBearerAuth()
     .setTitle(`${config.get('APP_NAME')} API`)
     .setDescription(`${config.get('APP_NAME')} API description`)
     .setVersion('v1')
-    .setContact(
-      'Contact',
-      'https://github.com/mahkassem',
-      'mahmoud.ali.kassem@gmail.com',
-    )
-    .setLicense(
-      'Developed by Ahmed el-Maghraby',
-      'https://github.com/mahkassem',
-    )
+    .setContact('Contact', 'https://github.com/mahkassem', 'mahmoud.ali.kassem@gmail.com')
+    .setLicense('Developed by Ahmed el-Maghraby', 'https://github.com/mahkassem')
     .addServer(config.get('APP_HOST'))
     .build();
 
@@ -115,19 +110,15 @@ export default (app: INestApplication, config: ConfigService) => {
     operationIdFactory,
   });
 
-  // Public: exclude admin and store-only endpoints
-  const publicDocument = filterPaths(
-    fullDocument,
-    (op) => !isAdminOperation(op) && !isStoreOperation(op),
-  );
-
-  // Admin: only admin-marked endpoints, strip non-admin class-level tags
+  const publicDocument = filterPaths(fullDocument, (op) => !isAdminOperation(op) && !isStoreOperation(op));
   const adminDocument = filterPaths(fullDocument, isAdminOperation, TAG_CONTROLLED);
-
-  // Store: only store-marked endpoints
   const storeDocument = filterPaths(fullDocument, isStoreOperation);
 
-  const swaggerOptions = { persistAuthorization: true, docExpansion: 'none' };
+  const swaggerOptions = {
+    persistAuthorization: true,
+    docExpansion: 'none',
+  };
+
   SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions });
   SwaggerModule.setup('swagger/admin', app, adminDocument, { swaggerOptions });
   SwaggerModule.setup('swagger/store', app, storeDocument, { swaggerOptions });
