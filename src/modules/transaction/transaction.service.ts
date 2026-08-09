@@ -90,6 +90,19 @@ if (req.date || req.iban || req.bank) {
     return wallet;
   }
 
+  async getStoreWallet(user_id: string, page = 1, limit = 10) {
+    const [wallet, [transactions, total]] = await Promise.all([
+      this.walletRepository.findOneBy({ user_id }),
+      this.transactionRepository.findAndCount({
+        where: { user_id },
+        order: { created_at: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
+    return { wallet, transactions: { data: transactions, total, page, limit } };
+  }
+
   async getAdminWallets(page = 1, limit = 10, name?: string) {
     const qb = this.walletRepository
       .createQueryBuilder('w')

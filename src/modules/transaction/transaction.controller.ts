@@ -140,6 +140,20 @@ export class TransactionController {
   @Roles(Role.ADMIN)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @Get('admin/wallets/:user_id')
+  async getStoreWallet(
+    @Param('user_id') user_id: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    return new ActionResponse(await this.transactionService.getStoreWallet(user_id, +page, +limit));
+  }
+
+  @ApiTags('Admin Transactions')
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by store name' })
   @Get('admin/wallets')
   async getAdminWallets(

@@ -6,7 +6,6 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
-import { ActionResponse } from 'src/core/base/responses/action.response';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { BranchResponse } from '../user/dto/branch.response';
 import { AdminStoreService } from './admin-store.service';
@@ -36,22 +35,6 @@ export class AdminStoreController {
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
-  @Get(':user_id/wallet')
-  async getStoreWallet(@Param('user_id') user_id: string) {
-    return new ActionResponse(await this.adminStoreService.getStoreWallet(user_id));
-  }
-
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @Get(':user_id/transactions')
-  async getStoreTransactions(
-    @Param('user_id') user_id: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-  ) {
-    const { data, total } = await this.adminStoreService.getStoreTransactions(user_id, Number(page), Number(limit));
-    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
-  }
 
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
