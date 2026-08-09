@@ -38,6 +38,15 @@ import { CreateAdminRoleRequest, UpdateAdminRoleRequest, AdminEmployeeRoleRespon
 export class AdminEmployeeController {
   constructor(private readonly service: AdminEmployeeService) {}
 
+  // ─── Permissions ──────────────────────────────────────────────────────────
+
+  @Get('permissions/groups')
+  getPermissionGroups() {
+    const actions = ['view', 'add', 'edit', 'delete'];
+    const modules = ['users', 'stores', 'employees', 'transactions', 'notifications', 'banners', 'static_pages', 'home'];
+    return new ActionResponse(modules.map((module) => ({ module, actions })));
+  }
+
   // ─── Roles ────────────────────────────────────────────────────────────────
 
   @Post('roles')
