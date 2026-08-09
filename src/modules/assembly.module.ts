@@ -21,6 +21,7 @@ import { StoreEmployeeModule } from './store-employee/store-employee.module';
 import { StoreProfileModule } from './store-profile/store-profile.module';
 import { StoreSuggestionModule } from './store-suggestion/store-suggestion.module';
 import { AdminStoreModule } from './admin-store/admin-store.module';
+import { AdminHomeModule } from './admin-home/admin-home.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AdminStoreModule } from './admin-store/admin-store.module';
     StoreProfileModule,
     StoreSuggestionModule,
     AdminStoreModule,
+    AdminHomeModule,
   ],
   exports: [],
 })

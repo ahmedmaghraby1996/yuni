@@ -41,6 +41,18 @@ export class StaticPageController {
     @Inject(REQUEST) private readonly request: Request,
   ) {}
 
+  @ApiTags('Admin Static Pages')
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Get('admin/:static_page_type')
+  async getAdminStaticPage(@Param() param: GetStaticPage): Promise<ActionResponse<StaticPageResponse>> {
+    const page = await this.staticPageService.getStaticPageByType(param.static_page_type);
+    const result = plainToInstance(StaticPageResponse, page, { excludeExtraneousValues: true });
+    return new ActionResponse<StaticPageResponse>(result);
+  }
+
+  @ApiTags('Admin Static Pages')
   @AdminEndpoint()
   @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
