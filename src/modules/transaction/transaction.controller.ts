@@ -157,7 +157,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
-  @Post()
+  @Post('admin')
   async makeTransaction(@Body() request: MakeTransactionRequest) {
     return new ActionResponse(
       await this.transactionService.makeTransaction(request),
