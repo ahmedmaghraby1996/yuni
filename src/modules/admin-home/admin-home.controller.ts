@@ -41,6 +41,7 @@ export class AdminHomeController {
     return new ActionResponse(await this.adminHomeService.getTopMerchants(Number(limit)));
   }
 
+
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('pending-requests')

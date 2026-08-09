@@ -8,7 +8,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { PackagesService } from './packages.service';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
@@ -33,6 +33,11 @@ export class PackagesController {
   @Get()
   async getPackages() {
     return new ActionResponse(await this.packagesService.getPackages());
+  }
+
+  @Get('analytics')
+  async getAnalytics() {
+    return new ActionResponse(await this.packagesService.getAnalytics());
   }
 
   @Get(':id')
