@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { plainToInstance } from 'class-transformer';
 import { TransactionResponse } from './dto/response/transaction-response';
+import { WalletResponse } from './dto/response/wallet-response';
 import {
   MakeTransactionRequest,
   WalletChargeRequest,
@@ -147,7 +148,10 @@ export class TransactionController {
     @Query('name') name?: string,
   ) {
     const { data, total } = await this.transactionService.getAdminWallets(+page, +limit, name);
-    return new PaginatedResponse(data, { meta: { total, page: +page, limit: +limit } });
+    return new PaginatedResponse(
+      plainToInstance(WalletResponse, data, { excludeExtraneousValues: true }),
+      { meta: { total, page: +page, limit: +limit } },
+    );
   }
 
   @ApiTags('Admin Transactions')

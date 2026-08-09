@@ -84,6 +84,9 @@ export class RegisterUserTransaction extends BaseTransaction<
       // save user
       const savedUser = await context.save(User, user);
 
+      // create wallet for user
+      await context.save(Wallet, new Wallet({ user_id: savedUser.id, balance: 0 }));
+
       if (req.role == Role.STORE) {
         const maxResult = await context
           .createQueryBuilder(Store, 'store')
