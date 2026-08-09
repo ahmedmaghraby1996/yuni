@@ -83,13 +83,14 @@ if (req.date || req.iban || req.bank) {
   }
 
   async getWallet() {
-    const wallet = await this.walletRepository.findOneBy({
-      user_id: this.currentUser.id,
-    });
+    let wallet = await this.walletRepository.findOneBy({ user_id: this.currentUser.id });
+    if (!wallet) {
+      wallet = await this.walletRepository.save(new Wallet({ user_id: this.currentUser.id, balance: 0 }));
+    }
     return wallet;
   }
 
-  async getAdminWallets(page = 1, limit = 10, search?: string) {
+  async getAdminWallets(page = 1, limit = 10, name?: string) {
     const qb = this.walletRepository
       .createQueryBuilder('w')
       .leftJoinAndSelect('w.user', 'user')
@@ -98,7 +99,7 @@ if (req.date || req.iban || req.bank) {
       .where('user.roles LIKE :role', { role: '%STORE%' })
       .orderBy('w.balance', 'DESC');
 
-    if (search) qb.andWhere('(user.name LIKE :s OR user.email LIKE :s OR user.phone LIKE :s)', { s: `%${search}%` });
+    if (name) qb.andWhere('store.name LIKE :name', { name: `%${name}%` });
 
     const total = await qb.getCount();
     const data = await qb.skip((page - 1) * limit).take(limit).getMany();
