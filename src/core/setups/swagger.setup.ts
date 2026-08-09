@@ -23,7 +23,7 @@ import { StoreProfileModule } from 'src/modules/store-profile/store-profile.modu
 import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
 import { AdminStoreModule } from 'src/modules/admin-store/admin-store.module';
 
-const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions', 'Admin Notifications'];
+const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions', 'Admin Notifications', 'Admin Offers'];
 // Tags that are x-admin but should NOT appear in admin swagger (use tag-based inclusion instead)
 const TAG_CONTROLLED = ['Transaction', 'Offers', 'Notifications'];
 

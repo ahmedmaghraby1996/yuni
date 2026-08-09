@@ -363,6 +363,7 @@ export class OffersController {
 
   // ─── Admin ─────────────────────────────────────────────────────────────────
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
@@ -376,6 +377,7 @@ export class OffersController {
     return new PaginatedResponse(this._i18nResponse.entity(result), { meta: { total, page: query.page, limit: query.limit } });
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @StoreEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -388,6 +390,7 @@ export class OffersController {
     return await this.offersService.softDelete(id);
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.STORE, Role.ADMIN)
@@ -397,6 +400,7 @@ export class OffersController {
     return new ActionResponse(await this.offersService.toggleOfferIsActive(id));
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
@@ -405,6 +409,7 @@ export class OffersController {
     return await this.offersService.updateOffer(req);
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
@@ -414,6 +419,7 @@ export class OffersController {
     return await this.offersService.updateOffer(req);
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
@@ -433,6 +439,7 @@ export class OffersController {
     return new PaginatedResponse(plainToInstance(OfferResponse, offers, { excludeExtraneousValues: true }), { meta: { total, page: query.page, limit: query.limit } });
   }
 
+  @ApiTags('Admin Offers')
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN)
