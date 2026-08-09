@@ -114,16 +114,7 @@ export default (app: INestApplication, config: ConfigService) => {
   const adminDocument = filterPaths(fullDocument, isAdminOperation, TAG_CONTROLLED);
   const storeDocument = filterPaths(fullDocument, isStoreOperation);
 
-  const appHost = config.get('APP_HOST');
-  const swaggerOptions = {
-    persistAuthorization: true,
-    docExpansion: 'none',
-    urls: [
-      { url: `${appHost}/swagger-json`, name: 'Public' },
-      { url: `${appHost}/swagger/admin-json`, name: 'Admin' },
-      { url: `${appHost}/swagger/store-json`, name: 'Store' },
-    ],
-  };
+  const swaggerOptions = { persistAuthorization: true, docExpansion: 'none' };
 
   SwaggerModule.setup('swagger', app, publicDocument, { swaggerOptions });
   SwaggerModule.setup('swagger/admin', app, adminDocument, { swaggerOptions });
