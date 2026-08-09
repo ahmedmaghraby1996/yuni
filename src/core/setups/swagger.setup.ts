@@ -44,13 +44,17 @@ function isStoreOperation(op: any): boolean {
 function filterPaths(
   document: OpenAPIObject,
   predicate: (op: any) => boolean,
+  stripTags?: string[],
 ): OpenAPIObject {
   const filteredPaths: Record<string, any> = {};
   for (const [path, pathItem] of Object.entries(document.paths || {})) {
     const filteredMethods: Record<string, any> = {};
     for (const [method, operation] of Object.entries(pathItem as Record<string, any>)) {
       if (predicate(operation)) {
-        filteredMethods[method] = operation;
+        const op = stripTags?.length
+          ? { ...operation, tags: (operation.tags ?? []).filter((t: string) => !stripTags.includes(t)) }
+          : operation;
+        filteredMethods[method] = op;
       }
     }
     if (Object.keys(filteredMethods).length > 0) {
@@ -113,8 +117,8 @@ export default (app: INestApplication, config: ConfigService) => {
     (op) => !isAdminOperation(op) && !isStoreOperation(op),
   );
 
-  // Admin: only admin-marked endpoints
-  const adminDocument = filterPaths(fullDocument, isAdminOperation);
+  // Admin: only admin-marked endpoints, strip non-admin class-level tags
+  const adminDocument = filterPaths(fullDocument, isAdminOperation, TAG_CONTROLLED);
 
   // Store: only store-marked endpoints
   const storeDocument = filterPaths(fullDocument, isStoreOperation);
