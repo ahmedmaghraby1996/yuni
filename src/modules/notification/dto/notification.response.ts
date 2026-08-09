@@ -32,7 +32,9 @@ export class NotificationResponse {
 
   @Expose() role: string;
 
-  @Expose() sent_to_all: boolean;
+  @Expose()
+  @Transform(({ obj }) => obj.user_ids == null || obj.user_ids?.length === 0)
+  sent_to_all: boolean;
 
   @Transform((value) => {
     
