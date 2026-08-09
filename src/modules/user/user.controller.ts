@@ -347,6 +347,31 @@ export class UserController {
         where: { user_id: id, is_main_branch: true },
         relations: { city: true, subcategory: true },
       });
+
+      if (store) {
+        const [branches_count, offers_count, promotional_offers_count] = await Promise.all([
+          this.userService.storeRepo.count({ where: { user_id: id } }),
+          this.userService.storeRepo.manager
+            .createQueryBuilder()
+            .select('COUNT(DISTINCT o.id)', 'cnt')
+            .from('offer_stores_store', 'os')
+            .innerJoin('offer', 'o', 'o.id = os.offerId AND o.deleted_at IS NULL')
+            .innerJoin('store', 's', 's.id = os.storeId AND s.user_id = :uid', { uid: id })
+            .getRawOne()
+            .then((r) => Number(r?.cnt ?? 0)),
+          this.userService.storeRepo.manager
+            .createQueryBuilder()
+            .select('COUNT(DISTINCT p.id)', 'cnt')
+            .from('promotion', 'p')
+            .innerJoin('store', 's', 's.id = p.target_id AND s.user_id = :uid', { uid: id })
+            .where('p.end_date >= :now', { now: new Date() })
+            .getRawOne()
+            .then((r) => Number(r?.cnt ?? 0)),
+        ]);
+        (store as any).branches_count = branches_count;
+        (store as any).offers_count = offers_count;
+        (store as any).promotional_offers_count = promotional_offers_count;
+      }
     }
 
     return new ActionResponse(
