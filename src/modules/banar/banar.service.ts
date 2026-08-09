@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/core/base/service/service.base';
 import {  LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
@@ -24,6 +24,13 @@ export class BanarService extends BaseService<Banar> {
     }
 
     async createBanar(banar: CreateBanarRequest) {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        if (new Date(banar.ended_at) < now)
+            throw new BadRequestException('message.end_date_must_be_future');
+        if (new Date(banar.started_at) < now)
+            throw new BadRequestException('message.start_date_must_be_today_or_future');
+
         const tempImage = await this._fileService.upload(
             banar.banar,
             `banars`,
