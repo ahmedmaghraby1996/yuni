@@ -170,6 +170,33 @@ if (req.date || req.iban || req.bank) {
     return this.transactionRepository.save(transaction);
   }
 
+  async getAdminTransactions(page = 1, limit = 10, filters: {
+    name?: string;
+    user_id?: string;
+    number?: string;
+    type?: TransactionTypes;
+    status?: TransactionStatus;
+    date_from?: string;
+    date_to?: string;
+  } = {}) {
+    const qb = this.transactionRepository
+      .createQueryBuilder('t')
+      .leftJoinAndSelect('t.user', 'user')
+      .where('t.deleted_at IS NULL')
+      .orderBy('t.created_at', 'DESC');
+
+    if (filters.name) qb.andWhere('user.name LIKE :name', { name: `%${filters.name}%` });
+    if (filters.user_id) qb.andWhere('t.user_id = :user_id', { user_id: filters.user_id });
+    if (filters.number) qb.andWhere('t.number = :number', { number: filters.number });
+    if (filters.type) qb.andWhere('t.type = :type', { type: filters.type });
+    if (filters.status) qb.andWhere('t.status = :status', { status: filters.status });
+    if (filters.date_from) qb.andWhere('t.created_at >= :date_from', { date_from: filters.date_from });
+    if (filters.date_to) qb.andWhere('t.created_at <= :date_to', { date_to: filters.date_to });
+
+    const [data, total] = await qb.skip((page - 1) * limit).take(limit).getManyAndCount();
+    return { data, total };
+  }
+
 
   async setAgentPercentage(percentage: number) {
     

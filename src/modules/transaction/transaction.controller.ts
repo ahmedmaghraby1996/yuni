@@ -104,6 +104,7 @@ export class TransactionController {
   @Roles(Role.ADMIN)
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
   @ApiQuery({ name: 'user_id', required: false, type: String, description: 'Filter by user ID' })
   @ApiQuery({ name: 'number', required: false, type: String, description: 'Filter by transaction number' })
   @ApiQuery({ name: 'type', required: false, enum: TransactionTypes, description: 'Filter by type' })
@@ -112,7 +113,9 @@ export class TransactionController {
   @ApiQuery({ name: 'date_to', required: false, type: String, description: 'To date (YYYY-MM-DD)' })
   @Get('admin/all')
   async getAdminTransactions(
-    @Query() query: PaginatedRequest,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('name') name?: string,
     @Query('user_id') user_id?: string,
     @Query('number') number?: string,
     @Query('type') type?: TransactionTypes,
@@ -120,19 +123,11 @@ export class TransactionController {
     @Query('date_from') date_from?: string,
     @Query('date_to') date_to?: string,
   ) {
-    applyQuerySort(query, 'created_at=desc');
-    applyQueryIncludes(query, 'user');
-    if (user_id) applyQueryFilters(query, `user_id=${user_id}`);
-    if (number) applyQueryFilters(query, `number=${number}`);
-    if (type) applyQueryFilters(query, `type=${type}`);
-    if (status) applyQueryFilters(query, `status=${status}`);
-    if (date_from) applyQueryFilters(query, `created_at>=${date_from}`);
-    if (date_to) applyQueryFilters(query, `created_at<=${date_to}`);
-
-    const total = await this.transactionService.count(query);
-    const transactions = await this.transactionService.findAll(query);
-    const result = plainToInstance(TransactionResponse, transactions, { excludeExtraneousValues: true });
-    return new PaginatedResponse(result, { meta: { total, page: query.page, limit: query.limit } });
+    const { data, total } = await this.transactionService.getAdminTransactions(
+      Number(page), Number(limit), { name, user_id, number, type, status, date_from, date_to },
+    );
+    const result = plainToInstance(TransactionResponse, data, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
   @ApiTags('Admin Transactions')
