@@ -23,8 +23,9 @@ import { StoreProfileModule } from 'src/modules/store-profile/store-profile.modu
 import { StoreSuggestionModule } from 'src/modules/store-suggestion/store-suggestion.module';
 import { AdminStoreModule } from 'src/modules/admin-store/admin-store.module';
 import { AdminHomeModule } from 'src/modules/admin-home/admin-home.module';
+import { AdminEmployeeModule } from 'src/modules/admin-employee/admin-employee.module';
 
-const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions', 'Admin Notifications', 'Admin Offers', 'Admin Static Pages', 'Admin Home'];
+const ADMIN_TAGS = ['Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories', 'Admin Transactions', 'Admin Notifications', 'Admin Offers', 'Admin Static Pages', 'Admin Home', 'Admin Employees'];
 // Tags that are x-admin but should NOT appear in admin swagger (use tag-based inclusion instead)
 const TAG_CONTROLLED = ['Transaction', 'Offers', 'Notifications', 'Satic Page'];
 
@@ -109,6 +110,7 @@ export default (app: INestApplication, config: ConfigService) => {
       StoreSuggestionModule,
       AdminStoreModule,
       AdminHomeModule,
+      AdminEmployeeModule,
     ],
     operationIdFactory,
   });

@@ -133,6 +133,22 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Filter by store name, email or phone' })
+  @Get('admin/wallets')
+  async getAdminWallets(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('search') search?: string,
+  ) {
+    const { data, total } = await this.transactionService.getAdminWallets(+page, +limit, search);
+    return new PaginatedResponse(data, { meta: { total, page: +page, limit: +limit } });
+  }
+
+  @ApiTags('Admin Transactions')
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
   @Post()
   async makeTransaction(@Body() request: MakeTransactionRequest) {
     return new ActionResponse(

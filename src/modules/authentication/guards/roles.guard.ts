@@ -9,6 +9,7 @@ import { Reflector } from '@nestjs/core';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { ROLES_KEY } from './roles.decorator';
 import { PERMISSION_KEY } from './permission.decorator';
+import { ADMIN_PERMISSION_KEY } from './admin-permission.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -50,6 +51,22 @@ export class RolesGuard implements CanActivate {
       if (!modulePerms[required.action]) {
         throw new ForbiddenException('message.permission_denied');
       }
+
+      return true;
+    }
+
+    // Admin employees inherit ADMIN access but are checked against their permissions
+    if (user.roles?.includes(Role.ADMIN_EMPLOYEE) && requiredRoles.includes(Role.ADMIN)) {
+      const required = this.reflector.getAllAndOverride<{ module: string; action: string }>(
+        ADMIN_PERMISSION_KEY,
+        [context.getHandler(), context.getClass()],
+      );
+
+      if (!required) throw new ForbiddenException('message.permission_denied');
+
+      const perms = (user as any).admin_employee_permissions ?? {};
+      const modulePerms = perms[required.module] ?? {};
+      if (!modulePerms[required.action]) throw new ForbiddenException('message.permission_denied');
 
       return true;
     }

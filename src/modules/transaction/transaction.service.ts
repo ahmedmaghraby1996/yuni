@@ -87,6 +87,22 @@ if (req.date || req.iban || req.bank) {
     return wallet;
   }
 
+  async getAdminWallets(page = 1, limit = 10, search?: string) {
+    const qb = this.walletRepository
+      .createQueryBuilder('w')
+      .leftJoinAndSelect('w.user', 'user')
+      .innerJoin('user.stores', 'store', 'store.is_main_branch = true')
+      .addSelect(['store.id', 'store.name', 'store.logo'])
+      .where('user.roles LIKE :role', { role: '%STORE%' })
+      .orderBy('w.balance', 'DESC');
+
+    if (search) qb.andWhere('(user.name LIKE :s OR user.email LIKE :s OR user.phone LIKE :s)', { s: `%${search}%` });
+
+    const total = await qb.getCount();
+    const data = await qb.skip((page - 1) * limit).take(limit).getMany();
+    return { data, total };
+  }
+
   async chargeWallet(req: WalletChargeRequest) {
     return this.makeTransaction(
       new MakeTransactionRequest({

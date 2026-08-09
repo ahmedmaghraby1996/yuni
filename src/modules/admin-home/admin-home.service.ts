@@ -10,6 +10,10 @@ import { SystemVariableEnum } from 'src/infrastructure/data/enums/sysytem-variab
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
+import { NotificationEntity } from 'src/infrastructure/entities/notification/notification.entity';
+import { NotificationTypes } from 'src/infrastructure/data/enums/notification-types.enum';
+import { FirebaseAdminService } from '../notification/firebase-admin-service';
+import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 
 @Injectable()
 export class AdminHomeService {
@@ -20,6 +24,8 @@ export class AdminHomeService {
     @InjectRepository(Offer) private readonly offerRepo: Repository<Offer>,
     @InjectRepository(SystemVariable) private readonly systemVariableRepo: Repository<SystemVariable>,
     @InjectRepository(Transaction) private readonly transactionRepo: Repository<Transaction>,
+    @InjectRepository(NotificationEntity) private readonly notificationRepo: Repository<NotificationEntity>,
+    private readonly fcmService: FirebaseAdminService,
   ) {}
 
   async getStats() {
@@ -123,6 +129,92 @@ export class AdminHomeService {
     }
 
     return result;
+  }
+
+  async getPendingRequests(page = 1, limit = 10) {
+    const [data, total] = await this.userRepo
+      .createQueryBuilder('u')
+      .where('u.roles = :role', { role: Role.STORE })
+      .andWhere("u.status = 'pending'")
+      .andWhere('u.deleted_at IS NULL')
+      .leftJoinAndSelect('u.stores', 'store', 'store.is_main_branch = true')
+      .orderBy('u.created_at', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: data.map((u) => {
+        const mainStore = u.stores?.[0] ?? null;
+        return {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          created_at: u.created_at,
+          waiting_hours: Math.floor((Date.now() - new Date(u.created_at).getTime()) / (1000 * 60 * 60)),
+          store: mainStore ? { id: mainStore.id, name: mainStore.name, logo: mainStore.logo } : null,
+        };
+      }),
+      total,
+    };
+  }
+
+  async sendExpiryReminders(adminUserId: string) {
+    const now = new Date();
+    const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const expiring = await this.subscriptionRepo
+      .createQueryBuilder('s')
+      .where('s.expire_at > :now', { now })
+      .andWhere('s.expire_at <= :week', { week: weekFromNow })
+      .andWhere('s.deleted_at IS NULL')
+      .getMany();
+
+    const title_ar = 'تذكير بانتهاء الاشتراك';
+    const title_en = 'Subscription Expiry Reminder';
+    const text_ar = 'اشتراكك سينتهي قريباً، يرجى التجديد للاستمرار في الاستفادة من الخدمات.';
+    const text_en = 'Your subscription is expiring soon. Please renew to continue enjoying our services.';
+
+    const userIds: string[] = [];
+
+    for (const sub of expiring) {
+      if (!sub.user_id) continue;
+      userIds.push(sub.user_id);
+
+      await this.notificationRepo.save(
+        this.notificationRepo.create({
+          user_id: sub.user_id,
+          type: NotificationTypes.USERS,
+          title_ar,
+          title_en,
+          text_ar,
+          text_en,
+          is_read: false,
+        }),
+      );
+
+      const user = await this.userRepo.findOne({ where: { id: sub.user_id }, select: ['id', 'fcm_token'] });
+      if (user?.fcm_token) {
+        await this.fcmService.sendNotification(user.fcm_token, title_ar, text_ar).catch(() => {});
+      }
+    }
+
+    // Save admin summary record
+    await this.notificationRepo.save(
+      this.notificationRepo.create({
+        user_id: adminUserId,
+        type: NotificationTypes.ADMIN,
+        title_ar,
+        title_en,
+        text_ar,
+        text_en,
+        is_read: false,
+        user_ids: userIds.length ? userIds : null,
+      }),
+    );
+
+    return { sent: userIds.length };
   }
 
   async getTopStores(limit = 10) {
