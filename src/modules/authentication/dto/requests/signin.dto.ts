@@ -10,6 +10,11 @@ export class LoginRequest {
     @ApiProperty()
     @IsNotEmpty() @IsString()
     password: string;
+
+    @ApiProperty({ required: false, enum: Role })
+    @IsOptional()
+    @IsEnum(Role)
+    role?: Role;
 }
 
 export class GoogleSigninRequest {

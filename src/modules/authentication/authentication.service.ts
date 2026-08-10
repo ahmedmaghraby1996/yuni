@@ -96,6 +96,10 @@ export class AuthenticationService {
       if (user.email && !user.email_verified_at) {
         throw new BadRequestException('message.email_not_verified');
       }
+      // Check role if provided
+      if (req.role && !user.roles?.includes(req.role)) {
+        throw new BadRequestException('message.invalid_credentials');
+      }
       // Check if employee is active
       if (user.roles?.includes(Role.EMPLOYEE)) {
         const employee = await this.employeeRepo.findOneBy({ user_id: user.id, is_active: true });
