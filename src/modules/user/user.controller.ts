@@ -355,8 +355,8 @@ export class UserController {
             .createQueryBuilder()
             .select('COUNT(DISTINCT o.id)', 'cnt')
             .from('offer_stores_store', 'os')
-            .innerJoin('offer', 'o', 'o.id = os.offerId AND o.deleted_at IS NULL')
-            .innerJoin('store', 's', 's.id = os.storeId AND s.user_id = :uid', { uid: id })
+            .innerJoin('offer', 'o', 'o.id = os.offer_id AND o.deleted_at IS NULL')
+            .innerJoin('store', 's', 's.id = os.store_id AND s.user_id = :uid', { uid: id })
             .getRawOne()
             .then((r) => Number(r?.cnt ?? 0)),
           this.userService.storeRepo.manager
