@@ -79,7 +79,7 @@ export class StoreEmployeeService {
       password: hashed,
       username: req.phone ?? req.email,
       roles: [Role.EMPLOYEE],
-      status: 'active',
+      status: (req.is_active ?? true) ? 'active' : 'deactivated',
       email_verified_at: new Date(),
       ...(avatar && { avatar }),
     });
@@ -89,7 +89,7 @@ export class StoreEmployeeService {
       user_id: savedUser.id,
       owner_user_id: this.ownerId,
       permissions,
-      is_active: true,
+      is_active: req.is_active ?? true,
       ...(req.role_id && { role_id: req.role_id }),
     });
     const saved = await this.repo.save(employee);

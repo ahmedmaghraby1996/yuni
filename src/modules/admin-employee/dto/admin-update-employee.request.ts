@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { AdminEmployeePermissionsDto } from './admin-create-employee.request';
 
 export class AdminUpdateEmployeeRequest {
@@ -8,6 +8,7 @@ export class AdminUpdateEmployeeRequest {
   @ApiProperty({ required: false }) @IsOptional() @IsString() phone?: string;
   @ApiProperty({ required: false }) @IsOptional() @IsString() email?: string;
   @ApiProperty({ required: false }) @IsOptional() @IsString() password?: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsBoolean() @Transform(({ value }) => value === 'true' || value === true) is_active?: boolean;
 
   @ApiProperty({ required: false, description: 'Assign a role — permissions are taken from the role' })
   @IsOptional() @IsString() role_id?: string;

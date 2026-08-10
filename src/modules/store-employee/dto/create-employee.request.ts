@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class ModulePermissionDto {
@@ -53,6 +53,8 @@ export class CreateEmployeeRequest {
   @ApiProperty() @IsString() password: string;
 
   @ApiProperty({ required: false }) @IsOptional() @IsString() email?: string;
+
+  @ApiProperty({ required: false, default: true }) @IsOptional() @IsBoolean() @Transform(({ value }) => value === 'true' || value === true) is_active?: boolean;
 
   @ApiProperty({ required: false, description: 'Assign a role — permissions are taken from the role' })
   @IsOptional() @IsString() role_id?: string;

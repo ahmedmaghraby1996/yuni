@@ -125,7 +125,7 @@ export class AdminEmployeeService {
       password: hashed,
       username: req.phone ?? req.email,
       roles: [Role.ADMIN_EMPLOYEE],
-      status: 'active',
+      status: (req.is_active ?? true) ? 'active' : 'deactivated',
       email_verified_at: new Date(),
       ...(avatar && { avatar }),
     });
@@ -134,7 +134,7 @@ export class AdminEmployeeService {
     const employee = this.repo.create({
       user_id: savedUser.id,
       permissions,
-      is_active: true,
+      is_active: req.is_active ?? true,
       ...(req.role_id && { role_id: req.role_id }),
     });
     const saved = await this.repo.save(employee);
@@ -149,6 +149,10 @@ export class AdminEmployeeService {
     if (req.phone) employee.user.phone = req.phone;
     if (req.email) employee.user.email = req.email;
     if (req.password) employee.user.password = await bcrypt.hash(req.password + this.config.get('app.key'), 10);
+    if (req.is_active !== undefined) {
+      employee.is_active = req.is_active;
+      employee.user.status = req.is_active ? 'active' : 'deactivated';
+    }
     if (req.avatarFile) employee.user.avatar = await this.uploadAvatar(req.avatarFile);
 
     if (req.role_id) {
