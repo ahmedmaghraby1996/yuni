@@ -96,9 +96,14 @@ export class AuthenticationService {
       if (user.email && !user.email_verified_at) {
         throw new BadRequestException('message.email_not_verified');
       }
-      // Check role if provided
-      if (req.role && !user.roles?.includes(req.role)) {
-        throw new BadRequestException('message.invalid_credentials');
+      // Check role if provided — treat EMPLOYEE as STORE and ADMIN_EMPLOYEE as ADMIN
+      if (req.role) {
+        const effectiveRoles = [...(user.roles ?? [])];
+        if (effectiveRoles.includes(Role.EMPLOYEE)) effectiveRoles.push(Role.STORE);
+        if (effectiveRoles.includes(Role.ADMIN_EMPLOYEE)) effectiveRoles.push(Role.ADMIN);
+        if (!effectiveRoles.includes(req.role)) {
+          throw new BadRequestException('message.invalid_credentials');
+        }
       }
       // Check if employee is active
       if (user.roles?.includes(Role.EMPLOYEE)) {
