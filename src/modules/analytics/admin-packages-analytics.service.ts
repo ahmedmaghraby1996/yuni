@@ -136,8 +136,8 @@ export class AdminPackagesService {
       const offers_count = await this.storeRepo.manager
         .query(
           `SELECT COUNT(DISTINCT o.id) as cnt FROM offer_stores_store os
-           INNER JOIN offer o ON o.id = os.offerId AND o.deleted_at IS NULL
-           INNER JOIN store st ON st.id = os.storeId AND st.user_id = ? AND st.deleted_at IS NULL`,
+           INNER JOIN offer o ON o.id = os.offer_id AND o.deleted_at IS NULL
+           INNER JOIN store st ON st.id = os.store_id AND st.user_id = ? AND st.deleted_at IS NULL`,
           [s.user_id],
         ).then((r: any[]) => Number(r?.[0]?.cnt ?? 0));
       return {
