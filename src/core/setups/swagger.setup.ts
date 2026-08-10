@@ -29,7 +29,7 @@ import { AdminPackagesModule } from 'src/modules/analytics/admin-packages-analyt
 const ADMIN_TAGS = [
   'Admin', 'Admin Auth', 'Admin Cities', 'Admin Stores', 'Admin Subcategories',
   'Admin Transactions', 'Admin Notifications', 'Admin Offers', 'Admin Static Pages',
-  'Admin Home', 'Admin Employees', 'Packages', 'Admin Packages',
+  'Admin Home', 'Admin Employees', 'Packages', 'Analytics',
 ];
 
 // Tags that are x-admin but should NOT appear in admin swagger (use tag-based inclusion instead)

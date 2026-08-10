@@ -8,7 +8,7 @@ import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { ActionResponse } from 'src/core/base/responses/action.response';
 import { AdminPackagesService } from './admin-packages-analytics.service';
 
-@ApiTags('Admin Packages')
+@ApiTags('Analytics')
 @AdminEndpoint()
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
