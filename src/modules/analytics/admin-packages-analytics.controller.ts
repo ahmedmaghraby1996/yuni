@@ -13,13 +13,13 @@ import { AdminPackagesService } from './admin-packages-analytics.service';
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
-@Controller('admin/packages')
+@Controller('admin/analytics')
 export class AdminPackagesController {
   constructor(private readonly service: AdminPackagesService) {}
 
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
-  @Get('dashboard')
+  @Get('packages')
   async getDashboard(@Query('page') page = 1, @Query('limit') limit = 10) {
     return new ActionResponse(await this.service.getDashboard(Number(page), Number(limit)));
   }
