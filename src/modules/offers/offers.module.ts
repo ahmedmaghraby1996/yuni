@@ -8,8 +8,10 @@ import { SubCategoryService } from './sub_category.service';
 import { StoreService } from './store.service';
 import { CategoryService } from '../category/category.service';
 import { FileService } from '../file/file.service';
+import { PackagesModule } from '../packages/packages.module';
 
 @Module({
+  imports: [PackagesModule],
   controllers: [OffersController, StoreController],
   providers: [
     OffersService,

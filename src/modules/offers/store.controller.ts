@@ -33,6 +33,7 @@ import { AddBranchRequest } from '../user/dto/request/add-branch.request';
 import { UserService } from '../user/user.service';
 import { OffersService } from './offers.service';
 import { SubCategoryService } from './sub_category.service';
+import { PackagesService } from '../packages/packages.service';
 import { SubCategory } from 'src/infrastructure/entities/category/subcategory.entity';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { IsDate } from 'class-validator';
@@ -52,6 +53,7 @@ export class StoreController {
     private readonly userService: UserService,
     private readonly offersService: OffersService,
     private readonly subCategoryService: SubCategoryService,
+    private readonly packagesService: PackagesService,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
   ) {}
 
@@ -64,6 +66,15 @@ export class StoreController {
     const { packages, store, subscription } = await this.userService.getPackage();
     const storeResult = plainToInstance(BranchResponse, store, { excludeExtraneousValues: true });
     return new ActionResponse(this._i18nResponse.entity({ packages, store: storeResult, subscription }));
+  }
+
+  @StoreEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.STORE)
+  @Permission('packages', 'view')
+  @Get('packages/:id')
+  async getPackageById(@Param('id') id: string) {
+    return new ActionResponse(await this.packagesService.getPackageById(id));
   }
 
   @StoreEndpoint()
