@@ -43,7 +43,8 @@ export class AdminAuthController {
   async adminSignin(@Body() req: LoginRequest): Promise<ActionResponse<AuthResponse>> {
     const user = await this.authService.validateUser(req);
     if (!user) throw new BadRequestException('message.invalid_credentials');
-    if (!user.roles?.includes(Role.ADMIN)) {
+    const isAllowed = user.roles?.includes(Role.SUPERADMIN) || user.roles?.includes(Role.ADMIN) || user.roles?.includes(Role.ADMIN_EMPLOYEE);
+    if (!isAllowed) {
       throw new BadRequestException('message.invalid_credentials');
     }
     const authData = await this.authService.login(user);
