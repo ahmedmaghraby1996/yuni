@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
-import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { PackagesService } from './packages.service';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
@@ -46,14 +45,6 @@ export class PackagesController {
     return new ActionResponse(await this.packagesService.getPackageById(id));
   }
 
-  @StoreEndpoint()
-  @ApiTags('Store Packages')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.STORE)
-  @Get('store/:id')
-  async getPackageByIdForStore(@Param('id') id: string) {
-    return new ActionResponse(await this.packagesService.getPackageById(id));
-  }
 
   @Post()
   createPackage(@Body() data: CreatePackageRequest) {

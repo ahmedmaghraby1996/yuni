@@ -10,5 +10,6 @@ import { Transaction } from 'src/infrastructure/entities/wallet/transaction.enti
   imports: [TypeOrmModule.forFeature([Package, Subscription, Transaction])],
   controllers: [PackagesController],
   providers: [PackagesService],
+  exports: [PackagesService],
 })
 export class PackagesModule {}

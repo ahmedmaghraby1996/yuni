@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Put,
   UploadedFiles,
   UseGuards,
@@ -20,6 +21,7 @@ import { Permission } from '../authentication/guards/permission.decorator';
 import { BranchResponse } from '../user/dto/branch.response';
 import { UpdateStoreInfoRequest } from '../user/dto/request/update-store-info.request';
 import { UserService } from '../user/user.service';
+import { PackagesService } from '../packages/packages.service';
 
 @ApiTags('Store Profile')
 @ApiHeader({ name: 'Accept-Language', required: false, description: 'Language header: en, ar' })
@@ -27,7 +29,10 @@ import { UserService } from '../user/user.service';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('store/profile')
 export class StoreProfileController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly packagesService: PackagesService,
+  ) {}
 
   @StoreEndpoint()
   @Roles(Role.STORE)
@@ -69,5 +74,14 @@ export class StoreProfileController {
     if (files?.vat_certificate?.[0]) req.vat_certificate = files.vat_certificate[0];
     const store = await this.userService.updateMainStoreInfo(req);
     return new ActionResponse(plainToInstance(BranchResponse, store, { excludeExtraneousValues: true }));
+  }
+
+  @StoreEndpoint()
+  @Roles(Role.STORE)
+  @ApiOperation({ summary: 'Get package by ID' })
+  @ApiTags('Store Packages')
+  @Get('package/:id')
+  async getPackageById(@Param('id') id: string) {
+    return new ActionResponse(await this.packagesService.getPackageById(id));
   }
 }
