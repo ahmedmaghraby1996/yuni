@@ -107,7 +107,7 @@ export class AdminEmployeeService {
       if (emailExists) throw new BadRequestException('Email already in use');
     }
 
-    let permissions: AdminEmployeePermissions = req.permissions ?? {};
+    let permissions: AdminEmployeePermissions = {};
     if (req.role_id) {
       const role = await this.roleRepo.findOneBy({ id: req.role_id });
       if (!role) throw new NotFoundException('Role not found');

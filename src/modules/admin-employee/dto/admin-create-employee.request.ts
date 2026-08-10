@@ -27,12 +27,8 @@ export class AdminCreateEmployeeRequest {
 
   @ApiProperty({ required: false }) @IsOptional() @IsString() email?: string;
 
-  @ApiProperty({ required: false, description: 'Assign a role — permissions are taken from the role' })
+  @ApiProperty({ required: false, description: 'Assign a role — permissions are inherited from the role' })
   @IsOptional() @IsString() role_id?: string;
-
-  @ApiProperty({ required: false, type: AdminEmployeePermissionsDto })
-  @IsOptional() @ValidateNested() @Type(() => AdminEmployeePermissionsDto)
-  permissions?: AdminEmployeePermissionsDto;
 
   @ApiProperty({ required: false, type: 'string', format: 'binary' })
   @IsOptional()
