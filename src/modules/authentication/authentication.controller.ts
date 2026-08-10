@@ -33,6 +33,7 @@ import { City } from 'src/infrastructure/entities/city/city.entity';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
+import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
 import { FileService } from '../file/file.service';
 
 @ApiTags(Router.Auth.ApiTag)
@@ -171,6 +172,8 @@ export class AuthenticationController {
       if (files?.cover_image?.[0]) store.cover_image = await this.fileService.upload(files.cover_image[0], 'stores');
       if (files?.commercial_registration_file?.[0]) store.commercial_registration = await this.fileService.upload(files.commercial_registration_file[0], 'stores');
       if (files?.vat_certificate_file?.[0]) store.vat_certificate = await this.fileService.upload(files.vat_certificate_file[0], 'stores');
+      store.is_active = false;
+      store.status = StoreStatus.PENDING;
       await this.storeRepository.save(store);
     }
 
