@@ -23,6 +23,7 @@ import { StoreSuggestionModule } from './store-suggestion/store-suggestion.modul
 import { AdminStoreModule } from './admin-store/admin-store.module';
 import { AdminHomeModule } from './admin-home/admin-home.module';
 import { AdminEmployeeModule } from './admin-employee/admin-employee.module';
+import { AdminPackagesModule } from './analytics/admin-packages-analytics.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AdminEmployeeModule } from './admin-employee/admin-employee.module';
     AdminStoreModule,
     AdminHomeModule,
     AdminEmployeeModule,
+    AdminPackagesModule,
   ],
   exports: [],
 })
