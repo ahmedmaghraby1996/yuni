@@ -134,11 +134,12 @@ export class AdminPackagesService {
         where: { user_id: s.user_id, is_main_branch: true }, select: ['id', 'name', 'logo'],
       });
       const offers_count = await this.storeRepo.manager
-        .createQueryBuilder().select('COUNT(DISTINCT o.id)', 'cnt')
-        .from('offer_stores_store', 'os')
-        .innerJoin('offer', 'o', 'o.id = os.offerId AND o.deleted_at IS NULL')
-        .innerJoin('store', 'st', 'st.id = os.storeId AND st.user_id = :uid', { uid: s.user_id })
-        .getRawOne().then((r) => Number(r?.cnt ?? 0));
+        .query(
+          `SELECT COUNT(DISTINCT o.id) as cnt FROM offer_stores_store os
+           INNER JOIN offer o ON o.id = os.offerId AND o.deleted_at IS NULL
+           INNER JOIN store st ON st.id = os.storeId AND st.user_id = ? AND st.deleted_at IS NULL`,
+          [s.user_id],
+        ).then((r: any[]) => Number(r?.[0]?.cnt ?? 0));
       return {
         id: s.id,
         user_id: s.user_id,
