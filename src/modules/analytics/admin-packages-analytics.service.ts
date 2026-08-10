@@ -75,7 +75,8 @@ export class AdminPackagesService {
       .select('DAYNAME(u.created_at)', 'day')
       .addSelect('COUNT(*)', 'count')
       .where('u.created_at >= :from', { from: fourWeeksAgo })
-      .groupBy('DAYNAME(u.created_at)')
+      .groupBy('DAYOFWEEK(u.created_at)')
+      .addGroupBy('DAYNAME(u.created_at)')
       .orderBy('DAYOFWEEK(u.created_at)', 'ASC')
       .getRawMany();
 
