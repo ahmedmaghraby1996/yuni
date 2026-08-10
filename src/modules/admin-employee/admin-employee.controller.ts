@@ -43,7 +43,7 @@ export class AdminEmployeeController {
   @Get('permissions/groups')
   getPermissionGroups() {
     const actions = ['view', 'add', 'edit', 'delete'];
-    const modules = ['users', 'stores', 'employees', 'transactions', 'notifications', 'banners', 'static_pages', 'home'];
+    const modules = ['users', 'stores', 'employees', 'transactions', 'notifications', 'banners', 'static_pages', 'home', 'analytics'];
     return new ActionResponse(modules.map((module) => ({ module, actions })));
   }
 

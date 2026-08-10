@@ -21,6 +21,7 @@ export interface AdminEmployeePermissions {
   banners?: AdminModulePermission;
   static_pages?: AdminModulePermission;
   home?: AdminModulePermission;
+  analytics?: AdminModulePermission;
 }
 
 @Entity()

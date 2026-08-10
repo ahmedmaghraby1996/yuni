@@ -18,6 +18,7 @@ export class AdminEmployeePermissionsDto {
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) banners?: AdminModulePermissionDto;
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) static_pages?: AdminModulePermissionDto;
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) home?: AdminModulePermissionDto;
+  @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) analytics?: AdminModulePermissionDto;
 }
 
 export class AdminCreateEmployeeRequest {
