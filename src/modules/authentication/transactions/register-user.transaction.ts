@@ -81,6 +81,9 @@ export class RegisterUserTransaction extends BaseTransaction<
 
       // set user role
       user.roles = [req.role];
+      if (req.role === Role.STORE) {
+        user.status = 'pending';
+      }
       // save user
       const savedUser = await context.save(User, user);
 

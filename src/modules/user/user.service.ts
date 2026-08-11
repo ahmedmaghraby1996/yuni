@@ -558,6 +558,9 @@ export class UserService extends BaseService<User> {
     const user = await this._repo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('message.user_not_found');
     user.status = status;
+    if (status === 'active' && !user.email_verified_at) {
+      user.email_verified_at = new Date();
+    }
     return await this._repo.save(user);
   }
 
