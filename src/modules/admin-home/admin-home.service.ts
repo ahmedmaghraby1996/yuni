@@ -291,7 +291,7 @@ export class AdminHomeService {
 
     const storeIds = rows.map((r) => r.store_id);
     const stores = await this.storeRepo.find({
-      where: storeIds.map((id) => ({ id, is_main_branch: true })),
+      where: storeIds.map((id) => ({ id })),
       select: ['id', 'name', 'logo', 'status', 'is_active', 'user_id'],
     });
     const storeMap = new Map(stores.map((s) => [s.id, s]));
