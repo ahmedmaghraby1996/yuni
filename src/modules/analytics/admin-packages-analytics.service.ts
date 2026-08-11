@@ -10,6 +10,7 @@ import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { toUrl } from 'src/core/helpers/file.helper';
 
 @Injectable()
 export class AdminPackagesService {
@@ -193,7 +194,7 @@ export class AdminPackagesService {
         name: (s.user as any)?.name ?? null,
         phone: (s.user as any)?.phone ?? null,
         store_name: store?.name ?? null,
-        logo: store?.logo ?? null,
+        logo: toUrl(store?.logo ?? null),
         offers_count,
         package_name_ar: s.package?.name_ar ?? s.name_ar,
         package_name_en: s.package?.name_en ?? s.name_en,

@@ -5,6 +5,7 @@ import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
+import { OfferUsage } from 'src/infrastructure/entities/offer/offer-usage.entity';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
@@ -12,6 +13,7 @@ import { NotificationEntity } from 'src/infrastructure/entities/notification/not
 import { NotificationTypes } from 'src/infrastructure/data/enums/notification-types.enum';
 import { FirebaseAdminService } from '../notification/firebase-admin-service';
 import { StoreStatus } from 'src/infrastructure/data/enums/store-status.enum';
+import { toUrl } from 'src/core/helpers/file.helper';
 
 @Injectable()
 export class AdminHomeService {
@@ -20,6 +22,7 @@ export class AdminHomeService {
     @InjectRepository(Store) private readonly storeRepo: Repository<Store>,
     @InjectRepository(Subscription) private readonly subscriptionRepo: Repository<Subscription>,
     @InjectRepository(Offer) private readonly offerRepo: Repository<Offer>,
+    @InjectRepository(OfferUsage) private readonly offerUsageRepo: Repository<OfferUsage>,
     @InjectRepository(Transaction) private readonly transactionRepo: Repository<Transaction>,
     @InjectRepository(NotificationEntity) private readonly notificationRepo: Repository<NotificationEntity>,
     private readonly fcmService: FirebaseAdminService,
@@ -119,7 +122,7 @@ export class AdminHomeService {
     const rows: { period: string; total: string }[] = await this.transactionRepo
       .createQueryBuilder('t')
       .select(groupBy, 'period')
-      .addSelect('SUM(t.amount)', 'total')
+      .addSelect('SUM(ABS(t.amount))', 'total')
       .where('t.created_at >= :from', { from })
       .andWhere('t.type = :type', { type: TransactionTypes.STORE_PAYMENT })
       .andWhere('t.deleted_at IS NULL')
@@ -172,7 +175,7 @@ export class AdminHomeService {
           phone: u.phone,
           created_at: u.created_at,
           waiting_hours: Math.floor((Date.now() - new Date(u.created_at).getTime()) / (1000 * 60 * 60)),
-          store: mainStore ? { id: mainStore.id, name: mainStore.name, logo: mainStore.logo } : null,
+          store: mainStore ? { id: mainStore.id, name: mainStore.name, logo: toUrl(mainStore.logo) } : null,
         };
       }),
       total,
@@ -263,7 +266,7 @@ export class AdminHomeService {
       return {
         user_id: r.user_id,
         store_name: store?.name ?? null,
-        logo: store?.logo ?? null,
+        logo: toUrl(store?.logo ?? null),
         total: Number(r.total),
       };
     });
@@ -272,42 +275,49 @@ export class AdminHomeService {
   async getTopStores(limit = 10) {
     const now = new Date();
 
+    // Rank stores by total offer usages
+    const rows: { store_id: string; total_usages: string }[] = await this.offerUsageRepo
+      .createQueryBuilder('u')
+      .select('os.store_id', 'store_id')
+      .addSelect('COUNT(u.id)', 'total_usages')
+      .innerJoin('offer_stores_store', 'os', 'os.offer_id = u.offer_id')
+      .where('u.deleted_at IS NULL')
+      .groupBy('os.store_id')
+      .orderBy('total_usages', 'DESC')
+      .limit(limit)
+      .getRawMany();
+
+    if (!rows.length) return [];
+
+    const storeIds = rows.map((r) => r.store_id);
     const stores = await this.storeRepo.find({
-      where: { is_main_branch: true },
-      relations: { subcategory: true },
-      take: limit,
-      order: { created_at: 'DESC' },
+      where: storeIds.map((id) => ({ id, is_main_branch: true })),
+      select: ['id', 'name', 'logo', 'status', 'is_active', 'user_id'],
     });
+    const storeMap = new Map(stores.map((s) => [s.id, s]));
 
-    const result = await Promise.all(
-      stores.map(async (store) => {
-        const [active_offers, subscription] = await Promise.all([
-          this.offerRepo
-            .createQueryBuilder('o')
-            .innerJoin('o.stores', 's')
-            .where('s.id = :id', { id: store.id })
-            .andWhere('o.is_active = true')
-            .getCount(),
-          this.subscriptionRepo.findOne({
-            where: { user_id: store.user_id, expire_at: MoreThan(now) },
-            relations: { package: true },
-            order: { created_at: 'DESC' },
-          }),
-        ]);
-
-        return {
-          id: store.id,
-          name: store.name,
-          logo: store.logo,
-          status: store.status,
-          is_active: store.is_active,
-          active_offers,
-          subscription_package: subscription?.package?.name_en ?? null,
-          subscription_expires_at: subscription?.expire_at ?? null,
-        };
-      }),
+    const subscriptions = await Promise.all(
+      stores.map((s) => this.subscriptionRepo.findOne({
+        where: { user_id: s.user_id, expire_at: MoreThan(now) },
+        relations: { package: true },
+        order: { created_at: 'DESC' },
+      })),
     );
+    const subMap = new Map(stores.map((s, i) => [s.id, subscriptions[i]]));
 
-    return result;
+    return rows.map((r) => {
+      const store = storeMap.get(r.store_id);
+      const subscription = subMap.get(r.store_id);
+      return {
+        id: r.store_id,
+        name: store?.name ?? null,
+        logo: toUrl(store?.logo ?? null),
+        status: store?.status ?? null,
+        is_active: store?.is_active ?? null,
+        total_usages: Number(r.total_usages),
+        subscription_package: subscription?.package?.name_en ?? null,
+        subscription_expires_at: subscription?.expire_at ?? null,
+      };
+    });
   }
 }
