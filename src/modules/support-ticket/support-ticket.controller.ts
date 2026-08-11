@@ -81,6 +81,16 @@ export class SupportTicketController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Get support ticket by id (admin)' })
+  @Get('admin/:id')
+  async getAdminTicketById(@Param('id') id: string) {
+    const ticket = await this.supportTicketService.getAdminTicketById(id);
+    return new ActionResponse(plainToInstance(TicketResponse, ticket, { excludeExtraneousValues: true }));
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Get all support tickets' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })

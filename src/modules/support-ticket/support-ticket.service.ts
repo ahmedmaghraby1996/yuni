@@ -53,6 +53,15 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     return ticket;
   }
 
+  async getAdminTicketById(id: string): Promise<SupportTicket> {
+    const ticket = await this.repo.findOne({
+      where: { id },
+      relations: { user: true },
+    });
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    return ticket;
+  }
+
   async getAllTickets(page = 1, limit = 10, status?: TicketStatus, name?: string): Promise<{ data: SupportTicket[]; total: number }> {
     const qb = this.repo.createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.user', 'user')
