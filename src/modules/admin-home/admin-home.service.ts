@@ -5,8 +5,6 @@ import { User } from 'src/infrastructure/entities/user/user.entity';
 import { Store } from 'src/infrastructure/entities/store/store.entity';
 import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
 import { Offer } from 'src/infrastructure/entities/offer/offer.entity';
-import { SystemVariable } from 'src/infrastructure/entities/system-variables/system-variable.entity';
-import { SystemVariableEnum } from 'src/infrastructure/data/enums/sysytem-variable.enum';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Transaction } from 'src/infrastructure/entities/wallet/transaction.entity';
 import { TransactionTypes } from 'src/infrastructure/data/enums/transaction-types';
@@ -22,7 +20,6 @@ export class AdminHomeService {
     @InjectRepository(Store) private readonly storeRepo: Repository<Store>,
     @InjectRepository(Subscription) private readonly subscriptionRepo: Repository<Subscription>,
     @InjectRepository(Offer) private readonly offerRepo: Repository<Offer>,
-    @InjectRepository(SystemVariable) private readonly systemVariableRepo: Repository<SystemVariable>,
     @InjectRepository(Transaction) private readonly transactionRepo: Repository<Transaction>,
     @InjectRepository(NotificationEntity) private readonly notificationRepo: Repository<NotificationEntity>,
     private readonly fcmService: FirebaseAdminService,
@@ -66,7 +63,9 @@ export class AdminHomeService {
         .where('u.roles LIKE :role', { role: `%${Role.CLIENT}%` })
         .andWhere('u.created_at < :end', { end: startOfMonth }).getCount(),
       this.userRepo.count({ where: { roles: Role.STORE, status: 'pending' } as any }),
-      this.systemVariableRepo.findOne({ where: { key: SystemVariableEnum.TOTAL_EARNINGS } }),
+      this.transactionRepo.createQueryBuilder('t').select('SUM(ABS(t.amount))', 'total')
+        .where('t.type = :type', { type: TransactionTypes.STORE_PAYMENT })
+        .andWhere('t.deleted_at IS NULL').getRawOne().then((r) => Number(r?.total ?? 0)),
       this.offerRepo.count({ where: { is_active: true } }),
       this.offerRepo.createQueryBuilder('o')
         .where('o.is_active = true')
@@ -90,7 +89,7 @@ export class AdminHomeService {
       total_students,
       total_students_growth: growth(total_students, total_students_last_month),
       join_requests,
-      total_revenue: Number(total_revenue?.value ?? 0),
+      total_revenue,
       active_offers,
       active_offers_growth: growth(active_offers, active_offers_last_month),
       pending_requests_over_48h,

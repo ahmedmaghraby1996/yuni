@@ -115,7 +115,7 @@ export class AdminPackagesService {
       .orderBy('month', 'ASC')
       .getRawMany();
 
-    // Most popular package
+    // Most popular package (by subscriber count)
     const popularRaw = await this.subscriptionRepo
       .createQueryBuilder('s').select('s.package_id', 'package_id').addSelect('COUNT(*)', 'count')
       .where('s.deleted_at IS NULL').groupBy('s.package_id').orderBy('count', 'DESC').limit(1).getRawOne();
@@ -127,6 +127,31 @@ export class AdminPackagesService {
       popular_package = {
         name_ar: pkg?.name_ar, name_en: pkg?.name_en,
         percentage: active_subscriptions ? Math.round((pkgActive / active_subscriptions) * 100) : 0,
+      };
+    }
+
+    // Top selling package (by revenue)
+    const topSellingRaw = await this.transactionRepo
+      .createQueryBuilder('t')
+      .select('s.package_id', 'package_id')
+      .addSelect('SUM(ABS(t.amount))', 'total')
+      .innerJoin('subscription', 's', 's.user_id = t.user_id AND s.deleted_at IS NULL')
+      .where('t.type = :type', { type: TransactionTypes.STORE_PAYMENT })
+      .andWhere('t.deleted_at IS NULL')
+      .andWhere('s.package_id IS NOT NULL')
+      .groupBy('s.package_id')
+      .orderBy('total', 'DESC')
+      .limit(1)
+      .getRawOne();
+
+    let top_selling_package = null;
+    if (topSellingRaw?.package_id) {
+      const pkg = await this.packageRepo.findOneBy({ id: topSellingRaw.package_id });
+      const pkgSubscribers = await this.subscriptionRepo.count({ where: { package_id: topSellingRaw.package_id } });
+      top_selling_package = {
+        name_ar: pkg?.name_ar, name_en: pkg?.name_en,
+        percentage: total_merchants ? Math.round((pkgSubscribers / total_merchants) * 100) : 0,
+        total_revenue: Math.round(Number(topSellingRaw.total)),
       };
     }
 
@@ -188,7 +213,7 @@ export class AdminPackagesService {
         total_students, total_students_growth,
       },
       alerts: { expiring_soon, pending_requests },
-      subscription_details: { popular_package, upgrades_this_month, avg_duration_months: avgDuration, renewal_rate },
+      subscription_details: { popular_package, top_selling_package, upgrades_this_month, avg_duration_months: avgDuration, renewal_rate },
       usage_trend: usageByDay.map((r) => ({ day: r.day, count: Number(r.count) })),
       revenue_trend: revenueByMonth.map((r) => ({ month: r.month, total: Number(r.total) })),
       recent_subscriptions: { data: recent_subscriptions, total: recent_total, page, limit },
