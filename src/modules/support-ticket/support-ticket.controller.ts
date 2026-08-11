@@ -53,14 +53,18 @@ export class SupportTicketController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
+  @ApiQuery({ name: 'from', required: false, type: String, description: 'Start date (ISO 8601)' })
+  @ApiQuery({ name: 'to', required: false, type: String, description: 'End date (ISO 8601)' })
   @Get()
   async getMyTickets(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('status') status?: TicketStatus,
     @Query('name') name?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status, name);
+    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status, name, from ? new Date(from) : undefined, to ? new Date(to) : undefined);
     const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
@@ -86,14 +90,18 @@ export class SupportTicketController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
+  @ApiQuery({ name: 'from', required: false, type: String, description: 'Start date (ISO 8601)' })
+  @ApiQuery({ name: 'to', required: false, type: String, description: 'End date (ISO 8601)' })
   @Get('admin/all')
   async getAllTickets(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('status') status?: TicketStatus,
     @Query('name') name?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    const { data, total } = await this.supportTicketService.getAllTickets(Number(page), Number(limit), status, name);
+    const { data, total } = await this.supportTicketService.getAllTickets(Number(page), Number(limit), status, name, from ? new Date(from) : undefined, to ? new Date(to) : undefined);
     const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
