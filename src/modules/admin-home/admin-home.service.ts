@@ -275,41 +275,42 @@ export class AdminHomeService {
   async getTopStores(limit = 10) {
     const now = new Date();
 
-    // Rank stores by total offer usages
-    const rows: { store_id: string; total_usages: string }[] = await this.offerUsageRepo
+    // Rank merchants (owners) by total offer usages across all branches
+    const rows: { user_id: string; total_usages: string }[] = await this.offerUsageRepo
       .createQueryBuilder('u')
-      .select('os.store_id', 'store_id')
+      .select('s.user_id', 'user_id')
       .addSelect('COUNT(u.id)', 'total_usages')
       .innerJoin('offer_stores_store', 'os', 'os.offer_id = u.offer_id')
+      .innerJoin('store', 's', 's.id = os.store_id AND s.deleted_at IS NULL')
       .where('u.deleted_at IS NULL')
-      .groupBy('os.store_id')
+      .groupBy('s.user_id')
       .orderBy('total_usages', 'DESC')
       .limit(limit)
       .getRawMany();
 
     if (!rows.length) return [];
 
-    const storeIds = rows.map((r) => r.store_id);
-    const stores = await this.storeRepo.find({
-      where: storeIds.map((id) => ({ id })),
+    const userIds = rows.map((r) => r.user_id);
+    const mainStores = await this.storeRepo.find({
+      where: userIds.map((uid) => ({ user_id: uid, is_main_branch: true })),
       select: ['id', 'name', 'logo', 'status', 'is_active', 'user_id'],
     });
-    const storeMap = new Map(stores.map((s) => [s.id, s]));
+    const storeMap = new Map(mainStores.map((s) => [s.user_id, s]));
 
     const subscriptions = await Promise.all(
-      stores.map((s) => this.subscriptionRepo.findOne({
-        where: { user_id: s.user_id, expire_at: MoreThan(now) },
+      userIds.map((uid) => this.subscriptionRepo.findOne({
+        where: { user_id: uid, expire_at: MoreThan(now) },
         relations: { package: true },
         order: { created_at: 'DESC' },
       })),
     );
-    const subMap = new Map(stores.map((s, i) => [s.id, subscriptions[i]]));
+    const subMap = new Map(userIds.map((uid, i) => [uid, subscriptions[i]]));
 
     return rows.map((r) => {
-      const store = storeMap.get(r.store_id);
-      const subscription = subMap.get(r.store_id);
+      const store = storeMap.get(r.user_id);
+      const subscription = subMap.get(r.user_id);
       return {
-        id: r.store_id,
+        user_id: r.user_id,
         name: store?.name ?? null,
         logo: toUrl(store?.logo ?? null),
         status: store?.status ?? null,
