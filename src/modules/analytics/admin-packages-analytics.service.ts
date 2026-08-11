@@ -30,17 +30,25 @@ export class AdminPackagesService {
 
     const [
       active_subscriptions,
+      active_subscriptions_last_month,
       total_revenue,
       revenue_this_month,
       revenue_last_month,
       active_merchants,
+      active_merchants_last_month,
       total_merchants,
+      total_merchants_last_month,
       total_students,
+      total_students_last_month,
       expiring_soon,
       pending_requests,
       upgrades_this_month,
     ] = await Promise.all([
       this.subscriptionRepo.count({ where: { expire_at: MoreThan(now) } }),
+      this.subscriptionRepo.createQueryBuilder('s')
+        .where('s.expire_at > :start', { start: startOfLastMonth })
+        .andWhere('s.created_at < :end', { end: startOfMonth })
+        .andWhere('s.deleted_at IS NULL').getCount(),
       this.transactionRepo.createQueryBuilder('t').select('SUM(ABS(t.amount))', 'total')
         .where('t.type = :type', { type: TransactionTypes.STORE_PAYMENT }).andWhere('t.deleted_at IS NULL')
         .getRawOne().then((r) => Number(r?.total ?? 0)),
@@ -56,8 +64,16 @@ export class AdminPackagesService {
       this.storeRepo.createQueryBuilder('s')
         .innerJoin('subscription', 'sub', 'sub.user_id = s.user_id AND sub.expire_at > :now', { now })
         .where('s.is_main_branch = true').andWhere('s.is_active = true').getCount(),
+      this.storeRepo.createQueryBuilder('s')
+        .innerJoin('subscription', 'sub', 'sub.user_id = s.user_id AND sub.expire_at > :start AND sub.created_at < :end', { start: startOfLastMonth, end: startOfMonth })
+        .where('s.is_main_branch = true').andWhere('s.is_active = true').getCount(),
       this.storeRepo.count({ where: { is_main_branch: true } }),
+      this.storeRepo.createQueryBuilder('s')
+        .where('s.is_main_branch = true').andWhere('s.created_at < :end', { end: startOfMonth }).getCount(),
       this.userRepo.count({ where: { roles: Role.CLIENT } as any }),
+      this.userRepo.createQueryBuilder('u')
+        .where('u.roles LIKE :role', { role: `%${Role.CLIENT}%` })
+        .andWhere('u.created_at < :end', { end: startOfMonth }).getCount(),
       this.subscriptionRepo.createQueryBuilder('s').where('s.expire_at > :now', { now })
         .andWhere('s.expire_at <= :week', { week: weekFromNow }).andWhere('s.deleted_at IS NULL').getCount(),
       this.userRepo.count({ where: { roles: Role.STORE, status: 'pending' } as any }),
@@ -65,8 +81,14 @@ export class AdminPackagesService {
         .where('s.created_at >= :start', { start: startOfMonth }).andWhere('s.deleted_at IS NULL').getCount(),
     ]);
 
-    const revenue_growth = revenue_last_month === 0 ? 100
-      : Math.round(((revenue_this_month - revenue_last_month) / revenue_last_month) * 1000) / 10;
+    const growth = (current: number, last: number) =>
+      last === 0 ? 100 : Math.round(((current - last) / last) * 1000) / 10;
+
+    const revenue_growth = growth(revenue_this_month, revenue_last_month);
+    const active_subscriptions_growth = growth(active_subscriptions, active_subscriptions_last_month);
+    const active_merchants_growth = growth(active_merchants, active_merchants_last_month);
+    const total_merchants_growth = growth(total_merchants, total_merchants_last_month);
+    const total_students_growth = growth(total_students, total_students_last_month);
 
     // Daily usage trend (last 4 weeks)
     const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
@@ -110,8 +132,8 @@ export class AdminPackagesService {
 
     // Avg subscription duration in months
     const avgDuration = await this.subscriptionRepo.manager
-      .query(`SELECT AVG(TIMESTAMPDIFF(MONTH, s.created_at, s.expire_at)) as avg FROM subscription s WHERE s.deleted_at IS NULL`)
-      .then((r: any[]) => Math.round(Number(r?.[0]?.avg ?? 0)));
+      .query(`SELECT AVG(TIMESTAMPDIFF(DAY, s.created_at, s.expire_at)) / 30.0 as avg FROM subscription s WHERE s.deleted_at IS NULL`)
+      .then((r: any[]) => Math.round(Number(r?.[0]?.avg ?? 0) * 10) / 10);
 
     // Renewal rate
     const renewalData = await this.subscriptionRepo.manager
@@ -157,7 +179,14 @@ export class AdminPackagesService {
     }));
 
     return {
-      stats: { active_subscriptions, total_revenue, revenue_this_month, revenue_growth, active_merchants, total_merchants, total_students },
+      stats: {
+        active_subscriptions, active_subscriptions_growth,
+        total_revenue,
+        revenue_this_month, revenue_growth,
+        active_merchants, active_merchants_growth,
+        total_merchants, total_merchants_growth,
+        total_students, total_students_growth,
+      },
       alerts: { expiring_soon, pending_requests },
       subscription_details: { popular_package, upgrades_this_month, avg_duration_months: avgDuration, renewal_rate },
       usage_trend: usageByDay.map((r) => ({ day: r.day, count: Number(r.count) })),

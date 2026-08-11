@@ -30,49 +30,69 @@ export class AdminHomeService {
 
   async getStats() {
     const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
     const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
+    const growth = (current: number, last: number) =>
+      last === 0 ? 100 : Math.round(((current - last) / last) * 1000) / 10;
+
     const [
       active_subscriptions,
+      active_subscriptions_last_month,
       total_stores,
+      total_stores_last_month,
       total_students,
+      total_students_last_month,
       join_requests,
       total_revenue,
       active_offers,
+      active_offers_last_month,
       pending_requests_over_48h,
       expiring_subscriptions_this_week,
     ] = await Promise.all([
       this.subscriptionRepo.count({ where: { expire_at: MoreThan(now) } }),
+      this.subscriptionRepo.createQueryBuilder('s')
+        .where('s.expire_at > :start', { start: startOfLastMonth })
+        .andWhere('s.created_at < :end', { end: startOfMonth })
+        .andWhere('s.deleted_at IS NULL').getCount(),
       this.storeRepo.count({ where: { is_main_branch: true } }),
+      this.storeRepo.createQueryBuilder('s')
+        .where('s.is_main_branch = true')
+        .andWhere('s.created_at < :end', { end: startOfMonth }).getCount(),
       this.userRepo.count({ where: { roles: Role.CLIENT } as any }),
+      this.userRepo.createQueryBuilder('u')
+        .where('u.roles LIKE :role', { role: `%${Role.CLIENT}%` })
+        .andWhere('u.created_at < :end', { end: startOfMonth }).getCount(),
       this.userRepo.count({ where: { roles: Role.STORE, status: 'pending' } as any }),
       this.systemVariableRepo.findOne({ where: { key: SystemVariableEnum.TOTAL_EARNINGS } }),
       this.offerRepo.count({ where: { is_active: true } }),
-      // Pending store users waiting more than 48h
-      this.userRepo
-        .createQueryBuilder('u')
+      this.offerRepo.createQueryBuilder('o')
+        .where('o.is_active = true')
+        .andWhere('o.created_at < :end', { end: startOfMonth }).getCount(),
+      this.userRepo.createQueryBuilder('u')
         .where("u.roles = :role", { role: Role.STORE })
         .andWhere("u.status = 'pending'")
         .andWhere('u.created_at <= :limit', { limit: fortyEightHoursAgo })
-        .andWhere('u.deleted_at IS NULL')
-        .getCount(),
-      // Subscriptions expiring within the next 7 days
-      this.subscriptionRepo
-        .createQueryBuilder('s')
+        .andWhere('u.deleted_at IS NULL').getCount(),
+      this.subscriptionRepo.createQueryBuilder('s')
         .where('s.expire_at > :now', { now })
         .andWhere('s.expire_at <= :week', { week: weekFromNow })
-        .andWhere('s.deleted_at IS NULL')
-        .getCount(),
+        .andWhere('s.deleted_at IS NULL').getCount(),
     ]);
 
     return {
       active_subscriptions,
+      active_subscriptions_growth: growth(active_subscriptions, active_subscriptions_last_month),
       total_stores,
+      total_stores_growth: growth(total_stores, total_stores_last_month),
       total_students,
+      total_students_growth: growth(total_students, total_students_last_month),
       join_requests,
       total_revenue: Number(total_revenue?.value ?? 0),
       active_offers,
+      active_offers_growth: growth(active_offers, active_offers_last_month),
       pending_requests_over_48h,
       expiring_subscriptions_this_week,
     };
