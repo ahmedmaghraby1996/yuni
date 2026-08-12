@@ -22,6 +22,9 @@ export interface AdminEmployeePermissions {
   static_pages?: AdminModulePermission;
   home?: AdminModulePermission;
   analytics?: AdminModulePermission;
+  packages?: AdminModulePermission;
+  subcategories?: AdminModulePermission;
+  support_tickets?: AdminModulePermission;
 }
 
 @Entity()

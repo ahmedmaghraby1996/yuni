@@ -19,6 +19,9 @@ export class AdminEmployeePermissionsDto {
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) static_pages?: AdminModulePermissionDto;
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) home?: AdminModulePermissionDto;
   @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) analytics?: AdminModulePermissionDto;
+  @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) packages?: AdminModulePermissionDto;
+  @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) subcategories?: AdminModulePermissionDto;
+  @ApiProperty({ required: false, type: AdminModulePermissionDto }) @IsOptional() @ValidateNested() @Type(() => AdminModulePermissionDto) support_tickets?: AdminModulePermissionDto;
 }
 
 export class AdminCreateEmployeeRequest {

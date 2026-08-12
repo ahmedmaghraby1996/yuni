@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { PackagesService } from './packages.service';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
@@ -30,32 +31,37 @@ import { ActionResponse } from 'src/core/base/responses/action.response';
 export class PackagesController {
   constructor(private readonly packagesService: PackagesService) {}
 
+  @AdminPermission('packages', 'view')
   @Get()
   async getPackages() {
     return new ActionResponse(await this.packagesService.getPackages());
   }
 
+  @AdminPermission('packages', 'view')
   @Get('analytics')
   async getAnalytics() {
     return new ActionResponse(await this.packagesService.getAnalytics());
   }
 
+  @AdminPermission('packages', 'view')
   @Get(':id')
   async getPackageById(@Param('id') id: string) {
     return new ActionResponse(await this.packagesService.getPackageById(id));
   }
 
-
+  @AdminPermission('packages', 'add')
   @Post()
   createPackage(@Body() data: CreatePackageRequest) {
     return this.packagesService.createPackage(data);
   }
 
+  @AdminPermission('packages', 'edit')
   @Put(':id')
   updatePackage(@Param('id') id: string, @Body() data: UpdatePackageRequest) {
     return this.packagesService.updatePackage(id, data);
   }
 
+  @AdminPermission('packages', 'delete')
   @Delete(':id')
   deletePackage(@Param('id') id: string) {
     return this.packagesService.deletePackage(id);

@@ -18,6 +18,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -44,6 +45,7 @@ export class AdminSubcategoryController {
     private readonly fileService: FileService,
   ) {}
 
+  @AdminPermission('subcategories', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'category_id', required: false, type: String })
@@ -72,6 +74,7 @@ export class AdminSubcategoryController {
     return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
+  @AdminPermission('subcategories', 'view')
   @Get(':id')
   async getOne(@Param('id') id: string) {
     const sub = await this.subCategoryRepo.findOne({
@@ -81,6 +84,7 @@ export class AdminSubcategoryController {
     return new ActionResponse(sub);
   }
 
+  @AdminPermission('subcategories', 'add')
   @Post()
   @UseInterceptors(FileInterceptor('logo'))
   @ApiConsumes('multipart/form-data')
@@ -100,6 +104,7 @@ export class AdminSubcategoryController {
     return new ActionResponse(await this.subCategoryRepo.save(sub));
   }
 
+  @AdminPermission('subcategories', 'edit')
   @Patch(':id')
   @UseInterceptors(FileInterceptor('logo'))
   @ApiConsumes('multipart/form-data')
@@ -118,6 +123,7 @@ export class AdminSubcategoryController {
     return new ActionResponse(await this.subCategoryRepo.save(sub));
   }
 
+  @AdminPermission('subcategories', 'delete')
   @Delete(':id')
   async remove(@Param('id') id: string) {
     const sub = await this.subCategoryRepo.findOneBy({ id });

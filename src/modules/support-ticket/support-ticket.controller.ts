@@ -20,6 +20,7 @@ import { Roles } from '../authentication/guards/roles.decorator';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Permission } from '../authentication/guards/permission.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { CreateTicketRequest } from './dto/create-ticket.request';
 import { ReplyTicketRequest } from './dto/reply-ticket.request';
 import { TicketResponse } from './dto/ticket.response';
@@ -85,6 +86,7 @@ export class SupportTicketController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('support_tickets', 'view')
   @ApiOperation({ summary: 'Get all support tickets' })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -109,6 +111,7 @@ export class SupportTicketController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('support_tickets', 'view')
   @ApiOperation({ summary: 'Get support ticket by id (admin)' })
   @Get('admin/:id')
   async getAdminTicketById(@Param('id') id: string) {
@@ -119,6 +122,7 @@ export class SupportTicketController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('support_tickets', 'edit')
   @ApiOperation({ summary: 'Reply to a support ticket — sets status to replied' })
   @Put(':id/reply')
   async replyTicket(@Param('id') id: string, @Body() req: ReplyTicketRequest) {
