@@ -9,10 +9,12 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
@@ -45,6 +47,12 @@ export class AdminEmployeeController {
     const actions = ['view', 'add', 'edit', 'delete'];
     const modules = ['users', 'stores', 'employees', 'transactions', 'notifications', 'banners', 'static_pages', 'home', 'analytics', 'packages', 'subcategories', 'support_tickets'];
     return new ActionResponse(modules.map((module) => ({ module, actions })));
+  }
+
+  @Roles(Role.ADMIN_EMPLOYEE)
+  @Get('me/permissions')
+  getMyPermissions(@Req() req: Request) {
+    return new ActionResponse((req as any).user?.admin_employee_permissions ?? {});
   }
 
   // ─── Roles ────────────────────────────────────────────────────────────────
