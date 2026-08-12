@@ -161,8 +161,6 @@ export class AdminEmployeeService {
       employee.role_id = req.role_id;
       employee.permissions = role.permissions;
       employee.role = role;
-    } else if (req.permissions) {
-      employee.permissions = req.permissions;
     }
 
     await this.userRepo.save(employee.user);
