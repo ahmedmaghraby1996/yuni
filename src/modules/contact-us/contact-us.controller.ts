@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ContactUsResponse } from './dtos/response/contact-us.response';
 import { I18nResponse } from 'src/core/helpers/i18n.helper';
-import { ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiProperty, ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { ContactUsService } from './contact-us.service';
 import { CreateContactDto } from './dtos/request/create-contact.dto';
@@ -23,6 +23,17 @@ import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Roles } from '../authentication/guards/roles.decorator';
+import { SupportTicketService } from '../support-ticket/support-ticket.service';
+import { ActionResponse } from 'src/core/base/responses/action.response';
+import { plainToInstance } from 'class-transformer';
+import { TicketResponse } from '../support-ticket/dto/ticket.response';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
+class SubmitContactUsRequest {
+  @ApiProperty() @IsNotEmpty() @IsString() title: string;
+  @ApiProperty() @IsNotEmpty() @IsString() description: string;
+  @ApiProperty({ required: false }) @IsOptional() @IsEmail() email?: string;
+}
 @ApiTags('Contact-Us')
 @ApiHeader({
   name: 'Accept-Language',
@@ -37,6 +48,7 @@ import { Roles } from '../authentication/guards/roles.decorator';
 export class ContactUsController {
   constructor(
     private contactUsService: ContactUsService,
+    private readonly supportTicketService: SupportTicketService,
     @Inject(I18nResponse) private readonly _i18nResponse: I18nResponse,
     @Inject(REQUEST) private readonly request: Request,
   ) {}
@@ -54,17 +66,14 @@ export class ContactUsController {
     return dataRes;
   }
 
+  @Roles(Role.CLIENT, Role.STORE)
   @Post()
-  async createContact(
-    @Body() createContactDto: CreateContactDto,
-  ): Promise<ContactUsResponse> {
-    const contactUsData = await this.contactUsService.createContact(
-      createContactDto,
-    );
-    const data: ContactUsResponse = this._i18nResponse.entity(contactUsData);
-
-    const dataRes = new ContactUsResponse(data);
-    return dataRes;
+  async submitContactUs(@Body() req: SubmitContactUsRequest) {
+    const ticket = await this.supportTicketService.createTicket({
+      title: req.title,
+      description: req.description,
+    });
+    return new ActionResponse(plainToInstance(TicketResponse, ticket, { excludeExtraneousValues: true }));
   }
 
   @Delete('/:id')

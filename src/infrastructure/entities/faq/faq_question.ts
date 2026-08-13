@@ -1,5 +1,5 @@
 import { BaseEntity } from "src/infrastructure/base/base.entity";
-import { Column, Entity, ManyToOne, OneToMany } from "typeorm";
+import { Column, Entity } from "typeorm";
 
 import { Factory } from "nestjs-seeder";
 
@@ -18,6 +18,8 @@ descrption_ar:string
 @Column()
 descrption_en:string
 
+@Column({ default: true })
+is_active: boolean;
 
 constructor(partial: Partial<FaqQuestion>) {
     super();

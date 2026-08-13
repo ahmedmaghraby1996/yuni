@@ -29,7 +29,7 @@ export class FaqController {
 
   @Get()
   async getQuestion() {
-    const res = await this.serivce.getQuestion();
+    const res = await this.serivce.faq_question_repo.find({ where: { is_active: true } });
     return new ActionResponse(res);
   }
 
@@ -41,13 +41,21 @@ export class FaqController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by title (ar or en)' })
+  @ApiQuery({ name: 'is_active', required: false, enum: ['0', '1'] })
   @Get('admin/all')
   async getAdminQuestions(
     @Query('page') page = 1,
     @Query('limit') limit = 10,
     @Query('name') name?: string,
+    @Query('is_active') is_active?: string,
   ) {
-    const where = name ? [{ title_ar: Like(`%${name}%`) }, { title_en: Like(`%${name}%`) }] : {};
+    const isActiveBool = is_active !== undefined && is_active !== '' ? is_active === '1' || is_active === 'true' : undefined;
+    let where: any = {};
+    if (name) where = [{ title_ar: Like(`%${name}%`) }, { title_en: Like(`%${name}%`) }];
+    if (isActiveBool !== undefined) {
+      if (Array.isArray(where)) where = where.map((w) => ({ ...w, is_active: isActiveBool }));
+      else where.is_active = isActiveBool;
+    }
     const [data, total] = await this.serivce.faq_question_repo.findAndCount({
       where,
       skip: (Number(page) - 1) * Number(limit),

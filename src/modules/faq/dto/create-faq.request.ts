@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsOptional } from "class-validator"
+import { Transform } from "class-transformer"
+import { IsBoolean, IsOptional } from "class-validator"
 
 export class CreateFaqRequest {
     @ApiProperty()
@@ -10,6 +11,11 @@ export class CreateFaqRequest {
     descrption_ar:string
     @ApiProperty()
     descrption_en:string
+    @ApiProperty({ required: false, default: true })
+    @IsOptional()
+    @Transform(({ value }) => value === 'true' || value === true)
+    @IsBoolean()
+    is_active: boolean
 }
 
 export class UpdateFaqRequest{
@@ -25,6 +31,9 @@ export class UpdateFaqRequest{
     @ApiProperty({required:false})
     @IsOptional()
     descrption_en:string
-
-
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @Transform(({ value }) => value === 'true' || value === true)
+    @IsBoolean()
+    is_active: boolean
 }
