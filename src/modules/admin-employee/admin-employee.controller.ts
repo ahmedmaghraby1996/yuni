@@ -43,6 +43,7 @@ export class AdminEmployeeController {
 
   // ─── Permissions ──────────────────────────────────────────────────────────
 
+  @AdminPermission('employees', 'view')
   @Get('permissions/groups')
   getPermissionGroups() {
     const actions = ['view', 'add', 'edit', 'delete'];
@@ -58,12 +59,14 @@ export class AdminEmployeeController {
 
   // ─── Roles ────────────────────────────────────────────────────────────────
 
+  @AdminPermission('employees', 'add')
   @Post('roles')
   async createRole(@Body() req: CreateAdminRoleRequest) {
     const role = await this.service.createRole(req);
     return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
   }
 
+  @AdminPermission('employees', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
@@ -76,18 +79,21 @@ export class AdminEmployeeController {
     );
   }
 
+  @AdminPermission('employees', 'view')
   @Get('roles/:id')
   async getRoleById(@Param('id') id: string) {
     const role = await this.service.getRoleById(id);
     return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
   }
 
+  @AdminPermission('employees', 'edit')
   @Put('roles/:id')
   async updateRole(@Param('id') id: string, @Body() req: UpdateAdminRoleRequest) {
     const role = await this.service.updateRole(id, req);
     return new ActionResponse(plainToInstance(AdminEmployeeRoleResponse, role, { excludeExtraneousValues: true }));
   }
 
+  @AdminPermission('employees', 'delete')
   @Delete('roles/:id')
   async deleteRole(@Param('id') id: string) {
     return new ActionResponse(await this.service.deleteRole(id));
