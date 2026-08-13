@@ -779,7 +779,7 @@ export class OffersService extends BaseService<Offer> {
     // Subscription days remaining + remaining codes
     let days_remaining: number | null = null;
     let renew_soon = false;
-    let remaining_codes: number | null = null;
+    let remaining_offers: number | null = null;
 
     if (subscription) {
       days_remaining = Math.ceil((new Date(subscription.expire_at).getTime() - now.getTime()) / 86400000);
@@ -788,7 +788,7 @@ export class OffersService extends BaseService<Offer> {
       if (pkg?.employees_count != null) {
         const usedRaw = await usageQb(new Date(subscription.created_at), now)
           .select('COUNT(usage.id)', 'cnt').getRawOne();
-        remaining_codes = Math.max(0, pkg.employees_count - parseInt(usedRaw?.cnt ?? '0', 10));
+        remaining_offers = Math.max(0, pkg.employees_count - parseInt(usedRaw?.cnt ?? '0', 10));
       }
     }
 
@@ -822,7 +822,7 @@ export class OffersService extends BaseService<Offer> {
           value: monthUsage,
           change_pct: pct(monthUsage, parseInt(lastMonthRaw?.cnt ?? '0', 10)),
         },
-        remaining_codes: { value: remaining_codes },
+        remaining_offers: { value: remaining_offers },
         subscription_days_remaining: { value: days_remaining, renew_soon },
         wallet_balance: { value: parseFloat(wallet?.balance?.toString() ?? '0') },
       },

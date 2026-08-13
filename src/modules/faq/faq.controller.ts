@@ -27,10 +27,20 @@ export class FaqController {
     @Inject(REQUEST) private readonly request: Request,
   ) {}
 
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get()
-  async getQuestion() {
-    const res = await this.serivce.faq_question_repo.find({ where: { is_active: true } });
-    return new ActionResponse(res);
+  async getQuestion(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    const [data, total] = await this.serivce.faq_question_repo.findAndCount({
+      where: { is_active: true },
+      order: { created_at: 'DESC' },
+      skip: (Number(page) - 1) * Number(limit),
+      take: Number(limit),
+    });
+    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
   @AdminEndpoint()
@@ -58,6 +68,7 @@ export class FaqController {
     }
     const [data, total] = await this.serivce.faq_question_repo.findAndCount({
       where,
+      order: { created_at: 'DESC' },
       skip: (Number(page) - 1) * Number(limit),
       take: Number(limit),
     });

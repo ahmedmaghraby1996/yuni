@@ -1,10 +1,10 @@
-import { BaseEntity } from "src/infrastructure/base/base.entity";
+import { AuditableEntity } from "src/infrastructure/base/auditable.entity";
 import { Column, Entity } from "typeorm";
 
 import { Factory } from "nestjs-seeder";
 
 @Entity()
-export class FaqQuestion extends BaseEntity{
+export class FaqQuestion extends AuditableEntity{
  @Factory((faker) => faker.helpers.unique(faker.lorem.word))
 @Column()
 title_ar:string
