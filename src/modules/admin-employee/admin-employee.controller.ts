@@ -19,6 +19,7 @@ import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { plainToInstance } from 'class-transformer';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -94,6 +95,7 @@ export class AdminEmployeeController {
 
   // ─── Employees ────────────────────────────────────────────────────────────
 
+  @AdminPermission('employees', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
@@ -113,6 +115,7 @@ export class AdminEmployeeController {
     );
   }
 
+  @AdminPermission('employees', 'view')
   @Get(':id')
   async getById(@Param('id') id: string) {
     const employee = await this.service.getById(id);
@@ -121,6 +124,7 @@ export class AdminEmployeeController {
     );
   }
 
+  @AdminPermission('employees', 'add')
   @Post()
   @UseInterceptors(FileInterceptor('avatarFile'))
   @ApiConsumes('multipart/form-data')
@@ -135,6 +139,7 @@ export class AdminEmployeeController {
     );
   }
 
+  @AdminPermission('employees', 'edit')
   @Patch(':id')
   @UseInterceptors(FileInterceptor('avatarFile'))
   @ApiConsumes('multipart/form-data')
@@ -150,6 +155,7 @@ export class AdminEmployeeController {
     );
   }
 
+  @AdminPermission('employees', 'edit')
   @Patch(':id/status')
   async toggleStatus(
     @Param('id') id: string,
@@ -158,6 +164,7 @@ export class AdminEmployeeController {
     return new ActionResponse(await this.service.toggleStatus(id, is_active === '1' || is_active === 'true'));
   }
 
+  @AdminPermission('employees', 'delete')
   @Delete(':id')
   async delete(@Param('id') id: string) {
     return new ActionResponse(await this.service.delete(id));

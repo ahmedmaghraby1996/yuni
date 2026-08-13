@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -17,6 +18,7 @@ import { AdminPackagesService } from './admin-packages-analytics.service';
 export class AdminPackagesController {
   constructor(private readonly service: AdminPackagesService) {}
 
+  @AdminPermission('analytics', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('packages')

@@ -2,6 +2,7 @@ import { Body, ClassSerializerInterceptor, Controller, Delete, Get, Param, Patch
 import { CategoryService } from './category.service';
 import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
 import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { SubCategoryService } from '../offers/sub_category.service';
@@ -52,6 +53,7 @@ export class CategoryController {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Post()
 @Roles(Role.ADMIN)
+@AdminPermission('subcategories', 'add')
 @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
 @ApiConsumes('multipart/form-data')
 async createCategory(
@@ -68,6 +70,7 @@ async createCategory(
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Post('/subcategory')
 @Roles(Role.ADMIN)
+@AdminPermission('subcategories', 'add')
 @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
 @ApiConsumes('multipart/form-data')
 async createSubCategory(
@@ -85,6 +88,7 @@ async createSubCategory(
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Patch(':id')
 @Roles(Role.ADMIN)
+@AdminPermission('subcategories', 'edit')
 @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
 @ApiConsumes('multipart/form-data')
 async updateCategory(
@@ -103,6 +107,7 @@ async updateCategory(
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Patch('subcategory/:id')
 @Roles(Role.ADMIN)
+@AdminPermission('subcategories', 'edit')
 @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('logo'))
 @ApiConsumes('multipart/form-data')
 async updateSubCategory(
@@ -118,6 +123,7 @@ async updateSubCategory(
 }
 
 
+@AdminPermission('subcategories', 'delete')
 @Delete(':id')
 async deleteCategory(@Param('id') id: string) {
   const res = await this.categoryService.softDelete(id);

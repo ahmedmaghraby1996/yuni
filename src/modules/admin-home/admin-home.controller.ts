@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -18,23 +19,27 @@ import { Request } from 'express';
 export class AdminHomeController {
   constructor(private readonly adminHomeService: AdminHomeService) {}
 
+  @AdminPermission('home', 'view')
   @Get()
   async getStats() {
     return new ActionResponse(await this.adminHomeService.getStats());
   }
 
+  @AdminPermission('home', 'view')
   @ApiQuery({ name: 'period', required: false, enum: ['7d', '30d', '12m'], description: 'Default: 7d' })
   @Get('revenue')
   async getRevenueChart(@Query('period') period: '7d' | '30d' | '12m' = '7d') {
     return new ActionResponse(await this.adminHomeService.getRevenueChart(period));
   }
 
+  @AdminPermission('home', 'view')
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Default: 10' })
   @Get('top-stores')
   async getTopStores(@Query('limit') limit = 10) {
     return new ActionResponse(await this.adminHomeService.getTopStores(Number(limit)));
   }
 
+  @AdminPermission('home', 'view')
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Default: 10' })
   @Get('top-merchants')
   async getTopMerchants(@Query('limit') limit = 10) {
@@ -42,6 +47,7 @@ export class AdminHomeController {
   }
 
 
+  @AdminPermission('home', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('pending-requests')

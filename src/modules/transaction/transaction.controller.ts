@@ -10,6 +10,7 @@ import {
 } from 'src/core/helpers/service-related.helper';
 import { ApiQuery, ApiTags, ApiHeader, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
@@ -102,6 +103,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by user name' })
@@ -133,6 +135,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('admin/wallets/:user_id')
@@ -147,6 +150,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String, description: 'Filter by store name' })
@@ -166,6 +170,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'add')
   @Post('admin')
   async makeTransaction(@Body() request: MakeTransactionRequest) {
     return new ActionResponse(
@@ -176,6 +181,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'edit')
   @Patch('admin/:id/accept-refund')
   async acceptRefund(@Param('id') id: string) {
     return new ActionResponse(
@@ -186,6 +192,7 @@ export class TransactionController {
   @ApiTags('Admin Transactions')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('transactions', 'edit')
   @Patch('admin/:id/reject-refund')
   async rejectRefund(@Param('id') id: string) {
     return new ActionResponse(

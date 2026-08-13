@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
@@ -45,6 +46,7 @@ export class StaticPageController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('static_pages', 'view')
   @Get('admin/:static_page_type')
   async getAdminStaticPage(@Param() param: GetStaticPage): Promise<ActionResponse<StaticPageResponse>> {
     const page = await this.staticPageService.getStaticPageByType(param.static_page_type);
@@ -57,6 +59,7 @@ export class StaticPageController {
   @Patch()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('static_pages', 'edit')
   async updateStaticPage(
     @Body() req: UpdateStaticPageRequest,
   ): Promise<ActionResponse<StaticPage>> {

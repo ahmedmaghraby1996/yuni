@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiHeader, ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../../authentication/guards/admin-permission.decorator';
 import { StoreEndpoint } from 'src/core/decorators/store-endpoint.decorator';
 import { Permission } from 'src/modules/authentication/guards/permission.decorator';
 import { plainToInstance } from 'class-transformer';
@@ -85,6 +86,7 @@ export class NotificationController {
   @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('notifications', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @Get('admin/all')
@@ -105,6 +107,7 @@ export class NotificationController {
   @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('notifications', 'add')
   @Post('send-to-users')
   async sendToUsers(@Body() req: SendToUsersNotificationRequest) {
     await this.notificationService.sendToUsers(req);
@@ -156,6 +159,7 @@ export class NotificationController {
   @ApiTags('Admin Notifications')
   @AdminEndpoint()
   @Roles(Role.ADMIN)
+  @AdminPermission('notifications', 'view')
   @Get(':id')
   async getSingleNotification(@Param('id') id: string) {
     const result = await this.notificationService.getSingleNotification(id);

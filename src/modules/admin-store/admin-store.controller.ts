@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
 import { Roles } from '../authentication/guards/roles.decorator';
@@ -18,6 +19,7 @@ import { AdminStoreService } from './admin-store.service';
 export class AdminStoreController {
   constructor(private readonly adminStoreService: AdminStoreService) {}
 
+  @AdminPermission('stores', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
@@ -36,6 +38,7 @@ export class AdminStoreController {
     return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
+  @AdminPermission('stores', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'name', required: false, type: String })
@@ -53,6 +56,7 @@ export class AdminStoreController {
     return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 
+  @AdminPermission('stores', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'date_from', required: false, type: String, description: 'From date (YYYY-MM-DD)' })

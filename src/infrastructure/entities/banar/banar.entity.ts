@@ -22,9 +22,6 @@ export class Banar extends AuditableEntity {
     is_popup:boolean
 
 
-    @Column({default:false})
-    is_general: boolean
-
     @Column({ nullable: true })
     description_ar: string;
 

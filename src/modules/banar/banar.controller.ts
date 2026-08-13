@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { BanarService } from './banar.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
@@ -40,6 +41,7 @@ export class BanarController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Post()
     @Roles(Role.ADMIN)
+    @AdminPermission('banners', 'add')
     @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('banar'))
     @ApiConsumes('multipart/form-data')
     async createBanar(
@@ -54,6 +56,7 @@ export class BanarController {
     }
     @AdminEndpoint()
     @Roles(Role.ADMIN)
+    @AdminPermission('banners', 'view')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
@@ -142,6 +145,7 @@ export class BanarController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Patch(":id")
     @Roles(Role.ADMIN)
+    @AdminPermission('banners', 'edit')
     @UseInterceptors(ClassSerializerInterceptor, FileInterceptor('banar'))
     @ApiConsumes('multipart/form-data')
     async updateBanar(
@@ -160,6 +164,7 @@ export class BanarController {
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Delete(":id")
     @Roles(Role.ADMIN)
+    @AdminPermission('banners', 'delete')
     async deleteBanar(
         @Param('id') id: string,
     ): Promise<ActionResponse<BannerResponse>> {

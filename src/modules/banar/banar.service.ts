@@ -42,7 +42,6 @@ export class BanarService extends BaseService<Banar> {
             ended_at: banar.ended_at,
             is_active: banar.is_active,
             is_popup: banar?.is_popup,
-            is_general: banar?.is_general,
             description_ar: banar?.description_ar,
             description_en: banar?.description_en,
         });
@@ -77,12 +76,11 @@ export class BanarService extends BaseService<Banar> {
                 started_at: LessThanOrEqual(new Date()),
                 ended_at: MoreThanOrEqual(new Date()),
                 is_popup:false,
-                is_general:false
             }
         });
     }
 
-    
+
     async getGeneralBanars(query: PaginatedRequest) {
         return await this.banarRepository.find({
             where: {
@@ -90,7 +88,6 @@ export class BanarService extends BaseService<Banar> {
                 started_at: LessThanOrEqual(new Date()),
                 ended_at: MoreThanOrEqual(new Date()),
                 is_popup:false,
-                is_general:true
             }
         });
     }
@@ -101,7 +98,6 @@ export class BanarService extends BaseService<Banar> {
                 started_at: LessThanOrEqual(new Date()),
                 ended_at: MoreThanOrEqual(new Date()),
                 is_popup:true,
-                is_general:false
             }
         });
     }

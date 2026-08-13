@@ -37,6 +37,7 @@ import { AcceptAgentRequest, AgentResponse, UserResponse } from './dto/response/
 import { Roles } from '../authentication/guards/roles.decorator';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { Permission } from '../authentication/guards/permission.decorator';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
 import { GetUserRequest } from './dto/get-user.request';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { UploadValidator } from 'src/core/validators/upload.validator';
@@ -94,6 +95,7 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('users', 'view')
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'role', required: false, enum: ['store', 'customer'], description: 'Filter by role: store owner or customer' })
@@ -112,6 +114,11 @@ export class UserController {
     if (!query.sortBy) query.sortBy = ['created_at=DESC'];
     if (role === 'store') applyQueryFilters(query, `roles=${Role.STORE}`);
     else if (role === 'customer') applyQueryFilters(query, `roles=${Role.CLIENT}`);
+    else {
+      // default: only store owners and customers
+      applyQueryFilters(query, `roles=${Role.STORE}`);
+      applyQueryFilters(query, `roles=${Role.CLIENT}`);
+    }
     if (name) applyQueryFilters(query, `name=${name}`);
     if (phone) applyQueryFilters(query, `phone=${phone}`);
     if (status) applyQueryFilters(query, `status=${status}`);
@@ -132,6 +139,8 @@ export class UserController {
           role: user.roles[0],
           created_at: user.created_at,
           city: user.city,
+          school_name: user.school_name,
+          major: user.major,
         }),
       ),
     );
@@ -337,6 +346,7 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('users', 'view')
   @Get('/:id')
   async getUserById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
@@ -405,6 +415,7 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('users', 'edit')
   @Put(':id')
   async adminUpdateUser(@Param('id') id: string, @Body() body: AdminUpdateUserRequest) {
     const user = await this.userService._repo.findOne({ where: { id } });
@@ -419,6 +430,7 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('users', 'delete')
   @Delete(':id')
   async adminDeleteUser(@Param('id') id: string) {
     return new ActionResponse(await this.userService.deleteUser(id));
@@ -427,6 +439,7 @@ export class UserController {
   @AdminEndpoint()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @AdminPermission('users', 'edit')
   @Patch(':id/status')
   async changeUserStatus(
     @Param('id') id: string,
