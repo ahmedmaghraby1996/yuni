@@ -139,6 +139,7 @@ export class UserController {
           role: user.roles[0],
           created_at: user.created_at,
           city: user.city,
+          birth_date: user.birth_date,
           school_name: user.school_name,
           major: user.major,
         }),
