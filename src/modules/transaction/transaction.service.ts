@@ -42,16 +42,21 @@ export class TransactionService extends BaseUserService<Transaction> {
     user_wallet.balance = Number(user_wallet.balance) + req.amount;
     user_wallet.balance = Number(user_wallet.balance);
 
-    const transaction = plainToInstance(Transaction, {
-      ...req,
-    });
-if (req.date || req.iban || req.bank) {
-  transaction.meta_data = JSON.stringify({
-    date: req.date,
-    iban: req.iban,
-    bank: req.bank,
-  });
-}
+    const roles: string[] = (this.currentUser?.roles as string[]) ?? [];
+    const sender_type = roles.includes('admin') || roles.includes('admin_employee')
+      ? 'admin'
+      : roles.includes('store')
+      ? 'store'
+      : 'system';
+
+    const transaction = plainToInstance(Transaction, { ...req, sender_type });
+    if (req.date || req.iban || req.bank) {
+      transaction.meta_data = JSON.stringify({
+        date: req.date,
+        iban: req.iban,
+        bank: req.bank,
+      });
+    }
 
     await this.transactionRepository.save(transaction);
 
@@ -130,11 +135,14 @@ if (req.date || req.iban || req.bank) {
   }
 
   async refundWallet(req: WalletRefundRequest) {
+    const roles: string[] = (this.currentUser?.roles as string[]) ?? [];
+    const sender_type = roles.includes('store') ? 'store' : 'system';
     const transaction = new Transaction({
       user_id: this.currentUser.id,
       amount: -Math.abs(Number(req.amount)),
       type: TransactionTypes.WALLET_REFUND,
       status: TransactionStatus.PENDING,
+      sender_type,
       meta_data: JSON.stringify({ reason: req.reason }),
     });
     return this.transactionRepository.save(transaction);

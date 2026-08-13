@@ -21,12 +21,15 @@ export class SupportTicketService extends BaseService<SupportTicket> {
 
   async createTicket(req: CreateTicketRequest): Promise<SupportTicket> {
     const count = await this.repo.count();
+    const roles: string[] = this.request.user.roles ?? [];
+    const sender_type = roles.includes('store') ? 'store' : 'client';
     return await this.repo.save({
       title: req.title,
       description: req.description,
       status: TicketStatus.PENDING,
       user_id: this.request.user.id,
       number: count + 1,
+      sender_type,
     });
   }
 
@@ -79,11 +82,10 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     return { data, total };
   }
 
-  async replyTicket(id: string, req: ReplyTicketRequest, senderType: 'store' | 'admin' = 'admin'): Promise<SupportTicket> {
+  async replyTicket(id: string, req: ReplyTicketRequest): Promise<SupportTicket> {
     const ticket = await this.repo.findOne({ where: { id } });
     if (!ticket) throw new NotFoundException('Ticket not found');
     ticket.reply = req.reply;
-    ticket.sender_type = senderType;
     ticket.status = TicketStatus.REPLIED;
     return await this.repo.save(ticket);
   }

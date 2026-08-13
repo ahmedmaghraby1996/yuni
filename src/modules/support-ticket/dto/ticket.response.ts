@@ -22,7 +22,7 @@ export class TicketResponse {
   reply: string;
 
   @Expose()
-  sender_type: 'store' | 'admin' | null;
+  sender_type: 'store' | 'client' | null;
 
   @Expose()
   @Type(() => UserResponse)
