@@ -1,21 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsIn, IsEmail } from 'class-validator';
-
+import { IsNotEmpty, IsEmail, IsOptional } from 'class-validator';
 
 export class SuggestionsComplaintsRequest {
-
-  @ApiProperty({default:'improve slider ads'})
+  @ApiProperty({ default: 'improve slider ads' })
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({default:'put some images good'})
+  @ApiProperty({ default: 'put some images good' })
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsEmail()
   email: string;
-
-
 }

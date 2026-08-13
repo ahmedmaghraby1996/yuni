@@ -1,85 +1,74 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { SuggestionsComplaintsService } from './suggestions-complaints.service';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { ActionResponse } from 'src/core/base/responses/action.response';
-import { SuggestionsComplaints } from 'src/infrastructure/entities/suggestions-complaints/suggestions-complaints.entity';
-import { SuggestionsComplaintsRequest } from './dto/suggestions-complaints.request';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../authentication/guards/roles.decorator';
-import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
+import { TicketStatus } from 'src/infrastructure/data/enums/ticket-status.enum';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
-import { PaginatedRequest } from 'src/core/base/requests/paginated.request';
-import { query } from 'express';
-import { SuggestionsComplaintResponse } from './dto/suggestions-complaints-response';
-import { plainToClass, plainToInstance } from 'class-transformer';
-import {
-  applyQueryFilters,
-  applyQueryIncludes,
-} from 'src/core/helpers/service-related.helper';
-import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
-import { Inject } from '@nestjs/common';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import { Roles } from '../authentication/guards/roles.decorator';
+import { Role } from 'src/infrastructure/data/enums/role.enum';
+import { AdminPermission } from '../authentication/guards/admin-permission.decorator';
+import { SupportTicketService } from '../support-ticket/support-ticket.service';
+import { TicketResponse } from '../support-ticket/dto/ticket.response';
+import { SuggestionsComplaintsRequest } from './dto/suggestions-complaints.request';
 
 @ApiTags('Suggestions-complaints')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.ADMIN, Role.CLIENT)
 @ApiBearerAuth()
 @Controller('suggestions-complaints')
 export class SuggestionsComplaintsController {
-  constructor(
-    @Inject(REQUEST) private readonly _request: Request,
-    private readonly suggestionsComplaintsService: SuggestionsComplaintsService,
-  ) {}
+  constructor(private readonly supportTicketService: SupportTicketService) {}
 
-  @AdminEndpoint()
-  @Roles(Role.ADMIN)
-  @Get()
-  async getAllSuggestionsComplaints(@Query() query: PaginatedRequest) {
-    applyQueryIncludes(query, 'user');
-    applyQueryFilters(query, `user_id=${this._request.user.id}`);
-    const result = await this.suggestionsComplaintsService.findAll(query);
-    const count = await this.suggestionsComplaintsService.count(query);
-    return new PaginatedResponse<SuggestionsComplaintResponse[]>(
-      plainToInstance(SuggestionsComplaintResponse, result, {
-        excludeExtraneousValues: true,
-      }),
-      { meta: { total: count, page: query.page, limit: query.limit } },
-    );
-  }
-
-  @AdminEndpoint()
-  @Roles(Role.ADMIN)
-  @Get('/:id')
-  async getSingleSuggestionsComplaints(@Param('id') id: string) {
-    const result =
-      await this.suggestionsComplaintsService.getSingleSuggestionsComplaint(id);
-    return new ActionResponse<SuggestionsComplaintResponse>(
-      plainToInstance(SuggestionsComplaintResponse, result, {
-        excludeExtraneousValues: true,
-      }),
-    );
-  }
   @Roles(Role.CLIENT, Role.STORE)
   @Post()
-  async createSuggestionsComplaints(
-    @Body() suggestionsComplaintsRequest: SuggestionsComplaintsRequest,
+  async createSuggestionsComplaints(@Body() req: SuggestionsComplaintsRequest) {
+    const ticket = await this.supportTicketService.createTicket({
+      title: req.title,
+      description: req.description,
+    });
+    return new ActionResponse(plainToInstance(TicketResponse, ticket, { excludeExtraneousValues: true }));
+  }
+
+  @Roles(Role.CLIENT, Role.STORE)
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
+  @Get()
+  async getMySuggestionsComplaints(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('status') status?: TicketStatus,
   ) {
-    const result =
-      await this.suggestionsComplaintsService.createSuggestionsComplaints(
-        suggestionsComplaintsRequest,
-      );
-    return new ActionResponse<SuggestionsComplaintsRequest>(
-      suggestionsComplaintsRequest,
-    );
+    const { data, total } = await this.supportTicketService.getMyTickets(Number(page), Number(limit), status);
+    const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
+  }
+
+  @Roles(Role.CLIENT, Role.STORE)
+  @Get(':id')
+  async getSingleSuggestionsComplaints(@Param('id') id: string) {
+    const ticket = await this.supportTicketService.getTicketById(id);
+    return new ActionResponse(plainToInstance(TicketResponse, ticket, { excludeExtraneousValues: true }));
+  }
+
+  @AdminEndpoint()
+  @Roles(Role.ADMIN)
+  @AdminPermission('support_tickets', 'view')
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'status', required: false, enum: TicketStatus })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @Get('admin/all')
+  async getAllSuggestionsComplaints(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('status') status?: TicketStatus,
+    @Query('name') name?: string,
+  ) {
+    const { data, total } = await this.supportTicketService.getAllTickets(Number(page), Number(limit), status, name);
+    const result = plainToInstance(TicketResponse, data, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 }
