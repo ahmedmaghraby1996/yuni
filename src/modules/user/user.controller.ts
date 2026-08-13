@@ -351,7 +351,8 @@ export class UserController {
   async getUserById(@Param('id') id: string) {
     const user = await this.userService._repo.findOne({
       where: { id },
-      relations: { city: true, subscriptions: { package: true } },
+      relations: { city: true, subscriptions: { package: true }, favorite_sections: { category: true } },
+      order: { subscriptions: { created_at: 'DESC' } },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -404,6 +405,14 @@ export class UserController {
             created_at: user.created_at,
             subscriptions: user.subscriptions,
             city: user.city,
+            birth_date: user.birth_date,
+            school_name: user.school_name,
+            major: user.major,
+            resume: user.resume,
+            certificate: user.certificate,
+            id_number: user.id_number,
+            language: user.language,
+            favorite_sections: user.favorite_sections,
             store,
           },
           { excludeExtraneousValues: true },

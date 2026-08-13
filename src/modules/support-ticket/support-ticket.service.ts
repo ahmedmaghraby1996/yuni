@@ -83,7 +83,7 @@ export class SupportTicketService extends BaseService<SupportTicket> {
     const ticket = await this.repo.findOne({ where: { id } });
     if (!ticket) throw new NotFoundException('Ticket not found');
     ticket.reply = req.reply;
-    ticket.reply_sender_type = senderType;
+    ticket.sender_type = senderType;
     ticket.status = TicketStatus.REPLIED;
     return await this.repo.save(ticket);
   }

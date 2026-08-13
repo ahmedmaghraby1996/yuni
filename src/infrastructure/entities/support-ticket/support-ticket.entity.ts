@@ -21,7 +21,7 @@ export class SupportTicket extends AuditableEntity {
   reply: string;
 
   @Column({ type: 'enum', enum: ['store', 'admin'], nullable: true })
-  reply_sender_type: 'store' | 'admin' | null;
+  sender_type: 'store' | 'admin' | null;
 
   @Column()
   user_id: string;

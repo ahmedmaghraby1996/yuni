@@ -72,7 +72,7 @@ export class FaqController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @AdminPermission('static_pages', 'add')
-  @Post()
+  @Post('admin')
   async createQuestion(@Body() req: CreateFaqRequest) {
     const res = await this.serivce.create(plainToInstance(FaqQuestion, req));
     return new ActionResponse(res);
@@ -83,7 +83,7 @@ export class FaqController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @AdminPermission('static_pages', 'edit')
-  @Put('/:id')
+  @Put('admin/:id')
   async updateQuestion(@Param('id') id: string, @Body() req: UpdateFaqRequest) {
     const res = await this.serivce.update(plainToInstance(FaqQuestion, { ...req, id }));
     return new ActionResponse(res);
@@ -94,7 +94,7 @@ export class FaqController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @AdminPermission('static_pages', 'delete')
-  @Delete('/:id')
+  @Delete('admin/:id')
   async deleteQuestion(@Param('id') id: string) {
     const res = await this.serivce.delete(id);
     return new ActionResponse(res);
