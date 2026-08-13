@@ -91,6 +91,17 @@ export class UserResponse {
   language: string;
 
   @Expose()
+  @Transform(({ value }) => toUrl(value))
+  resume: string;
+
+  @Expose()
+a  @Transform(({ value }) => toUrl(value))
+  certificate: string;
+
+  @Expose()
+  id_number: string;
+
+  @Expose()
   @Transform(({ obj }) =>
     obj.favorite_sections?.map((s: SubCategory) => ({
       id: s.id,

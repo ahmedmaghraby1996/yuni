@@ -25,6 +25,9 @@ export class TransactionResponse {
     meta_data: string
 
     @Expose()
+    sender_type: string
+
+    @Expose()
     user_id: string
 
     @Transform(({ obj }) => obj.user ? { id: obj.user.id, name: obj.user.name, email: obj.user.email, phone: obj.user.phone } : null)

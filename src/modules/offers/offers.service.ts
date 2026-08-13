@@ -785,10 +785,10 @@ export class OffersService extends BaseService<Offer> {
       days_remaining = Math.ceil((new Date(subscription.expire_at).getTime() - now.getTime()) / 86400000);
       renew_soon = days_remaining <= 7;
       const pkg = await this.packageRepo.findOneBy({ id: subscription.package_id });
-      if (pkg?.codes_count != null) {
+      if (pkg?.employees_count != null) {
         const usedRaw = await usageQb(new Date(subscription.created_at), now)
           .select('COUNT(usage.id)', 'cnt').getRawOne();
-        remaining_codes = Math.max(0, pkg.codes_count - parseInt(usedRaw?.cnt ?? '0', 10));
+        remaining_codes = Math.max(0, pkg.employees_count - parseInt(usedRaw?.cnt ?? '0', 10));
       }
     }
 

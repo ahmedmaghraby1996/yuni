@@ -14,6 +14,8 @@ import * as sharp from 'sharp';
 import { EmployeePermissions, StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
 import { StoreEmployeeRole } from 'src/infrastructure/entities/store/store-employee-role.entity';
 import { User } from 'src/infrastructure/entities/user/user.entity';
+import { Subscription } from 'src/infrastructure/entities/subscription/subscription.entity';
+import { Package } from 'src/infrastructure/entities/package/package.entity';
 import { Role } from 'src/infrastructure/data/enums/role.enum';
 import { ImageManager } from 'src/integration/sharp/image.manager';
 import { StorageManager } from 'src/integration/storage/storage.manager';
@@ -29,6 +31,10 @@ export class StoreEmployeeService {
     private readonly roleRepo: Repository<StoreEmployeeRole>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Subscription)
+    private readonly subscriptionRepo: Repository<Subscription>,
+    @InjectRepository(Package)
+    private readonly packageRepo: Repository<Package>,
     @Inject(REQUEST) private readonly request: Request,
     @Inject(ImageManager) private readonly imageManager: ImageManager,
     @Inject(StorageManager) private readonly storageManager: StorageManager,
@@ -53,6 +59,21 @@ export class StoreEmployeeService {
   // ─── Employee CRUD ────────────────────────────────────────────────────────
 
   async createEmployee(req: CreateEmployeeRequest): Promise<StoreEmployee> {
+    const now = new Date();
+    const subscription = await this.subscriptionRepo.findOne({
+      where: { user_id: this.ownerId },
+      order: { created_at: 'DESC' },
+    });
+    if (subscription) {
+      const pkg = await this.packageRepo.findOneBy({ id: subscription.package_id });
+      if (pkg?.employees_count != null) {
+        const currentCount = await this.repo.count({ where: { owner_user_id: this.ownerId } });
+        if (currentCount >= pkg.employees_count) {
+          throw new BadRequestException('message.employee_limit_reached');
+        }
+      }
+    }
+
     const existing = await this.userRepo.findOneBy({ phone: req.phone });
     if (existing) throw new BadRequestException('Phone already in use');
 

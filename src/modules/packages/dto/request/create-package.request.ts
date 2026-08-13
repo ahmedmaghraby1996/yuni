@@ -39,10 +39,10 @@ export class CreatePackageRequest {
   @IsNumber()
   offers_count?: number | null;
 
-  @ApiPropertyOptional({ description: 'Usage codes limit — omit or null for unlimited' })
+  @ApiPropertyOptional({ description: 'Max employees per store — omit or null for unlimited' })
   @IsOptional()
   @IsNumber()
-  codes_count?: number | null;
+  employees_count?: number | null;
 
   @ApiPropertyOptional({ description: 'Branches limit — omit or null for unlimited' })
   @IsOptional()
@@ -118,10 +118,10 @@ export class UpdatePackageRequest {
   @IsNumber()
   offers_count?: number | null;
 
-  @ApiPropertyOptional({ description: 'null = unlimited' })
+  @ApiPropertyOptional({ description: 'Max employees per store — null = unlimited' })
   @IsOptional()
   @IsNumber()
-  codes_count?: number | null;
+  employees_count?: number | null;
 
   @ApiPropertyOptional({ description: 'null = unlimited' })
   @IsOptional()

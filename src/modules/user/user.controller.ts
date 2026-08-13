@@ -99,18 +99,22 @@ export class UserController {
   @ApiQuery({ name: 'role', required: false, enum: ['store', 'customer'], description: 'Filter by role: store owner or customer' })
   @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({ name: 'phone', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, enum: ['active', 'deactivated', 'pending'] })
   @Get('')
   async getAll(
     @Query() query: PaginatedRequest,
     @Query('role') role?: 'store' | 'customer',
     @Query('name') name?: string,
     @Query('phone') phone?: string,
+    @Query('status') status?: string,
   ) {
     applyQueryIncludes(query, 'city');
+    if (!query.sortBy) query.sortBy = ['created_at=DESC'];
     if (role === 'store') applyQueryFilters(query, `roles=${Role.STORE}`);
     else if (role === 'customer') applyQueryFilters(query, `roles=${Role.CLIENT}`);
     if (name) applyQueryFilters(query, `name=${name}`);
     if (phone) applyQueryFilters(query, `phone=${phone}`);
+    if (status) applyQueryFilters(query, `status=${status}`);
     const [users, total] = await Promise.all([
       this.userService.findAll(query),
       this.userService.count(query),

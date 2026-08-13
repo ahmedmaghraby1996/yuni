@@ -36,7 +36,7 @@ export class Package extends AuditableEntity {
 
   /** null = unlimited */
   @Column({ nullable: true, type: 'int' })
-  codes_count: number | null;
+  employees_count: number | null;
 
   /** null = unlimited */
   @Column({ nullable: true, type: 'int' })

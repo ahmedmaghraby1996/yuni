@@ -31,8 +31,11 @@ export class Transaction extends AuditableEntity {
   @Column()
   user_id: string;
 
-  @Column({nullable:true})
-  meta_data: string
+  @Column({ nullable: true })
+  meta_data: string;
+
+  @Column({ type: 'enum', enum: ['store', 'admin', 'system'], nullable: true })
+  sender_type: 'store' | 'admin' | 'system' | null;
 
   constructor(partial?: Partial<Transaction>) {
     super();
