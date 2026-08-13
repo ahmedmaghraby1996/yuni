@@ -95,7 +95,7 @@ export class UserResponse {
   resume: string;
 
   @Expose()
-a  @Transform(({ value }) => toUrl(value))
+  @Transform(({ value }) => toUrl(value))
   certificate: string;
 
   @Expose()
