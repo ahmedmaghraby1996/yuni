@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiHeader, ApiProperty, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer';
 import { IsOptional, IsString } from 'class-validator';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
 import { RolesGuard } from '../authentication/guards/roles.guard';
@@ -21,11 +22,22 @@ import { PaginatedResponse } from 'src/core/base/responses/paginated.response';
 import { UploadValidator } from 'src/core/validators/upload.validator';
 import { AdminEndpoint } from 'src/core/decorators/admin-endpoint.decorator';
 import { StoreSuggestionService } from './store-suggestion.service';
+import { toUrl } from 'src/core/helpers/file.helper';
+import { UserResponse } from '../user/dto/response/user-response';
 
 class SuggestStoreRequest {
   @ApiProperty({ required: false }) @IsOptional() @IsString() title?: string;
   @ApiProperty({ required: false }) @IsOptional() @IsString() description?: string;
   @ApiProperty({ required: false, type: 'string', format: 'binary' }) @IsOptional() image?: any;
+}
+
+class StoreSuggestionResponse {
+  @Expose() id: string;
+  @Expose() title: string;
+  @Expose() description: string;
+  @Expose() @Transform(({ value }) => toUrl(value)) image: string;
+  @Expose() created_at: Date;
+  @Expose() @Type(() => UserResponse) user: UserResponse;
 }
 
 @ApiTags('Store Suggestion')
@@ -54,6 +66,7 @@ export class StoreSuggestionController {
   @Get()
   async getAll(@Query('page') page = 1, @Query('limit') limit = 10) {
     const { data, total } = await this.service.getAll(Number(page), Number(limit));
-    return new PaginatedResponse(data, { meta: { total, page: Number(page), limit: Number(limit) } });
+    const result = plainToInstance(StoreSuggestionResponse, data, { excludeExtraneousValues: true });
+    return new PaginatedResponse(result, { meta: { total, page: Number(page), limit: Number(limit) } });
   }
 }
