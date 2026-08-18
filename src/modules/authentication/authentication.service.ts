@@ -312,7 +312,7 @@ export class AuthenticationService {
       { secret: this._config.get<string>('app.key'), expiresIn: '1h' },
     );
     const resetPasswordUrl =
-      'https://admin.nadnee.click/auth/reset-password/' + token;
+      'https://www.youniapp.com/auth/reset-password/' + token;
 
     await this.sendEmailService.sendResetPasswordEmail(
       user.email,

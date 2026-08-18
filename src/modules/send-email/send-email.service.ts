@@ -8,8 +8,8 @@ export class SendEmailService {
     private password: string;
 
     constructor() {
-        this.email = "nadneewatch2@gmail.com";
-        this.password = "ctkm tuqz rwpv adjb";
+        this.email = "support@youniapp.com";
+        this.password = "gzmj wiso zyug mftk";
 
         this.transporter = nodemailer.createTransport({
             service: "gmail",
@@ -23,16 +23,16 @@ export class SendEmailService {
     async sendResetPasswordEmail(email: string, resetPasswordUrl: string) {
         return await this.sendMessage({
             to: email,
-            header: 'Nadnee - Password Reset URL',
+            header: 'Youni - Password Reset',
             body: `
             <h2>Password Reset</h2>
             <p>Dear User,</p>
             <p>You have requested to reset your password. Click the link below to proceed:</p>
-            <a href="${resetPasswordUrl}">Reset Password</a>
-            <p>Please note that this password reset link is confidential. Do not share this link with anyone.</p>
+            <a href="${resetPasswordUrl}" style="display:inline-block;padding:12px 24px;background-color:#7C3AED;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0;">Reset Password</a>
+            <p>Please note that this password reset link is confidential. Do not share it with anyone.</p>
             <p>If you did not request this change, please ignore this email.</p>
-            <p>This password reset link will expire after 1 hour.</p>
-            <p>Best Regards,<br>Nadnee.</p>
+            <p>This link will expire after 1 hour.</p>
+            <p>Best Regards,<br>Youni Team.</p>
         `});
     }
 
