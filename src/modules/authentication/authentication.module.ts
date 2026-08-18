@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { StoreEmployee } from 'src/infrastructure/entities/store/store-employee.entity';
 import { AdminEmployee } from 'src/infrastructure/entities/admin/admin-employee.entity';
 import { User } from 'src/infrastructure/entities/user/user.entity';
+import { Otp } from 'src/infrastructure/entities/auth/otp.entity';
 import { RegisterUserTransaction } from './transactions/register-user.transaction';
 import { SendOtpTransaction } from './transactions/send-otp.transaction';
 import { JwtService } from '@nestjs/jwt';
@@ -28,7 +29,7 @@ import { HttpModule } from '@nestjs/axios';
 // 
 @Global()
 @Module({
-  imports: [JWTSetup(), HttpModule, TypeOrmModule.forFeature([User, StoreEmployee, AdminEmployee])],
+  imports: [JWTSetup(), HttpModule, TypeOrmModule.forFeature([User, StoreEmployee, AdminEmployee, Otp])],
   controllers: [AuthenticationController, AdminAuthController],
   providers: [
     AuthenticationService,

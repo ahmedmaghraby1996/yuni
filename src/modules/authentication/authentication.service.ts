@@ -35,8 +35,9 @@ import { Request } from 'express';
 import { REQUEST } from '@nestjs/core';
 import { access } from 'fs';
 import { ResetPasswordRequest } from './dto/requests/reset-password';
-import { RequestResetPassword } from './dto/requests/request-reset-password';
+import { RequestResetPassword, ForgotPasswordRequestOtpRequest, ForgotPasswordVerifyOtpRequest, ForgotPasswordResetRequest } from './dto/requests/request-reset-password';
 import { SendEmailService } from '../send-email/send-email.service';
+import { Otp } from 'src/infrastructure/entities/auth/otp.entity';
 
 import { AddSecurityGradeRequest } from './dto/requests/add-security-garde.request';
 
@@ -55,6 +56,7 @@ export class AuthenticationService {
 
     @InjectRepository(Wallet) private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(StoreEmployee) private readonly employeeRepo: Repository<StoreEmployee>,
+    @InjectRepository(Otp) private readonly otpRepo: Repository<Otp>,
     private readonly _firebase_admin_service: FirebaseAdminService,
     @Inject(REQUEST) private readonly request: Request,
     @Inject(SendEmailService)
@@ -311,13 +313,106 @@ export class AuthenticationService {
       { username: user.username },
       { secret: this._config.get<string>('app.key'), expiresIn: '1h' },
     );
-    const resetPasswordUrl =
-      'https://www.youniapp.com/auth/reset-password/' + token;
+
+    let baseUrl = 'https://www.youniapp.com/auth/reset-password/';
+    if (req.type === 'admin') {
+      baseUrl = 'https://admin.youniapp.com/en/auth/forgot-password/';
+    } else if (req.type === 'merchant') {
+      baseUrl = 'https://merchant.youniapp.com/en/auth/forgot-password/';
+    }
+
+    const resetPasswordUrl = baseUrl + token;
 
     await this.sendEmailService.sendResetPasswordEmail(
       user.email,
       resetPasswordUrl,
     );
+
+    return true;
+  }
+
+  async forgotPasswordRequestOtp(req: ForgotPasswordRequestOtpRequest) {
+    const user = await this.userService.findOne([{ [req.type]: req.username }] as any);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const code = '1234';
+
+    await this.otpRepo.delete({ type: `forgot_${req.type}`, username: req.username });
+    await this.otpRepo.save(
+      this.otpRepo.create({ type: `forgot_${req.type}`, username: req.username, code }),
+    );
+
+    try {
+      if (req.type === 'email') {
+        await this.sendEmailService.sendCustomMessage({
+          send_to: req.username,
+          message_header: 'Youni - Password Reset Code',
+          message_body: `
+            <h2>Password Reset</h2>
+            <p>Dear User,</p>
+            <p>Your password reset code is: <strong style="font-size: 24px; color: #7C3AED;">${code}</strong></p>
+            <p>This code will expire in 1 minute.</p>
+            <p>If you did not request this, please ignore this email.</p>
+            <p>Best Regards,<br>Youni Team.</p>
+          `,
+          type: ['email'],
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    return true;
+  }
+
+  async forgotPasswordVerifyOtp(req: ForgotPasswordVerifyOtpRequest) {
+    const otp = await this.otpRepo.findOneBy({
+      type: `forgot_${req.type}`,
+      username: req.username,
+      code: req.code,
+    });
+
+    if (!otp) throw new BadRequestException('Invalid code');
+    if (otp.isExpired()) throw new BadRequestException('Code expired');
+
+    await this.otpRepo.remove(otp);
+
+    const user = await this.userService.findOne([{ [req.type]: req.username }] as any);
+    if (!user) throw new BadRequestException('User not found');
+
+    const reset_token = this.jwtService.sign(
+      { username: user.username, purpose: 'forgot_password' },
+      { secret: this._config.get<string>('app.key'), expiresIn: '15m' },
+    );
+
+    return { reset_token };
+  }
+
+  async forgotPasswordReset(req: ForgotPasswordResetRequest) {
+    let payload: any;
+    try {
+      payload = this.jwtService.verify(req.reset_token, {
+        secret: this._config.get<string>('app.key'),
+      });
+    } catch {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    if (payload.purpose !== 'forgot_password') {
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    const user = await this.userService.findOne([{ username: payload.username }] as any);
+    if (!user) throw new BadRequestException('User not found');
+
+    user.password = await bcrypt.hash(
+      req.new_password + this._config.get('app.key'),
+      10,
+    );
+    await user.save();
 
     return true;
   }

@@ -26,7 +26,7 @@ import { GoogleSigninRequest, LoginRequest } from './dto/requests/signin.dto';
 import { VerifyOtpRequest } from './dto/requests/verify-otp.dto';
 import { AuthResponse } from './dto/responses/auth.response';
 import { RegisterResponse } from './dto/responses/register.response';
-import { RequestResetPassword } from './dto/requests/request-reset-password';
+import { RequestResetPassword, ForgotPasswordRequestOtpRequest, ForgotPasswordVerifyOtpRequest, ForgotPasswordResetRequest } from './dto/requests/request-reset-password';
 import { ResetPasswordRequest } from './dto/requests/reset-password';
 import { RefreshTokenRequest } from './dto/requests/refresh-token.request';
 import { City } from 'src/infrastructure/entities/city/city.entity';
@@ -230,5 +230,29 @@ export class AuthenticationController {
     const result = await this.authService.resetPassword(resetToken, req);
 
     return new ActionResponse<AuthResponse>(result);
+  }
+
+  @Post('forgot-password/request-otp')
+  async forgotPasswordRequestOtp(
+    @Body() req: ForgotPasswordRequestOtpRequest,
+  ): Promise<ActionResponse<boolean>> {
+    const result = await this.authService.forgotPasswordRequestOtp(req);
+    return new ActionResponse<boolean>(result);
+  }
+
+  @Post('forgot-password/verify-otp')
+  async forgotPasswordVerifyOtp(
+    @Body() req: ForgotPasswordVerifyOtpRequest,
+  ): Promise<ActionResponse<{ reset_token: string }>> {
+    const result = await this.authService.forgotPasswordVerifyOtp(req);
+    return new ActionResponse(result);
+  }
+
+  @Post('forgot-password/reset')
+  async forgotPasswordReset(
+    @Body() req: ForgotPasswordResetRequest,
+  ): Promise<ActionResponse<boolean>> {
+    const result = await this.authService.forgotPasswordReset(req);
+    return new ActionResponse<boolean>(result);
   }
 }
