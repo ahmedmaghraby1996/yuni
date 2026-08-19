@@ -476,37 +476,57 @@ export class UserController {
   @ApiQuery({ name: 'name', required: false, type: String })
   @ApiQuery({ name: 'phone', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, enum: ['active', 'deactivated', 'pending'] })
-  @Get('export/csv')
-  async exportCsv(
+  @Get('export/excel')
+  async exportExcel(
     @Res() res: Response,
     @Query('role') role: 'store' | 'client',
     @Query('name') name?: string,
     @Query('phone') phone?: string,
     @Query('status') status?: string,
   ) {
+    const ExcelJS = require('exceljs');
     const users = await this.userService.exportUsers({ role, name, phone, status });
 
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'Gender', 'Birth Date', 'School', 'Major', 'City', 'Registered At'];
-    const rows = users.map((u) => [
-      u.id,
-      u.name ?? '',
-      u.email ?? '',
-      u.phone ?? '',
-      u.roles?.[0] ?? '',
-      u.status ?? '',
-      u.gender ?? '',
-      u.birth_date ?? '',
-      u.school_name ?? '',
-      u.major ?? '',
-      (u as any).city?.name ?? '',
-      u.created_at ? new Date(u.created_at).toISOString() : '',
-    ]);
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Users');
 
-    const escape = (val: string) => `"${String(val).replace(/"/g, '""')}"`;
-    const csv = [headers.map(escape).join(','), ...rows.map((r) => r.map(escape).join(','))].join('\n');
+    sheet.columns = [
+      { header: 'ID', key: 'id', width: 38 },
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Phone', key: 'phone', width: 20 },
+      { header: 'Role', key: 'role', width: 12 },
+      { header: 'Status', key: 'status', width: 14 },
+      { header: 'Gender', key: 'gender', width: 12 },
+      { header: 'Birth Date', key: 'birth_date', width: 15 },
+      { header: 'School', key: 'school_name', width: 25 },
+      { header: 'Major', key: 'major', width: 25 },
+      { header: 'City', key: 'city', width: 18 },
+      { header: 'Registered At', key: 'created_at', width: 22 },
+    ];
 
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="users-${role}-${Date.now()}.csv"`);
-    res.send(csv);
+    sheet.getRow(1).font = { bold: true };
+
+    for (const u of users) {
+      sheet.addRow({
+        id: u.id,
+        name: u.name ?? '',
+        email: u.email ?? '',
+        phone: u.phone ?? '',
+        role: u.roles?.[0] ?? '',
+        status: u.status ?? '',
+        gender: u.gender ?? '',
+        birth_date: u.birth_date ?? '',
+        school_name: u.school_name ?? '',
+        major: u.major ?? '',
+        city: (u as any).city?.name_en ?? (u as any).city?.name ?? '',
+        created_at: u.created_at ? new Date(u.created_at).toISOString().replace('T', ' ').slice(0, 19) : '',
+      });
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="users-${role}-${Date.now()}.xlsx"`);
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }
