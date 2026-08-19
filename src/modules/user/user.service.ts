@@ -707,4 +707,19 @@ export class UserService extends BaseService<User> {
       );
     }
   }
+
+  async exportUsers(filters: { role: 'store' | 'client'; name?: string; phone?: string; status?: string }) {
+    const roleValue = filters.role === 'store' ? Role.STORE : Role.CLIENT;
+
+    const qb = this._repo.createQueryBuilder('user')
+      .leftJoinAndSelect('user.city', 'city')
+      .where('FIND_IN_SET(:role, user.roles) > 0', { role: roleValue })
+      .orderBy('user.created_at', 'DESC');
+
+    if (filters.name) qb.andWhere('user.name ILIKE :name', { name: `%${filters.name}%` });
+    if (filters.phone) qb.andWhere('user.phone LIKE :phone', { phone: `%${filters.phone}%` });
+    if (filters.status) qb.andWhere('user.status = :status', { status: filters.status });
+
+    return qb.getMany();
+  }
 }

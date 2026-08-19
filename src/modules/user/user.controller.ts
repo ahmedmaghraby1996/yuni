@@ -11,11 +11,13 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UploadedFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { IsEnum, IsOptional, IsString, IsEmail } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../authentication/guards/jwt-auth.guard';
@@ -464,5 +466,47 @@ export class UserController {
   async testPayment() {
     const amount = '10.00';
     return await this.userService.makePayment(amount);
+  }
+
+  @AdminEndpoint()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.ADMIN_EMPLOYEE)
+  @AdminPermission('users', 'view')
+  @ApiQuery({ name: 'role', required: true, enum: ['store', 'client'], description: 'Filter by role: store or client' })
+  @ApiQuery({ name: 'name', required: false, type: String })
+  @ApiQuery({ name: 'phone', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, enum: ['active', 'deactivated', 'pending'] })
+  @Get('export/csv')
+  async exportCsv(
+    @Res() res: Response,
+    @Query('role') role: 'store' | 'client',
+    @Query('name') name?: string,
+    @Query('phone') phone?: string,
+    @Query('status') status?: string,
+  ) {
+    const users = await this.userService.exportUsers({ role, name, phone, status });
+
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status', 'Gender', 'Birth Date', 'School', 'Major', 'City', 'Registered At'];
+    const rows = users.map((u) => [
+      u.id,
+      u.name ?? '',
+      u.email ?? '',
+      u.phone ?? '',
+      u.roles?.[0] ?? '',
+      u.status ?? '',
+      u.gender ?? '',
+      u.birth_date ?? '',
+      u.school_name ?? '',
+      u.major ?? '',
+      (u as any).city?.name ?? '',
+      u.created_at ? new Date(u.created_at).toISOString() : '',
+    ]);
+
+    const escape = (val: string) => `"${String(val).replace(/"/g, '""')}"`;
+    const csv = [headers.map(escape).join(','), ...rows.map((r) => r.map(escape).join(','))].join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="users-${role}-${Date.now()}.csv"`);
+    res.send(csv);
   }
 }
