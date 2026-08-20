@@ -510,6 +510,7 @@ export class OffersService extends BaseService<Offer> {
       .leftJoinAndSelect('offer.images', 'images')
       .leftJoinAndSelect('offer.subcategory', 'subcategory')
       .leftJoinAndSelect('offer.favorites', 'favorites')
+      .leftJoinAndSelect('offer.stores', 'stores')
       .whereInIds(offerIds)
       .getMany();
 

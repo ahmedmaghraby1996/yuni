@@ -48,6 +48,10 @@ export class OfferResponse {
   @Expose()
   @Type(() => BranchResponse)
   stores: BranchResponse;
+
+  @Expose()
+  @Transform(({ obj }) => obj.stores?.map((s: any) => s.id) ?? [])
+  store_ids: string[];
   @Expose()
   is_active: boolean;
   @Expose()
